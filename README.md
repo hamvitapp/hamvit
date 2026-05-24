@@ -43,6 +43,7 @@ Slogan oficial: **HAMVIT - Evolua no seu ritmo.**
 - [ ] Execução Supabase local (depende de Docker Desktop).
 - [ ] Testes automatizados.
 
+
 ## Dependências de ambiente ainda necessárias
 - Docker Desktop (para `supabase start` local).
 - JDK 17 + Android SDK/cmdline-tools (para build Android Flutter).
