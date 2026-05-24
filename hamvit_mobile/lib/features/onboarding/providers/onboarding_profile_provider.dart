@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/goals/goal_calculation_engine.dart';
+import '../../../core/goals/nutrition_target_model.dart';
+import '../../../core/hamvit_date_utils.dart';
 import '../../../core/supabase_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -11,10 +14,17 @@ class OnboardingProfileState {
   final double? weightKg;
   final int? heightCm;
   final String? activityLevel;
+  final Map<String, dynamic> activityPreferences;
   final List<String> foodPreferences;
   final List<String> foodRestrictions;
   final double? sleepHours;
   final int? hydrationGoalMl;
+  final double? targetWeightKg;
+  final String? birthDateIso;
+  final String? biologicalSex;
+  final int? calorieGoal;
+  final String? goalsUpdatedAtIso;
+  final NutritionTargetModel? calculatedTargets;
   final bool welcomeSeen;
   final String? errorMessage;
 
@@ -25,10 +35,17 @@ class OnboardingProfileState {
     this.weightKg,
     this.heightCm,
     this.activityLevel,
+    this.activityPreferences = const {},
     this.foodPreferences = const [],
     this.foodRestrictions = const [],
     this.sleepHours,
     this.hydrationGoalMl,
+    this.targetWeightKg,
+    this.birthDateIso,
+    this.biologicalSex,
+    this.calorieGoal,
+    this.goalsUpdatedAtIso,
+    this.calculatedTargets,
     this.welcomeSeen = false,
     this.errorMessage,
   });
@@ -40,10 +57,17 @@ class OnboardingProfileState {
     double? weightKg,
     int? heightCm,
     String? activityLevel,
+    Map<String, dynamic>? activityPreferences,
     List<String>? foodPreferences,
     List<String>? foodRestrictions,
     double? sleepHours,
     int? hydrationGoalMl,
+    double? targetWeightKg,
+    String? birthDateIso,
+    String? biologicalSex,
+    int? calorieGoal,
+    String? goalsUpdatedAtIso,
+    NutritionTargetModel? calculatedTargets,
     bool? welcomeSeen,
     String? errorMessage,
     bool clearError = false,
@@ -55,10 +79,17 @@ class OnboardingProfileState {
       weightKg: weightKg ?? this.weightKg,
       heightCm: heightCm ?? this.heightCm,
       activityLevel: activityLevel ?? this.activityLevel,
+      activityPreferences: activityPreferences ?? this.activityPreferences,
       foodPreferences: foodPreferences ?? this.foodPreferences,
       foodRestrictions: foodRestrictions ?? this.foodRestrictions,
       sleepHours: sleepHours ?? this.sleepHours,
       hydrationGoalMl: hydrationGoalMl ?? this.hydrationGoalMl,
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+      birthDateIso: birthDateIso ?? this.birthDateIso,
+      biologicalSex: biologicalSex ?? this.biologicalSex,
+      calorieGoal: calorieGoal ?? this.calorieGoal,
+      goalsUpdatedAtIso: goalsUpdatedAtIso ?? this.goalsUpdatedAtIso,
+      calculatedTargets: calculatedTargets ?? this.calculatedTargets,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
@@ -147,6 +178,8 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       final food = _mapFromDynamic(onboarding['food']);
       final sleep = _mapFromDynamic(onboarding['sleep']);
       final hydration = _mapFromDynamic(onboarding['hydration']);
+      final body = _mapFromDynamic(onboarding['body']);
+      final activityPreferences = _mapFromDynamic(onboarding['activity_preferences']);
 
       state = OnboardingProfileState(
         isLoading: false,
@@ -154,12 +187,20 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
         weightKg: _asDouble(health['weight_kg']),
         heightCm: _asInt(health['height_cm']),
         activityLevel: _asString(onboarding['activity_level']),
+        activityPreferences: activityPreferences,
         foodPreferences: _asStringList(food['preferences']),
         foodRestrictions: _asStringList(food['restrictions']),
         sleepHours: _asDouble(sleep['hours_target']),
         hydrationGoalMl: _asInt(hydration['ml_target']),
+        targetWeightKg: _asDouble(body['target_weight_kg']),
+        birthDateIso: _asString(body['birth_date']),
+        biologicalSex: _asString(body['biological_sex']),
+        calorieGoal: _asInt(onboarding['calorie_goal']),
+        goalsUpdatedAtIso: _asString(onboarding['goals_updated_at']),
         welcomeSeen: _asBool(onboarding['welcome_seen']),
       );
+
+      _recalculateTargetsInMemory();
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
@@ -182,6 +223,8 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       };
     });
     state = state.copyWith(objective: trimmed);
+    _recalculateTargetsInMemory();
+    await _persistCalculatedTargets(source: 'system_calculated', userAdjusted: false);
     await _syncEssentialCompletion();
   }
 
@@ -233,6 +276,9 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
         activityLevel: activityLevel.trim(),
       );
 
+      _recalculateTargetsInMemory();
+      await _persistCalculatedTargets(source: 'system_calculated', userAdjusted: false);
+
       await _syncEssentialCompletion();
     } catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.toString());
@@ -260,6 +306,43 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
     );
   }
 
+  Future<void> saveActivityPreferences({
+    required String activityLevel,
+    String? limitations,
+    String? trainingPreference,
+    required List<String> availableDays,
+    int? availableMinutes,
+  }) async {
+    final trimmedLevel = activityLevel.trim();
+    await _savePreferencesPatch((onboarding) {
+      onboarding['activity_level'] = trimmedLevel;
+      onboarding['activity_preferences'] = {
+        'activity_level': trimmedLevel,
+        'limitations': limitations,
+        'training_preference': trainingPreference,
+        'available_days': availableDays,
+        'available_minutes': availableMinutes,
+      };
+      onboarding['flows'] = {
+        ..._mapFromDynamic(onboarding['flows']),
+        'activity': true,
+      };
+    });
+
+    state = state.copyWith(
+      activityLevel: trimmedLevel,
+      activityPreferences: {
+        'activity_level': trimmedLevel,
+        'limitations': limitations,
+        'training_preference': trainingPreference,
+        'available_days': availableDays,
+        'available_minutes': availableMinutes,
+      },
+    );
+
+    await _syncEssentialCompletion();
+  }
+
   Future<void> saveSleepProfile({required double hoursTarget}) async {
     await _savePreferencesPatch((onboarding) {
       onboarding['sleep'] = {'hours_target': hoursTarget};
@@ -284,13 +367,195 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
     state = state.copyWith(hydrationGoalMl: mlTarget);
   }
 
+  Future<void> saveHydrationAdvancedGoal({required int mlTarget}) async {
+    final normalized = mlTarget.clamp(1200, 6000);
+    await _savePreferencesPatch((onboarding) {
+      onboarding['hydration'] = {
+        'ml_target': normalized,
+        'source': 'user_advanced_adjusted',
+      };
+      onboarding['goals_updated_at'] = DateTime.now().toIso8601String();
+      onboarding['flows'] = {
+        ..._mapFromDynamic(onboarding['flows']),
+        'hydration': true,
+      };
+    });
+
+    state = state.copyWith(
+      hydrationGoalMl: normalized,
+      goalsUpdatedAtIso: DateTime.now().toIso8601String(),
+    );
+
+    await _persistCalculatedTargets(source: 'user_advanced_adjusted', userAdjusted: true);
+  }
+
+  Future<void> saveBodyData({
+    required double weightKg,
+    required int heightCm,
+    double? targetWeightKg,
+    String? birthDateIso,
+    String? biologicalSex,
+  }) async {
+    await saveActivityProfile(
+      weightKg: weightKg,
+      heightCm: heightCm,
+      activityLevel: state.activityLevel ?? 'moderada',
+    );
+
+    await _savePreferencesPatch((onboarding) {
+      onboarding['body'] = {
+        'target_weight_kg': targetWeightKg,
+        'birth_date': birthDateIso,
+        'biological_sex': biologicalSex,
+      };
+      onboarding['goals_updated_at'] = DateTime.now().toIso8601String();
+    });
+
+    state = state.copyWith(
+      targetWeightKg: targetWeightKg,
+      birthDateIso: birthDateIso,
+      biologicalSex: biologicalSex,
+      goalsUpdatedAtIso: DateTime.now().toIso8601String(),
+    );
+
+    _recalculateTargetsInMemory();
+    await _persistCalculatedTargets(source: 'system_calculated', userAdjusted: false);
+  }
+
+  Future<void> recalculateGoals() async {
+    _recalculateTargetsInMemory();
+    await _persistCalculatedTargets(source: 'system_calculated', userAdjusted: false);
+  }
+
+  void _recalculateTargetsInMemory() {
+    final age = _ageFromBirthDate(state.birthDateIso);
+    final result = GoalCalculationEngine.calculate(
+      GoalCalculationEngineInput(
+        weightKg: state.weightKg,
+        targetWeightKg: state.targetWeightKg,
+        heightCm: state.heightCm,
+        ageYears: age,
+        biologicalSex: state.biologicalSex,
+        activityLevel: state.activityLevel,
+        objective: state.objective,
+      ),
+    );
+
+    if (result == null) {
+      state = state.copyWith(calculatedTargets: null);
+      return;
+    }
+
+    state = state.copyWith(
+      calculatedTargets: result,
+      calorieGoal: result.caloriesKcal,
+      hydrationGoalMl: result.waterMl,
+    );
+  }
+
+  Future<void> _persistCalculatedTargets({
+    required String source,
+    required bool userAdjusted,
+  }) async {
+    final uid = _userId;
+    final client = _client;
+    final targets = state.calculatedTargets;
+    if (uid == null || client == null || targets == null) return;
+
+    final today = HamvitDateUtils.toIsoDate(DateTime.now());
+
+    await _savePreferencesPatch((onboarding) {
+      onboarding['calorie_goal'] = targets.caloriesKcal;
+      onboarding['hydration'] = {
+        'ml_target': targets.waterMl,
+        'source': source,
+      };
+      onboarding['goals_updated_at'] = DateTime.now().toIso8601String();
+      onboarding['targets_source'] = source;
+      onboarding['targets_user_adjusted'] = userAdjusted;
+    });
+
+    state = state.copyWith(
+      calorieGoal: targets.caloriesKcal,
+      hydrationGoalMl: targets.waterMl,
+      goalsUpdatedAtIso: DateTime.now().toIso8601String(),
+    );
+
+    try {
+      await client.from('daily_nutrition_targets').upsert({
+        'user_id': uid,
+        'target_date': today,
+        'calories_kcal': targets.caloriesKcal,
+        'protein_g': targets.proteinG,
+        'carbs_g': targets.carbsG,
+        'fat_g': targets.fatG,
+        'water_ml': targets.waterMl,
+        'calculation_source': source,
+        'calculated_at': DateTime.now().toIso8601String(),
+        'user_adjusted': userAdjusted,
+      });
+    } catch (_) {
+      // Ignore schema mismatch while migrations are not yet applied.
+    }
+
+    if (targets.estimatedWeeks != null && targets.weightDifferenceKg != null) {
+      try {
+        await client.from('goal_history').insert({
+          'user_id': uid,
+          'previous_weight_kg': state.weightKg,
+          'target_weight_kg': state.targetWeightKg,
+          'estimated_weeks': targets.estimatedWeeks,
+          'calorie_target_kcal': targets.caloriesKcal,
+          'water_target_ml': targets.waterMl,
+          'source': source,
+        });
+      } catch (_) {
+        // Ignore schema mismatch while migrations are not yet applied.
+      }
+    }
+  }
+
+  int? _ageFromBirthDate(String? isoDate) {
+    if (isoDate == null || isoDate.trim().isEmpty) return null;
+    final birth = HamvitDateUtils.tryParseIsoDate(isoDate);
+    if (birth == null) return null;
+
+    final now = DateTime.now();
+    var age = now.year - birth.year;
+    final hadBirthdayThisYear = (now.month > birth.month) || (now.month == birth.month && now.day >= birth.day);
+    if (!hadBirthdayThisYear) {
+      age -= 1;
+    }
+    return age < 0 ? null : age;
+  }
+
   Future<void> _syncEssentialCompletion() async {
     final uid = _userId;
     final client = _client;
     if (uid == null || client == null) return;
 
     final isComplete = state.essentialCompleted;
-    await client.from('profiles').update({'onboarding_completed': isComplete}).eq('id', uid);
+    final completionPercent = state.completionPercent;
+    final step = _resolveOnboardingStep();
+    try {
+      await client.from('profiles').update({
+        'onboarding_completed': isComplete,
+        'onboarding_step': step,
+        'profile_completion_percent': completionPercent,
+      }).eq('id', uid);
+    } catch (_) {
+      await client.from('profiles').update({'onboarding_completed': isComplete}).eq('id', uid);
+    }
+  }
+
+  int _resolveOnboardingStep() {
+    if (state.hydrationGoalMl != null && state.hydrationGoalMl! > 0) return 7;
+    if (state.sleepHours != null && state.sleepHours! > 0) return 6;
+    if (state.hasFoodPreferences && state.hasFoodRestrictions) return 5;
+    if (state.hasActivity) return 4;
+    if (state.hasWeight && state.hasHeight) return 3;
+    if (state.hasObjective) return 2;
+    return 1;
   }
 
   Future<void> _savePreferencesPatch(void Function(Map<String, dynamic> onboarding) patch) async {

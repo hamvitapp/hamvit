@@ -28,7 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthStateModel>(authStateProvider, (previous, next) {
-      final becameAuthenticated = previous?.status != AuthStatus.authenticated && next.status == AuthStatus.authenticated;
+      final becameAuthenticated =
+          previous?.status != AuthStatus.authenticated &&
+              next.status == AuthStatus.authenticated;
       if (!becameAuthenticated) return;
       if (!context.mounted) return;
       context.go('/welcome');
@@ -44,12 +46,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 90,
+            height: 98,
             width: double.infinity,
-            child: Image.asset(
-              'assets/branding/hamvit_hoje_exata.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Image.asset(
+                'assets/branding/hamvit_hoje_exata.png',
+                fit: BoxFit.contain,
+                alignment: Alignment.topCenter,
+              ),
             ),
           ),
           Padding(
@@ -74,7 +79,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _passwordCtrl,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Senha'),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Informe sua senha.' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Informe sua senha.' : null,
                   ),
                 ],
               ),

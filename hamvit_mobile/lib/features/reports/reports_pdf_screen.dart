@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/hamvit_date_utils.dart';
 import '../../core/premium/premium_access_matrix.dart';
 import '../../core/premium/premium_widgets.dart';
 import '../auth/providers/auth_provider.dart';
@@ -41,7 +42,8 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
             children: [
               HamvitReportPreview(
                 title: 'Relatório Semanal',
-                period: '${DateTime.now().subtract(const Duration(days: 7)).toString().substring(0, 10)} a ${DateTime.now().toString().substring(0, 10)}',
+                period:
+                    '${HamvitDateUtils.formatDateBr(DateTime.now().subtract(const Duration(days: 7)))} a ${HamvitDateUtils.formatDateBr(DateTime.now())}',
                 score: '80',
               ),
               const SizedBox(height: 10),
@@ -55,7 +57,7 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
                   final insights = List<Map<String, String>>.from(result?['insights'] ?? const []);
                   final bytes = await svc.generatePdfBytes(
                     userName: profile?.displayName ?? 'Usuario HAMVIT',
-                    periodLabel: '${start.toString().substring(0, 10)} a ${end.toString().substring(0, 10)}',
+                    periodLabel: '${HamvitDateUtils.formatDateBr(start)} a ${HamvitDateUtils.formatDateBr(end)}',
                     reportType: 'weekly',
                     summary: summary,
                     insights: insights,

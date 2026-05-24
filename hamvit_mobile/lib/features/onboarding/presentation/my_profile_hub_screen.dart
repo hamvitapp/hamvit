@@ -21,12 +21,15 @@ class MyProfileHubScreen extends StatelessWidget {
       children: [
         Text('Meu Perfil', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 10),
-        _tile(context, 'Objetivos', '/onboarding/objectives'),
-        _tile(context, 'Alimentação', '/onboarding/food'),
-        _tile(context, 'Atividade Física', '/onboarding/activity'),
+        _tile(context, 'Editar perfil', '/profile/edit'),
+        _tile(context, 'Objetivos', '/profile/goals'),
+        _tile(context, 'Dados corporais', '/profile/body-data'),
+        _tile(context, 'Alimentação', '/nutrition/preferences'),
+        _tile(context, 'Atividade Física', '/activities/preferences'),
         _tile(context, 'Hábitos', '/habits'),
-        _tile(context, 'Sono', '/onboarding/sleep'),
-        _tile(context, 'Preferências', '/onboarding/hydration'),
+        _tile(context, 'Sono', '/sleep/settings'),
+        _tile(context, 'Hidratação', '/hydration/settings'),
+        _tile(context, 'Preferências', '/settings/preferences'),
       ],
     );
   }

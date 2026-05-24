@@ -7,115 +7,134 @@ import '../../../../theme/hamvit_colors.dart';
 class HamvitDailyScoreWidget extends StatelessWidget {
   final int score;
   final String statusText;
+  final VoidCallback? onTap;
 
   const HamvitDailyScoreWidget({
     super.key,
     required this.score,
     required this.statusText,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final normalized = (score / 100).clamp(0.0, 1.0);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            HamvitColors.primaryDark.withValues(alpha: 0.9),
-            HamvitColors.darkCard,
-          ],
-        ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: HamvitColors.accentCyan.withValues(alpha: 0.08),
-            blurRadius: 14,
-            spreadRadius: 0.2,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                HamvitColors.primaryDark.withValues(alpha: 0.9),
+                HamvitColors.darkCard,
+              ],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            boxShadow: [
+              BoxShadow(
+                color: HamvitColors.accentCyan.withValues(alpha: 0.08),
+                blurRadius: 14,
+                spreadRadius: 0.2,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 86,
-            height: 86,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 86,
-                  height: 86,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: HamvitColors.accentBlue.withValues(alpha: 0.25),
-                        blurRadius: 16,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 86,
+                height: 86,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 86,
+                      height: 86,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: HamvitColors.accentBlue.withValues(alpha: 0.25),
+                            blurRadius: 16,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: normalized),
+                      duration: const Duration(milliseconds: 900),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) {
+                        return CustomPaint(
+                          size: const Size.square(86),
+                          painter: _RingPainter(progress: value),
+                        );
+                      },
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 260),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeOut,
+                          child: Text(
+                            '$score%',
+                            key: ValueKey(score),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        Text(
+                          'HAMVIT',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                letterSpacing: 0.8,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0, end: normalized),
-                  duration: const Duration(milliseconds: 900),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, _) {
-                    return CustomPaint(
-                      size: const Size.square(86),
-                      painter: _RingPainter(progress: value),
-                    );
-                  },
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$score%',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      'Score do dia',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
-                    Text(
-                      'HAMVIT',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            letterSpacing: 0.8,
-                          ),
+                    const SizedBox(height: 4),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      child: Text(
+                        statusText,
+                        key: ValueKey(statusText),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: HamvitColors.darkTextMuted,
+                            ),
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Score do dia',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  statusText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: HamvitColors.darkTextMuted,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

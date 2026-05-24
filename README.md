@@ -69,6 +69,11 @@ Slogan oficial: **HAMVIT - Evolua no seu ritmo.**
 - Se houver cupom valido, backend registra `professional_commissions` e `patient_professional_links`.
 - O app Flutter apenas le status/entitlement e libera recursos Premium apos confirmacao backend.
 
+## Regras de datas e metas calculadas
+- Datas de interface devem sempre aparecer em DD/MM/AAAA.
+- Metas de calorias e água devem ser calculadas pelo sistema, evitando campo livre como padrão.
+- Documento técnico: docs/HAMVIT_GOALS_AND_DATE_RULES.md.
+
 ## Correcao incremental aplicada: Auth/Login HAMVIT
 
 Implementacao realizada de forma incremental, preservando arquitetura existente e integrando Supabase Auth + Riverpod + GoRouter com protecao de rotas.

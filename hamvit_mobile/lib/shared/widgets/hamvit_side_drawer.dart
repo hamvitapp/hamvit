@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/menu/drawer_subpages.dart';
@@ -52,7 +52,9 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
       initiallyExpanded: _expandedMenu == title,
       onExpansionChanged: (expanded) {
         setState(() {
-          _expandedMenu = expanded ? title : (_expandedMenu == title ? null : _expandedMenu);
+          _expandedMenu = expanded
+              ? title
+              : (_expandedMenu == title ? null : _expandedMenu);
         });
       },
       children: children,
@@ -63,7 +65,8 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
   Widget build(BuildContext context) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(right: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(24))),
       child: Container(
         color: HamvitColors.primaryNavy,
         child: Theme(
@@ -81,7 +84,10 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [HamvitColors.primaryDark, HamvitColors.primaryNavy],
+                    colors: [
+                      HamvitColors.primaryDark,
+                      HamvitColors.primaryNavy
+                    ],
                   ),
                 ),
                 child: Column(
@@ -90,10 +96,16 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                     Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: HamvitColors.accentCyan.withValues(alpha: 0.2),
+                          backgroundColor:
+                              HamvitColors.accentCyan.withValues(alpha: 0.2),
                           child: Text(
-                            ((widget.userName ?? 'U').isNotEmpty ? (widget.userName ?? 'U')[0] : 'U').toUpperCase(),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            ((widget.userName ?? 'U').isNotEmpty
+                                    ? (widget.userName ?? 'U')[0]
+                                    : 'U')
+                                .toUpperCase(),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -101,10 +113,18 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(widget.userName ?? 'Usuário HAMVIT', overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                              Text(widget.userName ?? 'Usuário HAMVIT',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700)),
                               Text(
-                                widget.isPremium ? 'Premium Vitalício ativo' : 'Plano Free ativo',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
+                                widget.isPremium
+                                    ? 'Premium Vitalício ativo'
+                                    : 'Plano Free ativo',
+                                style: TextStyle(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75)),
                               ),
                             ],
                           ),
@@ -113,12 +133,15 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
-                      height: 90,
+                      height: 98,
                       width: double.infinity,
-                      child: Image.asset(
-                        'assets/branding/hamvit_hoje_exata.png',
-                        fit: BoxFit.cover,
-                        alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Image.asset(
+                          'assets/branding/hamvit_hoje_exata.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.topCenter,
+                        ),
                       ),
                     ),
                   ],
@@ -129,34 +152,49 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 icon: Icons.account_circle_outlined,
                 children: [
                   HamvitMenuTile(
+                    title: 'Editar perfil',
+                    icon: Icons.edit_outlined,
+                    onTap: () => _go(context, '/profile/edit'),
+                  ),
+                  HamvitMenuTile(
                     title: 'Objetivos',
                     icon: Icons.flag_outlined,
-                    onTap: () => _go(context, '/drawer/objectives'),
+                    onTap: () => _go(context, '/profile/goals'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Dados corporais',
+                    icon: Icons.monitor_weight_outlined,
+                    onTap: () => _go(context, '/profile/body-data'),
                   ),
                   HamvitMenuTile(
                     title: 'Alimentação',
                     icon: Icons.restaurant_menu,
-                    onTap: () => _go(context, '/drawer/food'),
+                    onTap: () => _go(context, '/nutrition/preferences'),
                   ),
                   HamvitMenuTile(
                     title: 'Atividade Física',
                     icon: Icons.directions_run,
-                    onTap: () => _go(context, '/drawer/activity'),
+                    onTap: () => _go(context, '/activities/preferences'),
                   ),
                   HamvitMenuTile(
                     title: 'Hábitos',
                     icon: Icons.checklist,
-                    onTap: () => _go(context, '/drawer/habits'),
+                    onTap: () => _go(context, '/habits'),
                   ),
                   HamvitMenuTile(
                     title: 'Sono',
                     icon: Icons.nightlight_round,
-                    onTap: () => _go(context, '/drawer/sleep'),
+                    onTap: () => _go(context, '/sleep/settings'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Hidratação',
+                    icon: Icons.local_drink_outlined,
+                    onTap: () => _go(context, '/hydration/settings'),
                   ),
                   HamvitMenuTile(
                     title: 'Preferências',
                     icon: Icons.tune,
-                    onTap: () => _go(context, '/drawer/hydration'),
+                    onTap: () => _go(context, '/settings/preferences'),
                   ),
                 ],
               ),
@@ -166,7 +204,8 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 children: [
                   _sub('Benefícios', DrawerSubItemType.premiumBenefits),
                   _sub('Comprar Premium', DrawerSubItemType.premiumBuy),
-                  _sub('Histórico de pagamento', DrawerSubItemType.premiumPaymentHistory),
+                  _sub('Histórico de pagamento',
+                      DrawerSubItemType.premiumPaymentHistory),
                   _sub('Cupons', DrawerSubItemType.premiumCoupons),
                 ],
               ),
@@ -176,8 +215,10 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 children: [
                   _sub('Resumo de evolução', DrawerSubItemType.reportsSummary),
                   _sub('Exportar PDF', DrawerSubItemType.reportsExportPdf),
-                  _sub('Enviar ao nutricionista', DrawerSubItemType.reportsSendNutritionist),
-                  _sub('Histórico de relatórios', DrawerSubItemType.reportsHistory),
+                  _sub('Enviar ao nutricionista',
+                      DrawerSubItemType.reportsSendNutritionist),
+                  _sub('Histórico de relatórios',
+                      DrawerSubItemType.reportsHistory),
                 ],
               ),
               _mainMenu(
@@ -187,7 +228,8 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   _sub('Vincular profissional', DrawerSubItemType.proLink),
                   _sub('Meu nutricionista', DrawerSubItemType.proMy),
                   _sub('Cupom do profissional', DrawerSubItemType.proCoupon),
-                  _sub('Compartilhar relatório', DrawerSubItemType.proShareReport),
+                  _sub('Compartilhar relatório',
+                      DrawerSubItemType.proShareReport),
                 ],
               ),
               _mainMenu(
@@ -208,8 +250,10 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   _sub('Segurança', DrawerSubItemType.settingsSecurity),
                   _sub('Notificações', DrawerSubItemType.settingsNotifications),
                   _sub('Privacidade', DrawerSubItemType.settingsPrivacy),
-                  _sub('Acessibilidade', DrawerSubItemType.settingsAccessibility),
-                  _sub('Dados e exportação', DrawerSubItemType.settingsDataExport),
+                  _sub('Acessibilidade',
+                      DrawerSubItemType.settingsAccessibility),
+                  _sub('Dados e exportação',
+                      DrawerSubItemType.settingsDataExport),
                 ],
               ),
               _mainMenu(
@@ -219,7 +263,8 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   _sub('Central de ajuda', DrawerSubItemType.supportHelp),
                   _sub('Falar com suporte', DrawerSubItemType.supportContact),
                   _sub('Termos', DrawerSubItemType.supportTerms),
-                  _sub('Política de privacidade', DrawerSubItemType.supportPrivacyPolicy),
+                  _sub('Política de privacidade',
+                      DrawerSubItemType.supportPrivacyPolicy),
                 ],
               ),
               const Divider(height: 20, thickness: 1),
@@ -250,4 +295,3 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
     );
   }
 }
-

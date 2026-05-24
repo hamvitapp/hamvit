@@ -30,6 +30,7 @@ class Validators {
       initialDate: initial ?? now,
       firstDate: DateTime(1900),
       lastDate: DateTime(now.year + 10),
+      locale: const Locale('pt', 'BR'),
     );
   }
 

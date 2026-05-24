@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/premium/route_guards.dart';
 import '../features/activities/activities_page.dart';
+import '../features/activities/preferences/activity_preferences_screen.dart';
 import '../features/admin_shortcuts/admin_shortcuts_page.dart';
 import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
@@ -18,20 +19,26 @@ import '../features/onboarding/presentation/food_preferences_flow.dart';
 import '../features/onboarding/presentation/hydration_flow.dart';
 import '../features/onboarding/presentation/sleep_flow.dart';
 import '../features/onboarding/presentation/general_profile_flow.dart';
-import '../features/onboarding/presentation/objectives_summary_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/meal_recommendations/meal_recommendations_page.dart';
 import '../features/menu/drawer_subpages.dart';
+import '../features/nutrition/preferences/food_preferences_screen.dart';
+import '../features/profile/body_data_page.dart';
+import '../features/profile/goals_page.dart';
+import '../features/profile/profile_edit_screen.dart';
 import '../features/onboarding/presentation/my_profile_hub_screen.dart';
-import '../features/habits/habits_page.dart';
+import '../features/hydration/hydration_page.dart';
 import '../features/premium/advanced_analytics_screen.dart';
 import '../features/premium/premium_page.dart';
 import '../features/reports/analytics_screen.dart';
 import '../features/reports/reports_pdf_screen.dart';
 import '../features/reports/reports_period_screen.dart';
 import '../features/reports/reports_page.dart';
+import '../features/reports/reports_daily_screen.dart';
+import '../features/settings/preferences_page.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/sleep/sleep_page.dart';
 import '../shared/widgets/hamvit_back_app_bar.dart';
 import '../shared/widgets/hamvit_scaffold.dart';
 
@@ -55,23 +62,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/settings',
     '/activities',
     '/reports',
+    '/reports/daily',
     '/welcome',
     '/meu-perfil',
     '/onboarding',
-    '/onboarding/general',
-    '/onboarding/objectives',
+    '/onboarding/goal',
+    '/onboarding/body',
     '/onboarding/food',
     '/onboarding/activity',
     '/onboarding/sleep',
     '/onboarding/hydration',
-    '/drawer/objectives',
-    '/drawer/food',
-    '/drawer/activity',
-    '/drawer/habits',
-    '/drawer/sleep',
-    '/drawer/hydration',
+    '/profile/goals',
+    '/profile/edit',
+    '/profile/body',
+    '/profile/body-data',
+    '/profile/food-preferences',
+    '/nutrition/preferences',
+    '/activities/preferences',
     '/drawer/subitem',
     '/drawer/admin',
+    '/sleep',
+    '/sleep/settings',
+    '/hydration',
+    '/hydration/settings',
+    '/settings/preferences',
   };
 
   final premiumRoutes = <String>{
@@ -106,6 +120,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
+      if (authState.status == AuthStatus.error) {
+        if (isAuthenticatedArea || location == '/' || location == '/home') {
+          return '/login';
+        }
+        return null;
+      }
+
       if (authState.status == AuthStatus.authenticated) {
         if (isPublic || location == '/') return '/home';
 
@@ -134,58 +155,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/reset-password', builder: (context, state) => const ResetPasswordScreen()),
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
-      GoRoute(path: '/onboarding/general', builder: (context, state) => const GeneralProfileFlow()),
-      GoRoute(
-        path: '/onboarding/objectives',
-        builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Objetivos'),
-          body: const ObjectivesSummaryScreen(),
-        ),
-      ),
+      GoRoute(path: '/onboarding/goal', builder: (context, state) => const GeneralProfileFlow()),
+      GoRoute(path: '/onboarding/body', builder: (context, state) => const ActivityProfileFlow()),
       GoRoute(path: '/onboarding/food', builder: (context, state) => const FoodPreferencesFlow()),
       GoRoute(path: '/onboarding/activity', builder: (context, state) => const ActivityProfileFlow()),
       GoRoute(path: '/onboarding/sleep', builder: (context, state) => const SleepFlow()),
       GoRoute(path: '/onboarding/hydration', builder: (context, state) => const HydrationFlow()),
       GoRoute(
-        path: '/drawer/objectives',
+        path: '/profile/edit',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Editar perfil'),
+          body: const ProfileEditScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/profile/goals',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Objetivos'),
-          body: const ObjectivesSummaryScreen(),
+          body: const GoalsPage(),
         ),
       ),
       GoRoute(
-        path: '/drawer/food',
+        path: '/profile/body-data',
         builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Alimentação'),
-          body: const FoodPreferencesFlow(showAppBar: false),
+          appBar: hamvitBackAppBar(context, title: 'Dados corporais'),
+          body: const BodyDataPage(),
         ),
       ),
       GoRoute(
-        path: '/drawer/activity',
+        path: '/profile/body',
         builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Atividade Física'),
-          body: const ActivityProfileFlow(showAppBar: false),
+          appBar: hamvitBackAppBar(context, title: 'Dados corporais'),
+          body: const BodyDataPage(),
         ),
       ),
+      GoRoute(path: '/profile/food-preferences', builder: (context, state) => const FoodPreferencesScreen()),
+      GoRoute(path: '/nutrition/preferences', builder: (context, state) => const FoodPreferencesScreen()),
       GoRoute(
-        path: '/drawer/habits',
+        path: '/activities/preferences',
         builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Hábitos'),
-          body: const HabitsPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/drawer/sleep',
-        builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Sono'),
-          body: const SleepFlow(showAppBar: false),
-        ),
-      ),
-      GoRoute(
-        path: '/drawer/hydration',
-        builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Preferências'),
-          body: const HydrationFlow(showAppBar: false),
+          appBar: hamvitBackAppBar(context, title: 'Preferencias de atividade'),
+          body: const ActivityPreferencesScreen(),
         ),
       ),
       GoRoute(
@@ -227,6 +237,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/settings/preferences',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Preferências'),
+          body: const PreferencesPage(),
+        ),
+      ),
+      GoRoute(
         path: '/activities',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Atividades'),
@@ -234,10 +251,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/sleep',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Sono'),
+          body: const SleepPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/sleep/settings',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Configuracoes de sono'),
+          body: const SleepPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hydration',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Hidratação'),
+          body: const HydrationPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/hydration/settings',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Configuracoes de hidratacao'),
+          body: const HydrationPage(),
+        ),
+      ),
+      GoRoute(
         path: '/reports',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Relatórios'),
           body: ReportsPage(isPremium: ref.read(isPremiumProvider)),
+        ),
+      ),
+      GoRoute(
+        path: '/reports/daily',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Score diário'),
+          body: const ReportsDailyScreen(),
         ),
       ),
       GoRoute(

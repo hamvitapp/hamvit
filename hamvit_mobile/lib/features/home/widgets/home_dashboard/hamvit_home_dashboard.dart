@@ -11,16 +11,22 @@ class HamvitHomeDashboardData {
   final int waterMl;
   final int waterGoalMl;
   final int calories;
-  final int caloriesGoal;
+  final int? caloriesGoal;
   final int habitsDone;
   final int habitsTotal;
-  final int steps;
+  final int? steps;
   final double distanceKm;
-  final Duration sleepDuration;
+  final Duration? sleepDuration;
   final int dayCompletionPercent;
   final String primaryInsight;
   final String? secondaryInsight;
   final List<double> trend;
+  final VoidCallback? onScoreTap;
+  final VoidCallback? onWaterTap;
+  final VoidCallback? onCaloriesTap;
+  final VoidCallback? onHabitsTap;
+  final VoidCallback? onActivityTap;
+  final VoidCallback? onSleepTap;
 
   const HamvitHomeDashboardData({
     required this.score,
@@ -38,6 +44,12 @@ class HamvitHomeDashboardData {
     required this.primaryInsight,
     this.secondaryInsight,
     required this.trend,
+    this.onScoreTap,
+    this.onWaterTap,
+    this.onCaloriesTap,
+    this.onHabitsTap,
+    this.onActivityTap,
+    this.onSleepTap,
   });
 }
 
@@ -65,7 +77,7 @@ class HamvitHomeDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HamvitDailyScoreWidget(score: data.score, statusText: data.statusText),
+          HamvitDailyScoreWidget(score: data.score, statusText: data.statusText, onTap: data.onScoreTap),
           const SizedBox(height: 10),
           HamvitDailyStatsGrid(
             waterMl: data.waterMl,
@@ -77,6 +89,11 @@ class HamvitHomeDashboard extends StatelessWidget {
             steps: data.steps,
             distanceKm: data.distanceKm,
             sleepDuration: data.sleepDuration,
+            onWaterTap: data.onWaterTap,
+            onCaloriesTap: data.onCaloriesTap,
+            onHabitsTap: data.onHabitsTap,
+            onActivityTap: data.onActivityTap,
+            onSleepTap: data.onSleepTap,
           ),
           const SizedBox(height: 10),
           HamvitDayCompletionBar(percent: data.dayCompletionPercent),

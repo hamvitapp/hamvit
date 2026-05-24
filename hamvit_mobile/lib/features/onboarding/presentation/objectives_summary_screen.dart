@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profile/body_data_page.dart';
 import '../../../shared/widgets/hamvit_components.dart';
-import 'activity_profile_flow.dart';
 import 'general_profile_flow.dart';
 import '../providers/onboarding_profile_provider.dart';
 
@@ -80,7 +80,7 @@ class ObjectivesSummaryScreen extends ConsumerWidget {
                     child: FilledButton(
                       onPressed: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ActivityProfileFlow()),
+                          MaterialPageRoute(builder: (_) => const BodyDataPage()),
                         );
                       },
                       child: const Text('Editar dados'),

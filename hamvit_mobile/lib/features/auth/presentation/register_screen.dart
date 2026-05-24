@@ -22,7 +22,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _acceptedTerms = false;
 
-  static final _passwordRegex = RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$');
+  static final _passwordRegex =
+      RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$');
 
   @override
   void dispose() {
@@ -36,7 +37,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthStateModel>(authStateProvider, (previous, next) {
-      final becameAuthenticated = previous?.status != AuthStatus.authenticated && next.status == AuthStatus.authenticated;
+      final becameAuthenticated =
+          previous?.status != AuthStatus.authenticated &&
+              next.status == AuthStatus.authenticated;
       if (!becameAuthenticated) return;
       if (!context.mounted) return;
       context.go('/welcome');
@@ -64,12 +67,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 90,
+            height: 98,
             width: double.infinity,
-            child: Image.asset(
-              'assets/branding/hamvit_hoje_exata.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Image.asset(
+                'assets/branding/hamvit_hoje_exata.png',
+                fit: BoxFit.contain,
+                alignment: Alignment.topCenter,
+              ),
             ),
           ),
           Padding(
@@ -81,7 +87,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextFormField(
                     controller: _nameCtrl,
                     decoration: const InputDecoration(labelText: 'Nome'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Nome obrigatorio.' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Nome obrigatorio.'
+                        : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -112,7 +120,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextFormField(
                     controller: _confirmCtrl,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Confirmar senha'),
+                    decoration:
+                        const InputDecoration(labelText: 'Confirmar senha'),
                     validator: (v) {
                       if ((v ?? '').trim() != _passwordCtrl.text.trim()) {
                         return 'As senhas não conferem.';
@@ -141,7 +150,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     InkWell(
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const TermsOfUseScreen()),
+                          MaterialPageRoute(
+                              builder: (_) => const TermsOfUseScreen()),
                         );
                       },
                       child: const Text(
@@ -179,7 +189,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
           if (auth.errorMessage != null) ...[
             const SizedBox(height: 8),
-            Text(auth.errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+            Text(auth.errorMessage!,
+                style: const TextStyle(color: Colors.redAccent)),
           ],
         ],
       ),

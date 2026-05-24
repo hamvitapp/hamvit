@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +9,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -44,12 +45,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 90,
+            height: 98,
             width: double.infinity,
-            child: Image.asset(
-              'assets/branding/hamvit_hoje_exata.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Image.asset(
+                'assets/branding/hamvit_hoje_exata.png',
+                fit: BoxFit.contain,
+                alignment: Alignment.topCenter,
+              ),
             ),
           ),
           Padding(
@@ -69,7 +73,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               await notifier.sendRecoveryEmail(email);
               if (!mounted) return;
               setState(() {
-                _feedback = 'Se o e-mail existir, você recebera um link de recuperacao.';
+                _feedback =
+                    'Se o e-mail existir, você recebera um link de recuperacao.';
               });
             },
           ),

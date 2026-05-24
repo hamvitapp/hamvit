@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/onboarding/providers/onboarding_profile_provider.dart';
-import '../meal_recommendations/meal_recommendations_page.dart';
+import 'domain/home_dashboard_model.dart';
+import 'providers/home_dashboard_provider.dart';
 import '../../shared/widgets/hamvit_onboarding_widgets.dart';
 import '../../theme/hamvit_colors.dart';
 import 'widgets/daily_stats/hamvit_mini_progress_bar.dart';
@@ -11,199 +12,434 @@ import 'widgets/home_dashboard/hamvit_home_dashboard.dart';
 import 'widgets/insights/hamvit_insight_card.dart';
 import 'widgets/quick_actions/hamvit_quick_actions_row.dart';
 
-class TodayPage extends ConsumerWidget {
+class TodayPage extends ConsumerStatefulWidget {
   final bool isPremium;
   const TodayPage({super.key, required this.isPremium});
 
-  HamvitHomeDashboardData _buildDashboardData(OnboardingProfileState onboarding) {
-    final completion = onboarding.completionPercent;
-    final hydrationGoal = onboarding.hydrationGoalMl ?? 2500;
-    final hydrationPercent = (0.42 + (completion / 200)).clamp(0.25, 0.95);
-    final waterMl = (hydrationGoal * hydrationPercent).round();
+  @override
+  ConsumerState<TodayPage> createState() => _TodayPageState();
+}
 
-    final caloriesGoal = switch ((onboarding.objective ?? '').toLowerCase()) {
-      'emagrecer' => 2100,
-      'ganhar massa muscular' => 2500,
-      _ => 2300,
-    };
-    final calories = (caloriesGoal * (0.48 + completion / 250)).round();
+class _TodayPageState extends ConsumerState<TodayPage> {
+  Future<void> _refreshDashboard() async {
+    ref.invalidate(homeDashboardProvider);
+    await ref.read(homeDashboardProvider.future);
+  }
 
-    const habitsTotal = 6;
-    final habitsDone = ((completion / 100) * habitsTotal).round().clamp(1, habitsTotal);
+  Future<void> _navigateAndRefresh(String route) async {
+    await context.push(route);
+    if (!mounted) return;
+    await _refreshDashboard();
+  }
 
-    final baseDistance = switch ((onboarding.activityLevel ?? '').toLowerCase()) {
-      'sedentaria' => 1.8,
-      'leve' => 2.9,
-      'moderada' => 3.8,
-      'alta' => 5.2,
-      _ => 3.2,
-    };
-    final distanceKm = (baseDistance + completion / 180).clamp(1.2, 6.8);
-    final steps = (distanceKm * 1400).round();
+  Future<void> _runQuickAction(
+      Future<void> Function() action, String successMessage) async {
+    try {
+      await action();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(successMessage)));
+      await _refreshDashboard();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nao foi possivel concluir a acao: $error')),
+      );
+    }
+  }
 
-    final sleepHours = onboarding.sleepHours ?? 6.7;
-    final sleep = Duration(minutes: (sleepHours * 60).round());
+  Future<void> _quickAddMeal() async {
+    final controller = TextEditingController(text: '350');
+    final calories = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Registrar refeicao rapida'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Calorias (kcal)',
+              hintText: 'Ex.: 350',
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar')),
+            FilledButton(
+              onPressed: () {
+                final value = int.tryParse(controller.text.trim());
+                if (value == null || value <= 0) {
+                  return;
+                }
+                Navigator.of(context).pop(value);
+              },
+              child: const Text('Salvar'),
+            ),
+          ],
+        );
+      },
+    );
 
-    final waterProgress = waterMl / hydrationGoal;
-    final caloriesProgress = calories / caloriesGoal;
-    final habitsProgress = habitsDone / habitsTotal;
-    final activityProgress = (distanceKm / 6.0).clamp(0.0, 1.0);
-    final consistencyProgress = (completion / 100).clamp(0.0, 1.0);
+    if (calories == null) return;
 
-    final score = ((waterProgress * 0.2) +
-            (caloriesProgress.clamp(0.0, 1.0) * 0.2) +
-            (habitsProgress * 0.22) +
-            (activityProgress * 0.2) +
-            (consistencyProgress * 0.18)) *
-        100;
+    await _runQuickAction(
+      () => ref.read(homeDashboardActionsProvider).quickAddMeal(calories),
+      'Refeicao registrada com dados reais.',
+    );
+  }
 
-    final scorePercent = score.round().clamp(35, 96);
-    final status = switch (scorePercent) {
-      >= 82 => 'Ritmo excelente hoje, com equilíbrio e constância.',
-      >= 70 => 'Boa constância hoje. Seu dia está evoluindo bem.',
-      >= 55 => 'Bom começo de dia. Pequenos passos já contam.',
-      _ => 'Dia em construção. Um registro agora já melhora seu score.',
-    };
-
-    final primaryInsight = waterProgress >= 0.7
-        ? 'Ótimo progresso na hidratação. Você está mais consistente que semana passada.'
-        : 'Seu dia está ganhando ritmo. Mais um registro de água melhora sua constância.';
-
-    final secondaryInsight = habitsDone >= 4
-        ? 'Hábitos em boa sequência hoje. Continue no seu ritmo.'
-        : 'Ative um hábito rápido agora para subir seu score diário.';
-
-    final trend = [42, 51, 58, 63, 67, scorePercent - 4, scorePercent.toDouble()];
-
+  HamvitHomeDashboardData _mapDashboardData(HomeDashboardModel model) {
     return HamvitHomeDashboardData(
-      score: scorePercent,
-      statusText: status,
-      waterMl: waterMl,
-      waterGoalMl: hydrationGoal,
-      calories: calories,
-      caloriesGoal: caloriesGoal,
-      habitsDone: habitsDone,
-      habitsTotal: habitsTotal,
-      steps: steps,
-      distanceKm: distanceKm,
-      sleepDuration: sleep,
-      dayCompletionPercent: ((completion * 0.45) + (scorePercent * 0.55)).round().clamp(30, 98),
-      primaryInsight: primaryInsight,
-      secondaryInsight: secondaryInsight,
-      trend: trend.map((e) => e.toDouble()).toList(),
+      score: model.score,
+      statusText: model.statusText,
+      waterMl: model.waterMl,
+      waterGoalMl: model.waterGoalMl,
+      calories: model.calories,
+      caloriesGoal: model.caloriesGoal,
+      habitsDone: model.habitsDone,
+      habitsTotal: model.habitsTotal,
+      steps: model.stepsToday,
+      distanceKm: model.distanceKm,
+      sleepDuration: model.sleepHours == null
+          ? null
+          : Duration(minutes: (model.sleepHours! * 60).round()),
+      dayCompletionPercent: model.dayCompletionPercent,
+      primaryInsight: model.primaryInsight,
+      secondaryInsight: model.secondaryInsight,
+      trend: model.trend,
+      onScoreTap: () => _navigateAndRefresh('/reports/daily'),
+      onWaterTap: () => _navigateAndRefresh('/hydration'),
+      onCaloriesTap: () => _navigateAndRefresh('/nutrition'),
+      onHabitsTap: () => _navigateAndRefresh('/habits'),
+      onActivityTap: () => _navigateAndRefresh('/activities'),
+      onSleepTap: () => _navigateAndRefresh('/sleep'),
+    );
+  }
+
+  Widget _loadingState() {
+    Widget skeletonBox({required double height}) {
+      return Container(
+        width: double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        children: [
+          skeletonBox(height: 126),
+          const SizedBox(height: 10),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.4,
+            children: List.generate(4, (_) => skeletonBox(height: 82)),
+          ),
+          const SizedBox(height: 10),
+          skeletonBox(height: 44),
+        ],
+      ),
+    );
+  }
+
+  Widget _errorState(Object error) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Falha ao carregar dashboard real',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$error',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: HamvitColors.darkTextMuted),
+            ),
+            const SizedBox(height: 10),
+            FilledButton(
+              onPressed: _refreshDashboard,
+              child: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final onboarding = ref.watch(onboardingProfileProvider);
-    final dashboard = _buildDashboardData(onboarding);
+    final dashboardAsync = ref.watch(homeDashboardProvider);
+    final actions = ref.read(homeDashboardActionsProvider);
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+    const bottomNavHeight = kBottomNavigationBarHeight;
+    final bottomContentPadding = bottomSafeArea + bottomNavHeight + 24;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-      children: [
-        SizedBox(
-          height: 90,
-          width: double.infinity,
-          child: Image.asset(
-            'assets/branding/hamvit_hoje_exata.png',
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
+    return RefreshIndicator(
+      onRefresh: _refreshDashboard,
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(10, 12, 10, bottomContentPadding),
+        children: [
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: Image.asset(
+              'assets/branding/hamvit_hoje_exata.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.center,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        if (onboarding.completionPercent < 60) ...[
-          HamvitProfileCompletionCard(
-            percent: onboarding.completionPercent,
-            onContinue: () => context.go('/onboarding/general'),
-          ),
-          const SizedBox(height: 10),
-        ],
-        HamvitHomeDashboard(data: dashboard),
-        const SizedBox(height: 10),
-        HamvitQuickActionsRow(
-          onWater: () => context.go('/onboarding/hydration'),
-          onMeal: () => context.go('/nutrition'),
-          onWalk: () => context.go('/activities'),
-          onHabit: () => context.go('/habits'),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Módulos principais',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: HamvitColors.darkText,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 8),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.08,
-          children: [
-            _HomeModuleCard(
-              title: 'Hábitos',
-              subtitle: '${dashboard.habitsDone} de ${dashboard.habitsTotal} concluídos hoje',
-              icon: Icons.checklist_rounded,
-              progress: dashboard.habitsDone / dashboard.habitsTotal,
-              onTap: () => context.go('/habits'),
+          const SizedBox(height: 8),
+          if (onboarding.completionPercent < 60) ...[
+            HamvitProfileCompletionCard(
+              percent: onboarding.completionPercent,
+              onContinue: () => context.go('/onboarding/goal'),
             ),
-            _HomeModuleCard(
-              title: 'Água',
-              subtitle: '${((dashboard.waterMl / dashboard.waterGoalMl) * 100).round()}% da meta diária',
-              icon: Icons.water_drop_outlined,
-              progress: dashboard.waterMl / dashboard.waterGoalMl,
-              onTap: () => context.go('/onboarding/hydration'),
-            ),
-            _HomeModuleCard(
-              title: 'Alimentação',
-              subtitle: '${dashboard.calories} kcal registradas',
-              icon: Icons.restaurant_menu_outlined,
-              progress: dashboard.calories / dashboard.caloriesGoal,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Sugestões Premium')),
-                      body: MealRecommendationsPage(isPremium: isPremium),
-                    ),
-                  ),
-                );
-              },
-            ),
-            _HomeModuleCard(
-              title: 'Atividades',
-              subtitle: '${dashboard.distanceKm.toStringAsFixed(1)} km esta semana',
-              icon: Icons.directions_walk_outlined,
-              progress: (dashboard.distanceKm / 6.0).clamp(0.0, 1.0),
-              onTap: () => context.go('/activities'),
-            ),
-            _HomeModuleCard(
-              title: 'Evolução',
-              subtitle: 'Peso estável nos últimos 7 dias',
-              icon: Icons.trending_up_rounded,
-              progress: (dashboard.score / 100).clamp(0.0, 1.0),
-              onTap: () => context.go('/progress'),
-            ),
-            _HomeModuleCard(
-              title: 'Perfil',
-              subtitle: 'Dados essenciais ${onboarding.essentialCompleted ? 'completos' : 'em progresso'}',
-              icon: Icons.account_circle_outlined,
-              progress: (onboarding.completionPercent / 100).clamp(0.0, 1.0),
-              onTap: () => context.go('/profile'),
-            ),
+            const SizedBox(height: 10),
           ],
-        ),
-        const SizedBox(height: 10),
-        HamvitInsightCard(
-          primaryInsight: dashboard.primaryInsight,
-          secondaryInsight: dashboard.secondaryInsight,
-          trend: dashboard.trend,
-        ),
-      ],
+          dashboardAsync.when(
+            loading: _loadingState,
+            error: (error, _) => _errorState(error),
+            data: (model) {
+              final dashboard = _mapDashboardData(model);
+              final currentWeight = onboarding.weightKg;
+              final targetWeight = onboarding.targetWeightKg;
+              final hasGoalProgress = currentWeight != null &&
+                  targetWeight != null &&
+                  currentWeight != targetWeight;
+              final safeCurrentWeight = currentWeight ?? 0.0;
+              final safeTargetWeight = targetWeight ?? 0.0;
+
+              final evolutionProgress = hasGoalProgress
+                  ? (((currentWeight - targetWeight).abs() == 0)
+                          ? 1.0
+                          : 1 -
+                              (((currentWeight - targetWeight).abs() /
+                                      (currentWeight).abs())
+                                  .clamp(0.0, 1.0)))
+                      .clamp(0.0, 1.0)
+                  : 0.0;
+
+              final evolutionSubtitle = hasGoalProgress
+                  ? 'Atual ${safeCurrentWeight.toStringAsFixed(1)} kg • alvo ${safeTargetWeight.toStringAsFixed(1)} kg'
+                  : 'Acompanhe peso, IMC e historico corporal';
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (model.isOffline || model.warningMessage != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Colors.amber.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        model.warningMessage ??
+                            'Modo offline ativo. Dados em cache local.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: HamvitColors.darkText),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  HamvitHomeDashboard(data: dashboard),
+                  if (model.isEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: HamvitColors.darkCard.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Text(
+                        'Ainda nao ha registros reais hoje. Use as acoes rapidas abaixo para iniciar seu dia.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: HamvitColors.darkTextMuted),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  HamvitQuickActionsRow(
+                    onWater: () => _runQuickAction(
+                      () => actions.quickAddWater(),
+                      '+200 ml registrados com sucesso.',
+                    ),
+                    onMeal: _quickAddMeal,
+                    onWalk: () => _runQuickAction(
+                      () => actions.quickStartWalk(),
+                      'Sessao de caminhada iniciada no seu historico.',
+                    ),
+                    onHabit: () async {
+                      try {
+                        final completed = await actions.quickCompleteHabit();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              completed
+                                  ? 'Habito concluido e salvo no banco.'
+                                  : 'Todos os habitos ja estao concluidos hoje.',
+                            ),
+                          ),
+                        );
+                        await _refreshDashboard();
+                      } catch (error) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Falha ao registrar habito: $error')),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Módulos principais',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: HamvitColors.darkText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final moduleCardExtent =
+                          screenWidth < 360 ? 170.0 : 156.0;
+                      final moduleCards = [
+                        _HomeModuleCard(
+                          title: 'Hábitos',
+                          subtitle:
+                              '${dashboard.habitsDone} de ${dashboard.habitsTotal} concluídos hoje',
+                          icon: Icons.checklist_rounded,
+                          progress: dashboard.habitsTotal == 0
+                              ? 0
+                              : dashboard.habitsDone / dashboard.habitsTotal,
+                          onTap: () => _navigateAndRefresh('/habits'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Água',
+                          subtitle:
+                              '${((dashboard.waterMl / dashboard.waterGoalMl) * 100).round()}% da meta diária',
+                          icon: Icons.water_drop_outlined,
+                          progress: dashboard.waterMl / dashboard.waterGoalMl,
+                          onTap: () => _navigateAndRefresh('/hydration'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Alimentação',
+                          subtitle: dashboard.caloriesGoal == null
+                              ? '${dashboard.calories} kcal registradas (meta pendente)'
+                              : '${dashboard.calories} kcal registradas',
+                          icon: Icons.restaurant_menu_outlined,
+                          progress: dashboard.caloriesGoal == null ||
+                                  dashboard.caloriesGoal == 0
+                              ? 0
+                              : dashboard.calories / dashboard.caloriesGoal!,
+                          onTap: () => _navigateAndRefresh('/nutrition'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Atividades',
+                          subtitle:
+                              '${dashboard.distanceKm.toStringAsFixed(1)} km registrados hoje',
+                          icon: Icons.directions_walk_outlined,
+                          progress:
+                              (dashboard.distanceKm / 3.0).clamp(0.0, 1.0),
+                          onTap: () => _navigateAndRefresh('/activities'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Sono',
+                          subtitle: dashboard.sleepDuration == null
+                              ? 'Sem registro recente'
+                              : 'Último registro ${(dashboard.sleepDuration!.inMinutes / 60).toStringAsFixed(1)}h',
+                          icon: Icons.bedtime_outlined,
+                          progress: dashboard.sleepDuration == null
+                              ? 0
+                              : (dashboard.sleepDuration!.inMinutes / (8 * 60))
+                                  .clamp(0.0, 1.0),
+                          onTap: () => _navigateAndRefresh('/sleep'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Evolução',
+                          subtitle: evolutionSubtitle,
+                          icon: Icons.monitor_weight_outlined,
+                          progress: evolutionProgress,
+                          onTap: () => _navigateAndRefresh('/progress'),
+                        ),
+                        _HomeModuleCard(
+                          title: 'Score diário',
+                          subtitle:
+                              'Veja detalhes e histórico do score real de hoje',
+                          icon: Icons.insights_outlined,
+                          progress: (dashboard.score / 100).clamp(0.0, 1.0),
+                          onTap: () => _navigateAndRefresh('/reports/daily'),
+                        ),
+                      ];
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: moduleCards.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          mainAxisExtent: moduleCardExtent,
+                        ),
+                        itemBuilder: (context, index) => moduleCards[index],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  HamvitInsightCard(
+                    primaryInsight: dashboard.primaryInsight,
+                    secondaryInsight: dashboard.secondaryInsight,
+                    trend: dashboard.trend,
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -236,6 +472,7 @@ class _HomeModuleCard extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -256,11 +493,14 @@ class _HomeModuleCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               subtitle,
-              maxLines: 2,
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: HamvitColors.darkTextMuted),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: HamvitColors.darkTextMuted),
             ),
-            const Spacer(),
+            const SizedBox(height: 10),
             HamvitMiniProgressBar(value: progress),
           ],
         ),
@@ -268,4 +508,3 @@ class _HomeModuleCard extends StatelessWidget {
     );
   }
 }
-

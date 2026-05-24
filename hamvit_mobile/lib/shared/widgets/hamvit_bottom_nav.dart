@@ -1,17 +1,16 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class _NavIcon extends StatelessWidget {
-  final String path;
+  final IconData icon;
   final bool selected;
-  const _NavIcon({required this.path, required this.selected});
+  const _NavIcon({required this.icon, required this.selected});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
+    return AnimatedScale(
+      scale: selected ? 1.08 : 1.0,
       duration: const Duration(milliseconds: 180),
-      width: selected ? 26 : 24,
-      height: selected ? 26 : 24,
-      child: Image.asset(path, fit: BoxFit.contain),
+      child: Icon(icon, size: selected ? 24 : 22),
     );
   }
 }
@@ -28,14 +27,12 @@ class HamvitBottomNav extends StatelessWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: onTap,
       destinations: [
-        NavigationDestination(icon: _NavIcon(path: 'assets/icons/inicio.png', selected: currentIndex == 0), label: 'Hoje'),
-        NavigationDestination(icon: _NavIcon(path: 'assets/icons/habitos.png', selected: currentIndex == 1), label: 'Hábitos'),
-        NavigationDestination(icon: _NavIcon(path: 'assets/icons/alimentacao.png', selected: currentIndex == 2), label: 'Alimentação'),
-        NavigationDestination(icon: _NavIcon(path: 'assets/icons/progresso.png', selected: currentIndex == 3), label: 'Evolução'),
-        NavigationDestination(icon: _NavIcon(path: 'assets/icons/bem_estar.png', selected: currentIndex == 4), label: 'Perfil'),
+        NavigationDestination(icon: _NavIcon(icon: Icons.today_outlined, selected: currentIndex == 0), label: 'Hoje'),
+        NavigationDestination(icon: _NavIcon(icon: Icons.checklist_rounded, selected: currentIndex == 1), label: 'Hábitos'),
+        NavigationDestination(icon: _NavIcon(icon: Icons.restaurant_menu_outlined, selected: currentIndex == 2), label: 'Alimentação'),
+        NavigationDestination(icon: _NavIcon(icon: Icons.show_chart_rounded, selected: currentIndex == 3), label: 'Evolução'),
+        NavigationDestination(icon: _NavIcon(icon: Icons.person_outline_rounded, selected: currentIndex == 4), label: 'Perfil'),
       ],
     );
   }
 }
-
-

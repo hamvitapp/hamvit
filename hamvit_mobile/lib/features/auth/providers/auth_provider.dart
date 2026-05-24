@@ -39,6 +39,10 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
   final AuthRepository _repository;
   StreamSubscription<AuthState>? _subscription;
 
+  bool _isSupabaseUnavailable(Object error) {
+    return error.toString().toLowerCase().contains('supabase indisponivel');
+  }
+
   AuthNotifier(this._repository)
       : super(const AuthStateModel(status: AuthStatus.initial)) {
     _subscription = _repository.authStateChanges.listen((_) {
@@ -50,6 +54,11 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
   Future<void> bootstrap() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
+      if (_repository.client == null) {
+        state = const AuthStateModel(status: AuthStatus.unauthenticated);
+        return;
+      }
+
       final session = _repository.currentSession;
       final user = _repository.currentUser;
       if (session == null || user == null) {
@@ -70,6 +79,10 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
         entitlements: entitlements,
       );
     } catch (e) {
+      if (_isSupabaseUnavailable(e)) {
+        state = const AuthStateModel(status: AuthStatus.unauthenticated);
+        return;
+      }
       state = AuthStateModel(status: AuthStatus.error, errorMessage: e.toString());
     }
   }
@@ -82,6 +95,13 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
     } on AuthException catch (e) {
       state = AuthStateModel(status: AuthStatus.unauthenticated, errorMessage: e.message);
     } catch (e) {
+      if (_isSupabaseUnavailable(e)) {
+        state = const AuthStateModel(
+          status: AuthStatus.unauthenticated,
+          errorMessage: 'Supabase indisponivel. Verifique SUPABASE_URL e SUPABASE_ANON_KEY.',
+        );
+        return;
+      }
       state = AuthStateModel(status: AuthStatus.error, errorMessage: e.toString());
     }
   }
@@ -98,6 +118,13 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
     } on AuthException catch (e) {
       state = AuthStateModel(status: AuthStatus.unauthenticated, errorMessage: e.message);
     } catch (e) {
+      if (_isSupabaseUnavailable(e)) {
+        state = const AuthStateModel(
+          status: AuthStatus.unauthenticated,
+          errorMessage: 'Supabase indisponivel. Verifique SUPABASE_URL e SUPABASE_ANON_KEY.',
+        );
+        return;
+      }
       state = AuthStateModel(status: AuthStatus.error, errorMessage: e.toString());
     }
   }
@@ -108,6 +135,10 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
     } on AuthException catch (e) {
       state = state.copyWith(errorMessage: e.message);
     } catch (e) {
+      if (_isSupabaseUnavailable(e)) {
+        state = state.copyWith(errorMessage: 'Supabase indisponivel. Verifique SUPABASE_URL e SUPABASE_ANON_KEY.');
+        return;
+      }
       state = state.copyWith(errorMessage: e.toString());
     }
   }
@@ -120,6 +151,13 @@ class AuthNotifier extends StateNotifier<AuthStateModel> {
     } on AuthException catch (e) {
       state = AuthStateModel(status: AuthStatus.error, errorMessage: e.message);
     } catch (e) {
+      if (_isSupabaseUnavailable(e)) {
+        state = const AuthStateModel(
+          status: AuthStatus.unauthenticated,
+          errorMessage: 'Supabase indisponivel. Verifique SUPABASE_URL e SUPABASE_ANON_KEY.',
+        );
+        return;
+      }
       state = AuthStateModel(status: AuthStatus.error, errorMessage: e.toString());
     }
   }

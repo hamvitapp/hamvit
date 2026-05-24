@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +13,99 @@ class NutritionService {
   final SupabaseClient? _client;
   NutritionService(this._client);
 
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.round();
+    if (value is num) return value.round();
+    if (value is String) {
+      final normalized = value.replaceAll(',', '.').trim();
+      final parsed = double.tryParse(normalized);
+      return parsed?.round() ?? 0;
+    }
+    return 0;
+  }
+
+  Future<Map<String, dynamic>> registerMeal({
+    required String mealType,
+    required int calories,
+  }) async {
+    final client = _client;
+    if (client == null) throw Exception('Supabase indisponível');
+    final user = client.auth.currentUser;
+    if (user == null) throw Exception('Usuário não autenticado');
+
+    final now = DateTime.now();
+    final meal = await client
+        .from('meal_logs')
+        .insert({
+          'user_id': user.id,
+          'meal_type': mealType,
+          'consumed_at': now.toIso8601String(),
+          'created_at': now.toIso8601String(),
+        })
+        .select('id, meal_type')
+        .single();
+
+    await client.from('meal_items').insert({
+      'meal_log_id': meal['id'],
+      'calories': calories,
+    });
+
+    return {
+      'meal_id': meal['id'],
+      'meal_type': (meal['meal_type'] ?? mealType).toString(),
+      'calories': calories,
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> fetchTodayMeals() async {
+    final client = _client;
+    if (client == null) return const [];
+    final user = client.auth.currentUser;
+    if (user == null) return const [];
+
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    final logs = await client
+        .from('meal_logs')
+        .select('id, meal_type, consumed_at')
+        .eq('user_id', user.id)
+        .gte('consumed_at', dayStart.toIso8601String())
+        .lt('consumed_at', dayEnd.toIso8601String())
+        .order('consumed_at');
+
+    final ids = logs
+        .map((e) => e['id']?.toString())
+        .whereType<String>()
+        .toList(growable: false);
+
+    final caloriesByMeal = <String, int>{};
+    if (ids.isNotEmpty) {
+      final items = await client
+          .from('meal_items')
+          .select('meal_log_id, calories')
+          .inFilter('meal_log_id', ids);
+
+      for (final row in items) {
+        final mealId = row['meal_log_id']?.toString();
+        if (mealId == null) continue;
+        caloriesByMeal[mealId] =
+            (caloriesByMeal[mealId] ?? 0) + _toInt(row['calories']);
+      }
+    }
+
+    return logs.map<Map<String, dynamic>>((row) {
+      final id = row['id']?.toString() ?? '';
+      return {
+        'meal_type': (row['meal_type'] ?? 'lanche').toString(),
+        'calories': caloriesByMeal[id] ?? 0,
+      };
+    }).toList(growable: false);
+  }
+
   Future<Map<String, dynamic>?> lookupBarcode(String barcode) async {
     final client = _client;
     if (client == null) return null;
@@ -20,7 +113,8 @@ class NutritionService {
       'scanner',
       body: {'barcode': barcode},
     );
-    if (result.data is Map<String, dynamic>) return result.data as Map<String, dynamic>;
+    if (result.data is Map<String, dynamic>)
+      return result.data as Map<String, dynamic>;
     return null;
   }
 
@@ -38,11 +132,13 @@ class NutritionService {
     }
 
     final bytes = await File(filePath).readAsBytes();
-    final objectPath = '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final objectPath =
+        '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
     await client.storage.from('food-photos').uploadBinary(
           objectPath,
           bytes,
-          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+          fileOptions:
+              const FileOptions(upsert: true, contentType: 'image/jpeg'),
         );
 
     final result = await client.functions.invoke(
@@ -52,11 +148,13 @@ class NutritionService {
         'storage_path': objectPath,
       },
     );
-    if (result.data is Map<String, dynamic>) return result.data as Map<String, dynamic>;
+    if (result.data is Map<String, dynamic>)
+      return result.data as Map<String, dynamic>;
     return null;
   }
 
-  Future<List<Map<String, dynamic>>> getPremiumSuggestions({required String mealType}) async {
+  Future<List<Map<String, dynamic>>> getPremiumSuggestions(
+      {required String mealType}) async {
     final client = _client;
     if (client == null) return const [];
     final user = client.auth.currentUser;
