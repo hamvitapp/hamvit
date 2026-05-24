@@ -1,0 +1,587 @@
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 1
+ HAMVIT
+ RCP FullStack e Arquitetura Técnica
+ Detalhada
+ Documento diretivo para implementação com Codex, Flutter, Supabase e ecossistema HAMVIT.
+Este documento substitui a versão resumida. A finalidade é reduzir ambiguidades para o Codex e definir
+decisões mandatórias de arquitetura, fluxo, regras de negócio, UX técnica, banco de dados, integrações
+e critérios de aceite.
+Campo
+Definicao
+Produto
+HAMVIT - aplicativo de saude, habitos, alimentacao, treino, evolucao corporal e qualidade de vida.
+Slogan oficial
+Evolua no seu ritmo.
+Stack principal
+Flutter + Supabase + PostgreSQL + Riverpod + GoRouter + backend/Edge Functions.
+Distribuicao
+Google Play Store e Apple App Store oficiais.
+Site oficial
+hamvit.app.br, com painel administrativo em admin.hamvit.app.br ou painel.hamvit.app.br.
+Monetizacao
+Free funcional + Premium vitalicio, sem anuncios e sem assinatura mensal agressiva.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 2
+1. Regras absolutas para o Codex
+Estas regras devem ser tratadas como obrigatorias. O Codex nao deve criar comportamentos, telas, campos, fluxos
+ou estruturas fora do que estiver definido no RCP. Quando uma decisao nao estiver especificada, deve registrar
+pendencia para decisao humana e nao implementar por conta propria.
+
+Nao implementar WebView para o aplicativo mobile principal.
+
+Nao adicionar anuncios, banners ou monetizacao baseada em publicidade.
+
+Nao transformar o produto em assinatura mensal sem decisao explicita futura.
+
+Nao bloquear funcionalidades basicas de saude no plano Free de forma agressiva.
+
+Nao salvar dados sensiveis desnecessarios durante o onboarding inicial.
+
+Nao permitir que IA registre calorias automaticamente sem revisao humana.
+
+Nao usar selects longos sem busca/autocomplete.
+
+Nao usar campos de texto livre para dados numericos, datas, CPF, CNPJ, telefone ou valores monetarios.
+
+Nao expor segredos de Supabase service role, Mercado Pago, Resend ou IA no aplicativo Flutter.
+
+Nao criar componentes visuais isolados fora do design system central.
+2. Arquitetura oficial
+Camada
+Tecnologia obrigatoria
+Responsabilidade
+Mobile
+Flutter
+Aplicativo Android/iOS, UI, offline local, camera, GPS, notificacoes, share sheet, fluxo premium.
+Estado
+Riverpod
+Gerenciamento de estado, providers, controllers e injecao de dependencias.
+Rotas
+GoRouter
+Navegacao declarativa, rotas protegidas e deep links.
+Backend/BaaS
+Supabase
+Auth, PostgreSQL, Storage, RLS, Edge Functions e Realtime quando necessario.
+Banco
+PostgreSQL
+Persistencia central, relacoes, views, funcoes, auditoria e RLS.
+Offline local
+Drift ou Hive
+Cache, fila offline, registros pendentes e dados de uso diario.
+Admin Web
+Next.js
+Painel administrativo, gestao de conteudo, usuarios, cupons, relatorios e suporte.
+E-mail
+Resend
+E-mails transacionais com dominio proprio e templates HAMVIT.
+Pagamento
+Mercado Pago
+PIX, cartao, webhooks, ativacao de Premium vitalicio.
+IA
+Provider intercambiavel
+Gemini Flash Vision inicial; OpenAI Vision/GPT-4o mini como alternativa.
+3. Estrutura de repositorios e pastas
+A estrutura deve ser modular, previsivel e amigavel para manutencao por IA. A separacao entre aplicativo, backend
+e painel administrativo deve ser clara.
+Repositorio/Pasta
+Conteudo obrigatorio
+hamvit_mobile
+Flutter app com features, core, theme, router, data, domain, presentation, shared widgets e testes.
+hamvit_admin
+Next.js admin web com autenticacao, dashboards, gestao de usuarios, alimentos, cupons, profissionais e suporte.
+hamvit_backend
+Edge Functions ou Node.js functions para pagamentos, IA, e-mails, relatorios, webhooks e integracoes externas.
+supabase
+Migrations SQL, policies RLS, seeds, storage policies, functions e documentacao de banco.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 3
+Estrutura minima do Flutter:
+/lib/core, /lib/theme, /lib/router, /lib/shared, /lib/features/auth, /lib/features/home,
+/lib/features/nutrition, /lib/features/habits, /lib/features/workouts, /lib/features/activities,
+/lib/features/progress, /lib/features/reports, /lib/features/premium, /lib/features/professionals,
+/lib/features/settings.
+4. Identidade, UX e navegacao
+
+A identidade visual deve ser premium, clean, moderna e acolhedora.
+
+O slogan oficial e obrigatorio: Evolua no seu ritmo.
+
+A navegacao principal deve usar bottom navigation fixa com no maximo cinco itens.
+
+O menu hamburguer deve ficar no canto superior esquerdo e abrir drawer parcial com 75 a 85 por cento da
+largura da tela.
+
+O drawer deve manter parte do conteudo ao fundo visivel, com animacao suave e suporte a swipe para fechar.
+
+O drawer deve usar categorias expansivas com setas para cima/baixo, subitens contextuais e telas internas
+separadas.
+
+Ao tocar em subitem, abrir tela propria com botao voltar e titulo claro.
+
+Icones devem ser outline, elegantes, limpos e consistentes com a marca HAMVIT.
+
+Evitar menus densos, telas poluidas, excesso de cards e excesso de metricas simultaneas.
+Area
+Funcao
+Bottom navigation
+Uso diario: Hoje, Alimentacao, Habitos/Treino, Evolucao, Perfil ou item equivalente definido no mapa final.
+Drawer lateral
+Funcoes secundarias: Premium, Relatorios, Nutricionista, Desafios, Configuracoes, Suporte, Sobre e Admin quando aplicavel.
+Home/Hoj e
+Tela principal com prioridades do dia, progresso, habitos, alimentacao, treino e chamadas simples.
+5. Design system obrigatorio
+
+Criar tema central em Flutter com cores, tipografia, bordas, espacamentos, sombras, icones, estados e
+animacoes.
+
+Todos os botoes, inputs, cards, modais, bottom sheets, snackbars, skeleton loaders e app bars devem vir de
+componentes compartilhados.
+
+Componentes devem prever estados loading, disabled, error, success, empty e offline.
+
+Areas de toque devem ser confortaveis e acessiveis para uso com uma mao.
+
+Fonte minima recomendada em conteudo principal deve priorizar legibilidade mobile.
+
+Nunca depender apenas de cor para indicar status; sempre combinar texto, icone ou estado visual adicional.
+Componente
+Requisito
+HamvitTextField
+Mascara, validacao, keyboardType, acessibilidade, unidade, erro e hint controlados.
+HamvitSearchSelect
+Autocomplete, busca em tempo real, bottom sheet pesquisavel e filtro dinamico.
+HamvitButton
+Variantes primaria, secundaria, ghost, danger, loading, disabled.
+HamvitCard
+Card padrao com padding, raio, sombra leve, titulo, icone e acao opcional.
+HamvitDrawer
+Drawer customizado parcial, categorias expansivas e branding.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 4
+6. Formularios, inputs e validacoes
+
+Idade deve aceitar somente numero inteiro e teclado numerico.
+
+Peso deve aceitar decimal, tratando virgula e ponto de forma consistente.
+
+Altura deve priorizar centimetros inteiros para reduzir erro.
+
+CPF deve usar mascara 000.000.000-00 e validacao de digitos quando usado.
+
+CNPJ deve usar mascara 00.000.000/0000-00 e validacao quando usado.
+
+Telefone deve usar mascara brasileira e validacao minima.
+
+Data deve usar date picker nativo, nao campo livre.
+
+Horario deve usar time picker nativo.
+
+Campos monetarios devem usar mascara de moeda brasileira.
+
+Codigos de cupom devem ser normalizados em uppercase.
+
+Selects com listas extensas devem ser substituidos por autocomplete ou bottom sheet pesquisavel.
+7. Autenticacao, perfis e coleta progressiva
+
+Supabase Auth sera a autenticacao oficial.
+
+Resend sera o provedor de e-mails transacionais com dominio proprio.
+
+Cadastro do usuario comum deve ser leve, sem CPF ou endereco completo no onboarding inicial.
+
+CPF, CNPJ, endereco ou dados fiscais so devem ser solicitados quando houver necessidade de pagamento,
+fiscal, parceria ou comissao.
+
+Nutricionistas/parceiros devem ter cadastro profissional inicial simples e dados financeiros apenas quando houver
+comissao a receber.
+
+A estrategia deve obedecer coleta progressiva de dados, LGPD, minimizacao de dados e baixa friccao.
+Perfil
+Dados iniciais permitidos
+Usuario comum
+Nome, e-mail, senha, objetivo, dados basicos de saude e preferencias iniciais.
+Usuario Premium
+Dados de plano, historico, preferencias premium e recursos desbloqueados.
+Nutricionista/parceiro
+Nome, e-mail, WhatsApp, cidade/UF, profissao, CRN e cupom desejado.
+Profissional com comissao
+CPF/CNPJ, chave PIX/dados bancarios e dados fiscais somente quando necessario.
+8. Modelo de banco de dados - modulos
+O banco deve ser construído com migrations versionadas. Todas as tabelas multiusuario devem possuir user_id ou
+relacionamento claro de propriedade. RLS deve ser ativado por padrao em tabelas com dados do usuario.
+Modulo
+Tabelas obrigatorias
+Usuarios
+profiles, health_profiles, user_preferences, user_devices, user_consents
+Planos
+plans, entitlements, user_entitlements, payments, payment_events
+Profissionais
+professional_profiles, professional_coupons, professional_links, commissions
+Nutricional
+food_categories, foods, food_portions, recipes, recipe_ingredients, meal_logs, meal_items
+IA de comida
+meal_photos, ai_analysis_jobs, ai_analysis_results, ai_provider_logs
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 5
+Modulo
+Tabelas obrigatorias
+Habitos e agua
+habits, habit_logs, water_logs, daily_summaries
+Treinos
+exercise_categories, exercises, workouts, workout_exercises, workout_sessions
+Atividades GPS
+physical_activities, activity_points, activity_summaries
+Evolucao
+body_measurements, body_photos, progress_notes
+Relatorios
+reports, report_exports, report_shares
+Gamificacao
+achievements, user_achievements, challenges, user_challenges, streaks
+Comunicacao
+notification_preferences, notification_events, email_events
+Auditoria
+audit_logs, app_errors, sync_batches, sync_conflicts
+9. Modelo de banco de dados - campos principais
+Tabela
+Campos obrigatorios de referencia
+profiles
+id, user_id, display_name, avatar_url, plan_status, created_at, updated_at
+health_profiles
+user_id, objective, birth_date_or_age, height_cm, initial_weight_kg, current_level, restrictions, updated_at
+foods
+id, name, brand, barcode, category_id, calories_100g, protein_100g, carbs_100g, fat_100g, source, verified, updated_at
+food_portions
+food_id, label, grams, household_measure, is_default
+meal_logs
+user_id, meal_type, logged_at, total_calories, total_protein, total_carbs, total_fat, source, sync_status
+meal_items
+meal_log_id, food_id, quantity, grams, calories, protein, carbs, fat, user_adjusted
+meal_photos
+user_id, file_path, meal_type, captured_at, status, ai_job_id
+ai_analysis_jobs
+user_id, provider, status, input_file_path, result_json, error_message, created_at, finished_at
+physical_activities
+user_id, type, started_at, ended_at, duration_seconds, distance_meters, pace, speed, calories_estimated, status
+reports
+user_id, period_start, period_end, report_type, status, generated_file_path, premium_only
+professional_coupons
+professional_id, code, active, discount_value, commission_value, total_uses
+payments
+user_id, provider, provider_payment_id, status, amount, currency, coupon_id, paid_at
+10. RLS, seguranca e privacidade
+
+RLS deve estar ativo em todas as tabelas com dados pessoais ou dados de usuario.
+
+Usuario comum so pode ler e alterar os proprios dados.
+
+Profissional so pode acessar dados de paciente quando houver vinculo autorizado pelo usuario.
+
+Admin deve acessar via painel com role especifica e auditoria obrigatoria.
+
+Service role nunca deve ser usado no aplicativo Flutter.
+
+Dados sensiveis locais devem ter protecao adequada conforme capacidade tecnica da plataforma.
+
+Logs nao devem armazenar imagens, tokens, CPF completo, chaves PIX ou dados financeiros sensiveis sem
+necessidade.
+
+Operacoes administrativas devem gerar audit_logs.
+11. Offline-first e sincronizacao
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 6
+
+O app deve permitir uso offline para habitos, agua, alimentacao manual, treino, peso, medidas, diario, historico
+recente e captura de foto pendente.
+
+Cada registro local deve possuir local_id, remote_id quando sincronizado, sync_status, created_at, updated_at e
+last_sync_attempt_at.
+
+A fila local deve tentar reenvio automatico quando a conexao voltar.
+
+Erros temporarios devem gerar retry com intervalo progressivo.
+
+Conflitos devem ser marcados como conflict e nao devem sobrescrever dados sem regra definida.
+
+A interface deve mostrar estados claros de offline, sincronizando, sincronizado, pendente e falha.
+Cenario
+Regra de resolucao
+Registro criado offline
+Salvar localmente, marcar pending e sincronizar quando houver internet.
+Atualizacao local sem conflito remoto
+Enviar patch e marcar synced apos confirmacao.
+Falha de rede
+Manter pending ou failed, exibir mensagem amigavel e tentar novamente.
+Conflito de edicao
+Marcar conflict, preservar dados locais e exigir estrategia especifica de reconciliacao.
+Foto de comida offline
+Salvar localmente, marcar como pendente e processar IA somente ao retornar internet.
+12. IA de foto da comida
+
+Recurso exclusivo Premium, com limite inicial de 3 envios por dia por usuario.
+
+Opcionalmente evoluir para 4 envios por dia mediante decisao futura.
+
+O app deve comprimir imagem antes do upload e preservar qualidade suficiente para analise.
+
+Backend deve receber imagem, validar permissao Premium, validar limite diario e chamar provedor de IA.
+
+A IA deve retornar alimentos, porcoes estimadas, calorias, macros e nivel de confianca.
+
+O usuario deve revisar e confirmar antes de salvar no diario alimentar.
+
+A interface deve informar que valores sao estimados e ajustaveis.
+
+A arquitetura deve permitir troca de provider sem mudar o app Flutter.
+Provider
+Uso definido
+Gemini Flash Vision
+Opcao inicial de melhor custo-beneficio para reconhecimento visual e JSON estruturado.
+OpenAI Vision/GPT-4o mini
+Alternativa de maior qualidade para testes ou fallback futuro.
+Outros providers
+Somente se integrados via camada abstrata de backend.
+13. Scanner de codigo de barras
+
+Scanner deve ser recurso tambem disponivel para usuarios Free por favorecer retencao e alimentacao diaria.
+
+Flutter deve usar recurso nativo de camera/scanner.
+
+Backend deve consultar primeiro a base local Supabase.
+
+Se nao encontrar, consultar API externa como Open Food Facts.
+
+Ao encontrar, salvar/cachear produto no Supabase com origem e status de confianca.
+
+Usuario deve revisar informacoes e ajustar porcao antes de salvar.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 7
+
+Alimentos industrializados devem possuir barcode/EAN/GTIN, marca, nome, porcao, calorias, macros, origem e
+verificacao.
+14. Pagamentos e Premium
+
+Modelo oficial: Free funcional + Premium vitalicio.
+
+Gateway inicial: Mercado Pago.
+
+Meios: PIX prioritario e cartao de credito opcional.
+
+Flutter nunca deve conter credenciais do Mercado Pago.
+
+Backend deve criar preferencia/pagamento, receber webhook, validar pagamento e ativar Premium.
+
+Premium deve desbloquear IA de foto, relatorios PDF, exportacoes, analytics avancados, historico avancado,
+desafios e recursos premium.
+
+Free deve manter valor real: habitos, agua, alimentacao manual, progresso basico, treino basico, calendario e
+streaks simples.
+15. Relatorios, PDFs e compartilhamento
+
+Free visualiza relatorios apenas na tela.
+
+Premium pode gerar PDF, compartilhar por WhatsApp, e-mail e share sheet nativo.
+
+Relatorios devem possuir visual premium, branding HAMVIT e linguagem profissional.
+
+Relatorios devem conter graficos, porcentagens, evolucao corporal, alimentacao, agua, treinos, habitos,
+constancia e insights automáticos.
+
+PDFs devem ser uteis para nutricionistas analisarem evolucao do paciente.
+
+O rodape ou capa do PDF deve identificar que o relatorio foi gerado pelo HAMVIT.
+16. Nutricionistas, cupons e parceria profissional
+
+Implementar Programa Profissional HAMVIT, sem posicionamento de marketing multinivel.
+
+Nutricionista pode possuir cupom proprio.
+
+Paciente recebe desconto no Premium vitalicio ao aplicar cupom.
+
+Profissional recebe comissao/recompensa configuravel.
+
+Sistema deve registrar vinculo entre paciente e profissional quando cupom for usado.
+
+Vinculo deve permitir evolucao futura para painel profissional, acompanhamento remoto e relatorios
+automatizados.
+
+Comissoes podem iniciar com controle simples e evoluir para automacao posterior.
+17. Atividades fisicas com GPS
+
+Modulo inicial deve permitir caminhada e corrida.
+
+Tela deve possuir iniciar, pausar e finalizar atividade.
+
+Registrar tempo total, distancia, ritmo medio, velocidade media e calorias estimadas.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 8
+
+Calorias devem considerar peso do usuario, tipo de atividade, duracao, distancia e intensidade estimada.
+
+O app deve deixar claro que calorias sao estimadas.
+
+Fase inicial pode gravar com app aberto; background tracking deve ser tratado como evolucao futura com
+permissoes especificas.
+
+Dados devem ser salvos localmente e sincronizados com Supabase.
+
+A regra fisiologica detalhada deve ser validada no RCP de Educacao Fisica.
+18. Notificacoes e lembretes
+
+Notificacoes devem ser uteis, personalizadas e nao agressivas.
+
+O usuario deve controlar horarios e categorias de lembretes.
+
+Permissao de notificacao deve ser solicitada no momento de valor percebido, nao no primeiro segundo do app.
+
+Lembretes previstos: agua, refeicoes, treino, habitos, streaks, relatorio disponivel, premium ativado e revisao de
+IA pendente.
+
+Notificacoes de reengajamento devem ter tom acolhedor e sem culpa.
+19. Permissoes mobile
+Permissao
+Quando solicitar
+Uso
+Camera
+Ao usar foto da comida ou scanner pela primeira vez.
+Foto de refeicao, scanner de codigo de barras e recursos visuais.
+Galeria/Arquivos
+Ao importar imagem ou compartilhar/baixar relatorio.
+Upload e compartilhamento de arquivos.
+Localizacao
+Ao iniciar caminhada/corrida com GPS.
+Distancia, ritmo e rota quando aplicavel.
+Notificacoes
+Apos configuracao de lembretes ou momento de valor.
+Lembretes e alertas relevantes.
+Biometria
+Futuro, quando houver dados sensiveis ou login rapido.
+Protecao de sessao e acesso rapido.
+20. E-mails transacionais
+
+Resend deve ser utilizado com dominio proprio HAMVIT.
+
+Remetentes recomendados: noreply@hamvit.app.br e suporte@hamvit.app.br.
+
+Templates devem seguir identidade visual premium HAMVIT.
+
+E-mails previstos: confirmacao de cadastro, recuperacao de senha, premium ativado, relatorio disponivel,
+compartilhamento de PDF, convite profissional, cupom/parceria e notificacoes importantes.
+
+Backend/Edge Functions deve intermediar envios sensiveis.
+21. Site, dominios e publicacao
+
+Dominio principal recomendado: hamvit.app.br.
+
+Registrar hamvit.com.br como protecao de marca quando possivel.
+
+Site deve servir como landing page, central de downloads, suporte, termos, politica de privacidade, premium e
+acesso ao painel admin.
+
+Distribuicao oficial deve ser feita pela Google Play Store e Apple App Store.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 9
+
+Nao usar distribuicao enterprise/certificado manual para publico geral em iOS.
+
+Android deve ser publicado na Play Store; APK fora da loja nao deve ser fluxo principal.
+22. Admin web
+
+Painel administrativo deve ser web em Next.js.
+
+Acesso restrito por perfil administrativo.
+
+Funcoes: gestao de usuarios, alimentos, categorias, receitas, cupons, profissionais, pagamentos, relatorios,
+suporte, logs, configuracoes e conteudo.
+
+Acoes administrativas devem gerar auditoria.
+
+Admin deve permitir revisar dados nutricionais importados de fontes externas.
+
+Admin deve permitir acompanhar falhas de IA, pagamentos pendentes, webhooks e sincronizacao.
+23. Analytics, logs e monitoramento
+
+Registrar eventos de produto sem coletar dados excessivos.
+
+Medir ativacao, retencao, uso de habitos, alimentacao, IA, scanner, relatorios, premium e abandono de fluxo.
+
+Separar analytics de produto de logs tecnicos.
+
+Falhas de app, IA, pagamentos, e-mails, upload e sync devem ser registradas para suporte.
+
+Ferramentas externas podem ser adicionadas posteriormente; a arquitetura deve prever camada de analytics
+desacoplada.
+24. Criterios de aceite para implementacao
+
+O app deve rodar em Android e iOS como Flutter nativo real.
+
+Login, cadastro, recuperacao e e-mails devem funcionar com Supabase Auth + Resend.
+
+Usuario Free deve usar funcoes basicas sem anuncios.
+
+Premium deve ser ativado automaticamente apos confirmacao do Mercado Pago.
+
+IA de foto deve respeitar limite diario, exigir Premium e exigir revisao humana.
+
+Scanner deve consultar base local antes de API externa e cachear resultado.
+
+Offline deve salvar registros principais e sincronizar depois.
+
+Drawer e bottom navigation devem seguir padrao definido.
+
+Todos os inputs devem seguir mascaras, tipos corretos e validacoes.
+
+Relatorios Premium devem gerar PDF e compartilhar nativamente.
+
+RLS deve impedir acesso indevido aos dados de outros usuarios.
+25. Pendencias que exigem validacao de outros especialistas
+
+Formulas finais de calculo calorico de caminhada/corrida devem ser validadas pela area de Educacao Fisica.
+
+Regras nutricionais, interpretacao de macros e alertas alimentares devem ser validados pela area de Nutricao.
+
+HAMVIT - RCP FullStack detalhado
+Evolua no seu ritmo.
+Pagina 10
+
+Textos de saude, limites recomendados e linguagem sensivel devem ser revisados por especialistas de saude.
+
+Qualquer recomendacao automatizada com potencial impacto clinico deve ser tratada como orientacao geral e
+nao diagnostico.
+26. Proibicoes de escopo nesta fase
+
+Nao implementar diagnostico medico.
+
+Nao implementar prescricao nutricional automatica definitiva sem profissional.
+
+Nao implementar competicao agressiva ou ranking de corpos.
+
+Nao usar linguagem de culpa, vergonha ou pressao extrema.
+
+Nao implementar marketplace profissional antes de validar cupom e relatorios.
+
+Nao implementar IA local pesada no dispositivo nesta fase.
+
+Nao criar microservicos complexos antes da necessidade real.
+Encerramento
+Este RCP FullStack detalhado deve ser utilizado como base de implementacao tecnica para o HAMVIT.
+Qualquer alteracao de escopo deve ser registrada em nova versao do documento antes de ser enviada
+ao Codex.
+ HAMVIT - Evolua no seu ritmo.

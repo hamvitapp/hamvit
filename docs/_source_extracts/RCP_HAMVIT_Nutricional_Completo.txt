@@ -1,0 +1,43 @@
+RCP Nutricional Completo – HAMVIT
+Documento de requisitos nutricionais, comportamentais, científicos e funcionais para desenvolvimento do aplicativo HAMVIT, focado em emagrecimento saudável, mudança de hábitos, educação alimentar, hidratação, atividade física, bem-estar e acompanhamento inteligente do usuário.
+1. Visão Estratégica do HAMVIT
+O HAMVIT deve ser um ecossistema digital de saúde e hábitos saudáveis com foco em:- emagrecimento sustentável;- educação alimentar;- saúde metabólica;- mudança de hábitos;- constância;- simplicidade;- experiência premium;- suporte comportamental.O aplicativo NÃO deve ser tratado como “app de dieta”, mas como plataforma de construção de hábitos saudáveis.
+2. Princípios Científicos Obrigatórios
+Todo o sistema deve seguir evidências científicas modernas e diretrizes internacionais.Principais referências:- OMS (World Health Organization)- CDC- ACSM- NIH- Dietary Guidelines for Americans- Diretrizes Brasileiras de Obesidade- Nutrição Comportamental- Diretrizes de atividade física da OMSPrincípios:- evitar dietas extremas;- evitar linguagem agressiva;- evitar culpa alimentar;- priorizar aderência;- respeitar saúde mental;- estimular sustentabilidade alimentar;- utilizar déficit calórico moderado e seguro.
+3. Público-Alvo
+Perfis contemplados:- sedentários;- iniciantes;- obesidade leve/moderada;- pessoas com rotina corrida;- usuários com pouco tempo para cozinhar;- usuários leigos;- baixa renda;- usuários buscando melhora da saúde e qualidade de vida.
+4. Objetivos do Aplicativo
+Objetivos principais:- auxiliar emagrecimento saudável;- melhorar alimentação;- estimular hidratação;- incentivar movimento;- aumentar consciência alimentar;- melhorar qualidade de vida;- reduzir compulsão;- incentivar consistência.
+5. Onboarding Nutricional
+Dados obrigatórios:- nome- idade- sexo biológico- altura- peso atual- peso desejado- circunferência abdominal- rotina diária- horários de sono- rotina de trabalho- nível de atividade física- objetivo principal- histórico de pesoTriagem obrigatória:- diabetes- hipertensão- doença renal- doença hepática- transtornos alimentares- ansiedade alimentar- compulsão- gravidez/amamentação- uso de medicamentosO sistema deve recomendar acompanhamento profissional quando necessário.
+6. Cálculos Nutricionais
+O sistema deve calcular:- IMC- taxa metabólica basal- gasto energético total- déficit calórico seguro- meta calórica diária- ingestão proteica- ingestão hídrica- tendência de evolução- aderência semanalDiretrizes:- perda saudável: 0,5–1 kg/semana;- evitar déficits extremos;- evitar metas perigosas.
+7. Estrutura Alimentar
+Estratégia-base:Método do prato:- 50% vegetais;- 25% proteína;- 25% carboidrato.Categorias:- café da manhã;- almoço;- jantar;- lanche;- ceia.O app deve trabalhar:- refeições simples;- alimentação brasileira;- opções econômicas;- refeições rápidas;- substituições inteligentes.
+8. Diário Alimentar Inteligente
+Campos:- horário;- tipo da refeição;- alimentos;- quantidade;- foto;- calorias;- proteína;- carboidrato;- gordura;- fibras;- fome antes da refeição;- saciedade após;- emoção associada;- local da refeição.Objetivo:construir inteligência alimentar e comportamental.
+9. Nutrição Comportamental
+O sistema deve avaliar:- fome emocional;- compulsão;- ansiedade;- beliscos;- vontade de doce;- alimentação noturna;- sono;- estresse.Estratégias:- escala de fome;- pausa consciente;- alimentação intuitiva assistida;- reforço positivo;- pequenas metas.
+10. Hidratação
+Regra-base:30–35 ml/kg/dia.Funcionalidades:- lembretes inteligentes;- consumo rápido;- metas por turno;- histórico semanal;- streak saudável;- ajuste por exercício/clima.
+11. Exercícios e Movimento
+MVP:- caminhada;- corrida;- treino em casa;- musculação;- alongamento.Dados:- duração;- intensidade;- passos;- percepção de esforço;- calorias estimadas.Diretrizes OMS/ACSM:- 150 min/semana moderado;- fortalecimento muscular 2x/semana.
+12. Sono e Recuperação
+Dados:- horas de sono;- qualidade do sono;- horário de dormir;- despertares;- cansaço ao acordar.Objetivo:correlacionar sono com fome, compulsão e aderência.
+13. Gamificação Saudável
+Permitido:- streaks;- metas semanais;- evolução visual;- desafios leves;- recompensas positivas.Evitar:- punições;- ranking tóxico;- comparação corporal;- metas irreais.
+14. Relatórios e Analytics
+Relatórios futuros:- evolução de peso;- evolução abdominal;- ingestão calórica;- ingestão proteica;- hidratação;- consistência;- sono;- compulsão;- horários críticos;- atividade física.Gráficos:- linha temporal;- radar de hábitos;- calorias x meta;- água x meta;- aderência semanal.
+15. Inteligência Artificial
+Funcionalidades futuras:- reconhecimento de alimentos por foto;- análise automática do prato;- previsão de estagnação;- alertas inteligentes;- recomendações adaptativas;- sugestões comportamentais.
+16. UX Nutricional
+Princípios:- baixo atrito;- simplicidade;- linguagem acessível;- poucos cliques;- mobile-first;- acessibilidade;- experiência acolhedora.O sistema deve ser utilizável por idosos e usuários leigos.
+17. Conteúdo Educativo
+Categorias:- leitura de rótulos;- proteína;- carboidratos;- gorduras;- saciedade;- fome emocional;- hidratação;- organização alimentar;- alimentação fora de casa;- marmitas;- sono;- exercício.
+18. Estrutura de Dados Recomendada
+Tabelas:- profiles- body_metrics- meal_logs- hydration_logs- sleep_logs- exercise_logs- emotional_logs- goals- foods- recipes- recipe_ingredients- achievements- nutrition_reports- user_foods- progress_history
+19. Segurança e Ética
+O app não deve:- incentivar dietas perigosas;- sugerir restrição extrema;- promover culpa;- estimular transtornos alimentares;- prometer emagrecimento rápido.O app deve:- incentivar acompanhamento profissional;- respeitar saúde mental;- usar linguagem acolhedora;- deixar claro limites das estimativas nutricionais.
+20. Embasamento Científico
+Referências-base:- WHO – Healthy Diet- WHO – Physical Activity Guidelines- CDC – Healthy Weight- ACSM Guidelines- NIH Obesity Guidelines- Dietary Guidelines for Americans- Diretrizes Brasileiras de Obesidade- Nutrição ComportamentalTodas as estratégias devem possuir evidência moderada ou forte.
+Documento gerado em 20/05/2026 14:16

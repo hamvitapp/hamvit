@@ -1,0 +1,38 @@
+RCP – Área de Educação Física | Projeto HAMVIT
+Versão inicial do RCP – 20/05/2026
+1. Objetivo do módulo
+Criar um ecossistema de atividade física focado em emagrecimento saudável, melhora do condicionamento físico, saúde preventiva, criação de hábitos sustentáveis e retenção de usuários através de experiência simples, acolhedora e baseada em evidências científicas.O módulo deve atender principalmente usuários sedentários, iniciantes, acima do peso, com baixa motivação e pouco tempo disponível.
+2. Princípios do produto
+• Priorizar constância acima de intensidade• Progressão gradual e segura• Linguagem acolhedora e não agressiva• UX simplificada para usuários leigos• Mobile-first• Base científica reconhecida• Evitar cultura fitness extrema• Estimular aderência de longo prazo• Reforçar saúde e bem-estar antes da estética
+3. Público-alvo principal
+• Sedentários• Pessoas com sobrepeso/obesidade• Usuários iniciantes• Pessoas com baixa disposição física• Usuários com pouco tempo• Adultos buscando emagrecimento sustentável• Usuários com dores articulares leves
+4. Funcionalidades obrigatórias
+4.1 Treinos guiados• Treinos para iniciantes, intermediários e avançados• Treinos rápidos (5, 10, 15 e 20 minutos)• Treinos de caminhada• Treinos de corrida• Treinos de baixo impacto• Mobilidade• Alongamento• Fortalecimento básico4.2 Módulo GPS• Iniciar atividade• Pausar atividade• Finalizar atividade• Registrar tempo total• Registrar distância• Calcular ritmo médio• Calcular velocidade média• Estimar calorias• Salvar histórico4.3 Histórico• Calendário de atividades• Histórico semanal/mensal• Evolução de frequência• Evolução de minutos ativos• Evolução de distância4.4 Gamificação• Sequência de dias• Conquistas por constância• Metas semanais• Recompensas não competitivas
+5. Estrutura de níveis
+Nível 1 – Recomeço• Sedentários• Obesidade• Limitações leves• Baixo condicionamentoNível 2 – Iniciante Ativo• Já realiza pequenas caminhadas• Tolera exercícios levesNível 3 – Evolução• Mantém frequência semanal• Consegue sessões moderadasNível 4 – Performance• Usuário avançado• Maior intensidade e volume
+6. Estrutura recomendada dos treinos
+Modelo padrão:1. Aquecimento2. Parte principal3. Desaceleração4. Feedback finalDuração:• 5–10 min para iniciantes• 15–25 min para intermediários• 30–45 min para avançados
+7. Progressão segura
+A progressão deve seguir:1. Frequência2. Duração3. Distância4. IntensidadeEvitar aumento simultâneo de múltiplas variáveis.Regra recomendada:• aumentar no máximo 5–10% do volume semanal por vez
+8. Diretrizes de caminhada e corrida
+Objetivo:• Melhorar saúde cardiovascular• Aumentar gasto energético• Melhorar aderênciaMetas iniciais:• 10–15 minutos• 3x por semana• Intensidade leve/moderadaMeta OMS:• 150–300 min/semana de atividade moderada
+9. Estimativa calórica
+Método principal:Calorias = MET × peso corporal × duração (horas)Valores MET sugeridos:• Caminhada leve: 2,5–3,0• Caminhada moderada: 3,3–4,3• Caminhada rápida: 4,5–5,0• Corrida leve: 6–8• Corrida intensa: 8+Mensagem obrigatória:“As calorias são estimadas e podem variar conforme metabolismo, terreno, inclinação e precisão do GPS.”
+10. Métricas prioritárias
+Mais importantes:• Frequência semanal• Tempo ativo• ConstânciaSecundárias:• Distância• Ritmo• Velocidade• CaloriasComplementares:• Energia• Humor• Sono• Dor percebida
+11. UX e experiência do usuário
+O app deve:• evitar termos técnicos excessivos• usar linguagem simples• evitar culpa e punição• evitar estética agressiva fitnessExemplos:✔ “Você se movimentou hoje.”✔ “5 minutos já contam.”✔ “Vamos continuar no seu ritmo.”Evitar:✘ “No pain no gain”✘ “Sem desculpas”✘ “Queime gordura rápido”
+12. Fluxo ideal do usuário
+1. Onboarding simples2. Classificação automática do nível3. Sugestão de treino inicial4. Meta semanal leve5. Evolução gradual automática6. Feedback positivo contínuo
+13. Onboarding recomendado
+Perguntas:• idade• peso• altura• objetivo• tempo disponível• dores• condicionamento• frequência atual• sono• disposiçãoEvitar:• questionários complexos• termos clínicos difíceis
+14. Recomendações para sedentários
+• começar devagar• foco em consistência• treinos curtos• baixo impacto• pausas permitidas• evitar corrida inicialmente• reforço positivo frequente
+15. Segurança
+O app deve sugerir avaliação médica em casos de:• dor no peito• tontura• hipertensão descontrolada• obesidade severa• limitações importantes• histórico cardiovascularO app não substitui avaliação profissional presencial.
+16. Conteúdo educativo
+Conteúdos curtos:• benefícios da caminhada• hidratação• recuperação• sono• emagrecimento sustentável• dor muscular• importância da constância
+17. Futuras expansões
+• Frequência cardíaca• Wearables• Zonas de intensidade• VO2 estimado• IA adaptativa• Planos personalizados• Integração nutricional
+18. Base científica
+Principais referências:• World Health Organization (WHO)• American College of Sports Medicine (ACSM)• American Heart Association (AHA)• CDC• Compendium of Physical ActivitiesConceitos:• METs• Progressão gradual• Atividade física moderada• Mudança comportamental• Aderência ao exercício

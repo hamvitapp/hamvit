@@ -1,0 +1,547 @@
+HAMVIT
+ Evolua no seu ritmo.
+RCP FullStack - Complemento Obrigatorio de UX, Branding, Navegacao e Design System
+Documento diretivo para implementacao no Codex. Este arquivo substitui qualquer orientacao
+generica sobre navegacao, paleta, icones, menus e componentes visuais do HAMVIT.
+Regra central: o Codex nao deve improvisar layout, navegacao, cores ou componentes. Toda implementacao
+visual deve seguir este documento e o RCP principal.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 2
+1. Objetivo deste complemento
+Este documento detalha as adequacoes obrigatorias do RCP FullStack do HAMVIT referentes a identidade visual,
+paleta de cores, sistema de icones, arquitetura de menus, bottom navigation, drawer lateral, submenus
+expansíveis e telas filhas. O objetivo e eliminar ambiguidade para a implementacao com Codex.
+Decisoes obrigatorias
+•
+O HAMVIT deve usar visual premium, escuro, limpo, moderno e com alto contraste.
+•
+A identidade aprovada usa monograma HV em italico, com gradiente verde para azul e ponto superior indicando
+vitalidade/movimento.
+•
+O slogan oficial e: Evolua no seu ritmo.
+•
+A navegacao deve seguir o conceito aprovado inspirado no Facebook: bottom navigation fixa e drawer lateral
+parcial com categorias expansíveis.
+•
+O drawer padrao do Flutter nao deve ser usado sem customizacao visual completa.
+•
+Os icones devem ser elegantes, clean, outline quando forem de sistema, e consistentes com a familia visual
+aprovada.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 3
+2. Referencia visual aprovada - logotipo e icones
+A imagem abaixo e a referencia visual aprovada para o sistema de icones e identidade inicial do HAMVIT. O Codex
+deve tratar essa direcao como base de estilo para app icon, modulos internos, cards de acesso e elementos de
+marca.
+ Referencia aprovada: monograma HV com V sem base arredondada, traços inclinados, ponto superior e gradiente verde-azul
+ sobre fundo azul escuro.
+Regras visuais derivadas da imagem aprovada
+•
+O V do monograma deve possuir base angular/clara, sem arredondamento que faca parecer U ou J.
+•
+O conjunto HV deve transmitir movimento por meio de inclinacao sutil para a direita.
+•
+O ponto superior deve sugerir vitalidade, progresso e movimento; nao deve parecer decoracao aleatoria.
+•
+O gradiente deve ir de verde vivo no topo para azul/ciano na base.
+•
+O fundo preferencial do branding e azul marinho profundo.
+•
+Cards de icones devem usar cantos arredondados, sombra sutil e fundo escuro translúcido.
+•
+Nao usar icones pesados, infantis, coloridos em excesso ou com visual antigo.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 4
+3. Paleta de cores oficial
+A paleta abaixo deve ser utilizada como base inicial do design system. Qualquer variacao deve manter contraste,
+acessibilidade e coerencia com a identidade premium do HAMVIT.
+Token
+Hex
+Uso obrigatorio
+primary.dark
+#071A2D
+Fundo principal escuro, splash, headers premium, drawer dark.
+primary.navy
+#0B2238
+Cards escuros, areas elevadas, bottom nav dark quando aplicavel.
+accent.green
+#72E85A
+Destaques positivos, ponto do logo, status ativo, progresso saudavel.
+accent.mint
+#39D98A
+Elementos de confirmacao, badges, sucesso, CTAs secundarios.
+accent.cyan
+#00B7D8
+Gradiente do logo, links, detalhes tecnologicos, dados.
+accent.blue
+#168DFF
+Estado ativo em navegacao quando fundo claro, feedback informativo.
+surface.light
+#F6F8FB
+Fundo claro de telas, areas neutras, modais claros.
+surface.card
+#FFFFFF
+Cards claros, formularios e conteudo de leitura.
+text.primary
+#142033
+Texto principal em fundo claro.
+text.secondary
+#5B667A
+Texto secundario e descricoes.
+line.soft
+#D8DEE8
+Divisores, bordas suaves e separadores.
+danger
+#EF4444
+Erros, alertas criticos, falhas de sync.
+warning
+#F59E0B
+Pendencias, offline, processamento aguardando.
+Regra de acessibilidade: textos devem manter contraste adequado. Nunca usar verde claro como
+texto longo sobre fundo branco. Usar verde/ciano apenas para destaques, icones, progresso e
+estados.
+Gradientes oficiais
+Nome
+Inicio
+Fim
+Uso
+brand.gradient
+#72E85A
+#00B7D8
+Logo, icones principais, app icon, graficos de destaque.
+success.gradient
+#39D98A
+#72E85A
+Conquistas, streaks e celebracoes sutis.
+data.gradient
+#00B7D8
+#168DFF
+Graficos, relatorios, cards de analytics.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 5
+4. Tipografia e estilo visual
+O HAMVIT deve usar tipografia sans-serif moderna, legivel, com bom suporte mobile e acessibilidade. A
+preferencia tecnica no Flutter deve ser uma fonte equivalente a Inter, Manrope, Satoshi ou Plus Jakarta Sans. A
+escolha final deve ser centralizada no ThemeData.
+Elemento
+Peso
+Tamanho base
+Regra
+Titulo de tela
+SemiBold/Bold
+22-26 px
+Curto, claro e sem excesso de palavras.
+Titulo de secao
+SemiBold
+18-20 px
+Usado para grupos de cards e categorias.
+Texto de corpo
+Regular
+15-16 px
+Nunca abaixo de 14 px em conteudo principal.
+Descricao/auxiliar
+Regular
+13-14 px
+Usar cinza com contraste suficiente.
+Label de bottom nav
+Medium
+11-12 px
+Maximo 1 linha e texto simples.
+Sistema de icones
+•
+Icones do sistema devem ser outline, espessura consistente e cantos levemente arredondados.
+•
+Tamanho padrao de icones de menu: 24 px.
+•
+Area minima de toque: 48 x 48 px.
+•
+Icones de modulo podem usar a familia visual HV aprovada com gradiente verde-azul.
+•
+Evitar icones preenchidos pesados, efeitos 3D exagerados e excesso de cores.
+•
+Estado ativo deve ser indicado por cor, label e/ou indicador visual; nunca depender somente de cor.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 6
+5. Arquitetura de navegacao oficial
+A navegacao do HAMVIT deve ser desenhada para um aplicativo grande que pareca simples. O padrao oficial
+combina bottom navigation fixa para areas de uso diario e drawer lateral parcial para funcoes secundarias,
+expansões e atalhos.
+Regra obrigatoria de separacao
+Area
+Finalidade
+Conteudo permitido
+Bottom navigation
+Uso diario e rotas principais.
+Maximo 5 itens, labels curtos, icones limpos.
+Drawer lateral
+Visao geral, atalhos e categorias
+secundarias.
+Premium, Relatorios, Nutricionista, Desafios, Configuracoes,
+Suporte, Sobre e Admin.
+Telas filhas
+Detalhes, formularios e configuracoes
+profundas.
+Sempre com botao voltar, titulo claro e conteudo proprio.
+Rotas principais recomendadas para bottom navigation
+Ordem
+Rota
+Label
+Finalidade
+1
+/home
+Hoje
+Resumo do dia, progresso rapido, proximas acoes.
+2
+/habits
+Habitos
+Habitos, agua, checklist diario.
+3
+/nutrition
+Alimentacao
+Diario alimentar, foto IA, scanner, refeicoes.
+4
+/progress
+Evolucao
+Peso, medidas, graficos, historico.
+5
+/profile
+Perfil
+Dados, plano, preferencias resumidas.
+Nao adicionar mais de 5 itens no rodape. Qualquer funcao adicional deve ir para o drawer ou para tela filha
+de uma area principal.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 7
+6. Especificacao da bottom navigation
+A bottom navigation deve ser fixa nas rotas principais e manter comportamento consistente em Android e iOS. Ela
+deve transmitir leveza, clareza e permitir uso com uma mao.
+Propriedade
+Especificacao obrigatoria
+Altura
+Entre 64 e 76 px, respeitando safe area inferior.
+Itens
+Maximo 5. Nunca usar scroll horizontal no rodape.
+Icones
+Outline, 24 px, espessura consistente.
+Labels
+Obrigatorios, curtos, 1 linha.
+Ativo
+Cor accent.blue ou brand.gradient, label em destaque e indicador sutil.
+Inativo
+Preto/cinza em fundo claro ou cinza claro em fundo escuro.
+Area de toque
+Minimo 48 x 48 px por item.
+Animacao
+Transicao leve de cor/escala em 150-200ms.
+Persistencia
+Persistir nas telas principais; ocultar somente em fluxos imersivos definidos.
+Telas onde a bottom navigation pode ser ocultada
+•
+Captura de foto da comida.
+•
+Atividade fisica em gravacao com GPS.
+•
+Pagamento premium.
+•
+Visualizacao de PDF em tela cheia.
+•
+Onboarding inicial.
+Em todas as demais telas principais, a bottom navigation deve permanecer visivel.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 8
+7. Drawer lateral parcial estilo Facebook
+O drawer do HAMVIT deve abrir a partir do lado esquerdo, mantendo parte do conteudo principal visivel ao fundo.
+Nao deve ocupar 100% da tela, pois o objetivo e manter contexto e reduzir sensacao de desorientacao.
+Propriedade
+Especificacao obrigatoria
+Largura
+75% a 85% da largura da tela. Valor recomendado: 82%.
+Altura
+100% da tela respeitando safe area.
+Abertura
+Slide horizontal da esquerda para a direita.
+Duracao
+220 a 280ms. Valor recomendado: 250ms.
+Curva
+easeOutCubic na abertura e easeInCubic no fechamento.
+Overlay
+Fundo externo escurecido com opacidade entre 0.28 e 0.42.
+Fechamento
+Toque fora, swipe para esquerda, botao menu/back quando aplicavel.
+Bordas
+Raio apenas nos cantos direitos quando visualmente adequado: 20-28 px.
+Sombra
+Sombra sutil; nao usar sombra pesada.
+Conteudo
+Scroll vertical interno independente da tela principal.
+Cabecalho do drawer
+•
+Exibir avatar ou iniciais do usuario.
+•
+Exibir nome do usuario truncado com ellipsis se longo.
+•
+Exibir status do plano: Free ou Premium.
+•
+Opcional: CTA discreto para Premium quando usuario Free.
+•
+Nao exibir informacoes sensiveis no cabecalho.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 9
+8. Categorias expansíveis no drawer
+O drawer deve usar categorias principais que expandem e recolhem inline. Esse comportamento replica a
+experiencia aprovada: assunto geral abre os subassuntos logo abaixo, com seta para cima/baixo.
+Estado
+Comportamento obrigatorio
+Categoria fechada
+Mostrar icone, titulo, seta para baixo e area de toque grande.
+Categoria aberta
+Mostrar icone, titulo, seta para cima e subitens abaixo.
+Animacao
+Expansao vertical suave em 180-240ms.
+Subitens
+Indentacao de 16-24 px em relacao ao item pai.
+Toque
+Minimo 48 px de altura por item/subitem.
+Persistencia
+Estado pode persistir enquanto o drawer estiver aberto; ao fechar, resetar ou manter conforme
+preferencia centralizada.
+Profundidade
+Nao criar terceiro nivel dentro do drawer. Subitem sempre abre tela propria.
+Categorias oficiais iniciais
+Categoria
+Subitens obrigatorios iniciais
+Premium
+Beneficios, Comprar Premium, Historico de pagamento, Cupons.
+Relatorios
+Resumo de evolucao, Exportar PDF, Enviar ao nutricionista, Historico de relatorios.
+Nutricionista
+Vincular profissional, Meu nutricionista, Cupom do profissional, Compartilhar relatorio.
+Desafios
+Desafios ativos, Conquistas, Streaks, Historico.
+Configuracoes
+Conta, Seguranca, Notificacoes, Privacidade, Acessibilidade, Dados e exportacao.
+Suporte
+Central de ajuda, Falar com suporte, Termos, Politica de privacidade.
+Admin
+Visivel apenas para perfis autorizados; painel web e atalhos administrativos.
+Nao inserir todos os subitens como telas soltas no bottom nav. O drawer deve concentrar areas secundarias
+e preservar simplicidade.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 10
+9. Telas filhas abertas por subitens
+Ao tocar em qualquer subitem do drawer, o app deve abrir uma nova tela dedicada. O drawer nao deve virar uma
+tela profunda com formularios ou configuracoes complexas dentro dele.
+Elemento
+Regra obrigatoria
+Header
+Botao voltar a esquerda, titulo central ou alinhado a esquerda conforme padrao da tela.
+Titulo
+Claro, curto e igual ao item selecionado.
+Busca
+Adicionar campo de busca quando a lista tiver muitos itens.
+Scroll
+Conteudo vertical simples, com espaco amplo e divisores suaves.
+Bottom nav
+Manter se a tela pertencer ao fluxo principal; ocultar em fluxos imersivos.
+Voltar
+Sempre retornar a tela anterior, nao necessariamente reabrir drawer.
+Padrao visual de tela filha
+•
+Fundo claro para telas de configuracao e leitura extensa.
+•
+Fundo escuro premium permitido para telas de status, dashboard e branding.
+•
+Itens de lista com icone outline a esquerda, texto principal e descricao opcional.
+•
+Areas clicaveis grandes, sem densidade excessiva.
+•
+Nunca misturar formulario complexo dentro do drawer.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 11
+10. Diretrizes de implementacao Flutter
+A implementacao deve ser modular, centralizada e reutilizavel. O Codex deve criar componentes dedicados para
+navegacao e design system, evitando repetir estilos diretamente nas telas.
+Componente
+Responsabilidade
+HamvitScaffold
+Estrutura base com header, body, bottom nav e controle de drawer.
+HamvitBottomNav
+Bottom navigation oficial com maximo 5 itens.
+HamvitSideDrawer
+Drawer parcial customizado com overlay e swipe.
+HamvitExpandableMenuItem
+Categoria expansível com seta e subitens.
+HamvitMenuTile
+Item simples de menu ou subitem.
+HamvitHeader
+Header padronizado com menu/back, titulo e acoes.
+HamvitIconCard
+Card de modulo com estilo de icone aprovado.
+HamvitTheme
+Cores, tipografia, radius, spacing, shadows e estados.
+Bibliotecas e padroes recomendados
+•
+go_router para roteamento declarativo.
+•
+Riverpod para estado global e controle de sessao, plano, drawer e menus.
+•
+ThemeData centralizado para cores, fontes, radius, sombras e componentes.
+•
+Componentes customizados para drawer e bottom nav; nao depender do Drawer padrao sem estilização
+completa.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 12
+11. Tokens de design obrigatorios
+Os tokens abaixo devem orientar a criacao do design system Flutter. O Codex deve centralizar estes valores e
+evitar hardcode espalhado nas telas.
+Token
+Valor recomendado
+Uso
+radius.sm
+8 px
+Campos, chips pequenos.
+radius.md
+14 px
+Cards simples e botoes.
+radius.lg
+20 px
+Cards principais e bottom sheets.
+radius.xl
+28 px
+Drawer, modais premium e cards de destaque.
+spacing.xs
+4 px
+Ajustes internos pequenos.
+spacing.sm
+8 px
+Distancia entre icone e texto.
+spacing.md
+16 px
+Padding padrao de tela.
+spacing.lg
+24 px
+Separacao de secoes.
+touch.min
+48 px
+Altura/largura minima clicavel.
+icon.menu
+24 px
+Icones de menu e bottom nav.
+icon.module
+40-56 px
+Icones de cards de modulo.
+Estados visuais obrigatorios
+Estado
+Regra
+Ativo
+Cor de destaque, label forte e indicador sutil.
+Inativo
+Baixo contraste controlado, nunca invisivel.
+Disabled
+Opacidade reduzida e bloqueio de toque.
+Loading
+Skeleton ou indicador leve, sem bloquear toda tela quando nao necessario.
+Erro
+Mensagem clara, sem linguagem agressiva.
+Offline
+Aviso discreto e persistente quando houver acoes pendentes.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 13
+12. Criterios de aceite de UX e navegacao
+A implementacao so deve ser considerada aceita se cumprir todos os criterios abaixo.
+•
+Bottom navigation possui no maximo 5 itens e labels visiveis.
+•
+Drawer abre parcialmente, nunca em tela cheia no mobile padrao.
+•
+Conteudo ao fundo permanece parcialmente visivel com overlay escurecido.
+•
+Drawer fecha por toque fora, swipe e acao de voltar quando aplicavel.
+•
+Categorias expandem inline com setas para cima/baixo.
+•
+Subitens nao abrem terceiro nivel dentro do drawer; sempre abrem tela propria.
+•
+Telas filhas possuem botao voltar e titulo claro.
+•
+Icones seguem estilo clean, elegante, outline ou familia HV aprovada.
+•
+Paleta usa azul escuro, verde e ciano conforme tokens oficiais.
+•
+Nenhum componente visual importante usa estilo generico padrao sem adaptacao HAMVIT.
+•
+Areas de toque respeitam minimo de 48 x 48 px.
+•
+Layout funciona em telas pequenas e grandes sem overflow.
+•
+Textos longos usam ellipsis ou quebra controlada.
+•
+Experiencia deve ser compreensivel para usuario leigo sem tutorial.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 14
+13. Proibicoes explicitas para o Codex
+As regras abaixo existem para impedir que a IA implemente atalhos visuais ou arquiteturais que prejudiquem o
+produto.
+Nao fazer
+•
+Nao usar drawer padrao antigo com visual Material cru.
+•
+Nao usar bottom nav com mais de 5 itens.
+•
+Nao criar menus densos com listas enormes sem agrupamento.
+•
+Nao colocar formularios extensos dentro do drawer.
+•
+Nao usar icones coloridos aleatorios ou diferentes entre si.
+•
+Nao improvisar paleta de cores fora dos tokens oficiais.
+•
+Nao usar labels tecnicos ou abreviacoes confusas para usuario final.
+•
+Nao criar navegacao profunda sem botao voltar.
+•
+Nao depender apenas de cor para indicar estado ativo.
+•
+Nao usar componentes com area de toque pequena.
+•
+Nao poluir telas com muitos cards, sombras ou gradientes simultaneamente.
+Regra final: quando houver duvida, priorizar simplicidade, clareza, acessibilidade e coerencia visual
+com a imagem aprovada.
+
+HAMVIT - RCP FullStack | UX, Branding e Navegacao
+Pagina 15
+14. Integracao com o RCP FullStack principal
+Este complemento deve ser anexado ao RCP FullStack principal e tratado como especificacao obrigatoria para toda
+interface do HAMVIT. Em caso de conflito entre uma orientacao generica anterior e este documento, prevalece
+este documento para navegacao, paleta, branding e icones.
+Pontos que devem ser atualizados no RCP principal
+•
+Inserir a imagem aprovada do grupo de icones como referencia oficial de marca.
+•
+Adicionar paleta oficial com tokens de cor.
+•
+Adicionar especificacoes detalhadas do bottom nav.
+•
+Adicionar especificacoes detalhadas do drawer lateral parcial.
+•
+Adicionar regras de categorias expansíveis com setas.
+•
+Adicionar padrao de telas filhas com botao voltar.
+•
+Adicionar proibicoes explicitas para evitar improviso visual.
+•
+Adicionar componentes Flutter obrigatorios de navegacao e design system.
+Assinatura de marca
+HAMVIT - Evolua no seu ritmo.

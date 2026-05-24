@@ -1,0 +1,301 @@
+seed_number,name,meal_category,prep_time_min,calories,protein_g,carbs_g,fats_g,objective,needs_review
+1,Omelete Proteico com tomate,Café da Manhã,25,438,37,40,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+2,Overnight Oats com espinafre,Café da Manhã,31,478,19,32,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+3,Overnight Oats com tomate,Café da Manhã,25,425,31,43,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+4,Omelete Proteico com espinafre,Café da Manhã,29,488,34,36,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+5,Omelete Proteico com tomate,Café da Manhã,12,399,16,19,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+6,Overnight Oats com espinafre,Café da Manhã,35,238,33,15,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+7,Overnight Oats com cenoura,Café da Manhã,24,285,15,40,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+8,Omelete Proteico com cenoura,Café da Manhã,9,200,36,33,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+9,Omelete Proteico com brócolis,Café da Manhã,17,312,20,43,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+10,Omelete Proteico com brócolis,Café da Manhã,30,201,19,43,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+11,Overnight Oats com cenoura,Café da Manhã,30,194,35,45,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+12,Overnight Oats com abobrinha,Café da Manhã,11,235,21,43,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+13,Omelete Proteico com abobrinha,Café da Manhã,22,289,13,26,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+14,Overnight Oats com abobrinha,Café da Manhã,14,414,35,20,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+15,Omelete Proteico com cenoura,Café da Manhã,26,507,37,22,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+16,Overnight Oats com brócolis,Café da Manhã,30,297,23,53,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+17,Overnight Oats com espinafre,Café da Manhã,31,202,27,41,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+18,Omelete Proteico com espinafre,Café da Manhã,28,193,28,52,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+19,Omelete Proteico com cenoura,Café da Manhã,26,508,15,43,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+20,Overnight Oats com brócolis,Café da Manhã,10,380,14,52,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+21,Overnight Oats com brócolis,Café da Manhã,15,530,37,41,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+22,Omelete Proteico com abobrinha,Café da Manhã,11,451,12,16,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+23,Overnight Oats com abobrinha,Café da Manhã,11,218,29,52,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+24,Omelete Proteico com espinafre,Café da Manhã,6,495,36,39,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+25,Overnight Oats com brócolis,Café da Manhã,28,524,14,36,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+26,Overnight Oats com abobrinha,Café da Manhã,23,372,16,49,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+27,Omelete Proteico com brócolis,Café da Manhã,26,263,34,46,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+28,Overnight Oats com tomate,Café da Manhã,17,410,22,52,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+29,Overnight Oats com brócolis,Café da Manhã,6,538,34,27,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+30,Overnight Oats com espinafre,Café da Manhã,11,183,15,27,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+31,Overnight Oats com brócolis,Café da Manhã,35,412,12,33,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+32,Overnight Oats com cenoura,Café da Manhã,22,272,14,16,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+33,Omelete Proteico com brócolis,Café da Manhã,11,433,36,30,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+34,Omelete Proteico com abobrinha,Café da Manhã,18,357,37,39,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+35,Omelete Proteico com cenoura,Café da Manhã,8,341,15,35,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+36,Overnight Oats com abobrinha,Café da Manhã,10,535,17,26,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+37,Overnight Oats com abobrinha,Café da Manhã,24,243,35,28,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+38,Overnight Oats com brócolis,Café da Manhã,27,467,30,18,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+39,Overnight Oats com tomate,Café da Manhã,10,384,35,48,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+40,Overnight Oats com espinafre,Café da Manhã,24,511,15,26,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+41,Omelete Proteico com espinafre,Café da Manhã,28,494,32,21,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+42,Overnight Oats com tomate,Café da Manhã,9,415,26,46,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+43,Omelete Proteico com espinafre,Café da Manhã,22,467,13,46,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+44,Omelete Proteico com brócolis,Café da Manhã,22,385,12,48,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+45,Omelete Proteico com espinafre,Café da Manhã,35,439,30,19,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+46,Omelete Proteico com brócolis,Café da Manhã,5,242,30,50,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+47,Overnight Oats com tomate,Café da Manhã,20,549,25,26,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+48,Omelete Proteico com espinafre,Café da Manhã,29,498,33,39,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+49,Overnight Oats com abobrinha,Café da Manhã,15,329,24,36,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+50,Overnight Oats com abobrinha,Café da Manhã,11,431,27,40,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+51,Overnight Oats com cenoura,Café da Manhã,26,377,16,50,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+52,Omelete Proteico com cenoura,Café da Manhã,10,297,13,48,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+53,Overnight Oats com espinafre,Café da Manhã,30,279,27,27,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+54,Omelete Proteico com espinafre,Café da Manhã,30,221,18,37,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+55,Omelete Proteico com brócolis,Café da Manhã,15,419,24,18,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+56,Overnight Oats com abobrinha,Café da Manhã,12,232,31,17,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+57,Overnight Oats com abobrinha,Café da Manhã,12,502,21,29,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+58,Omelete Proteico com abobrinha,Café da Manhã,26,214,33,18,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+59,Omelete Proteico com tomate,Café da Manhã,21,489,28,27,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+60,Overnight Oats com brócolis,Café da Manhã,13,378,21,16,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+61,Overnight Oats com brócolis,Café da Manhã,12,501,26,32,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+62,Omelete Proteico com tomate,Café da Manhã,23,370,14,19,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+63,Overnight Oats com abobrinha,Café da Manhã,33,241,34,17,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+64,Overnight Oats com cenoura,Café da Manhã,10,505,12,20,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+65,Overnight Oats com tomate,Café da Manhã,18,237,12,29,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+66,Overnight Oats com tomate,Café da Manhã,17,246,18,48,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+67,Omelete Proteico com brócolis,Café da Manhã,22,215,38,54,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+68,Omelete Proteico com abobrinha,Café da Manhã,16,323,31,29,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+69,Omelete Proteico com tomate,Café da Manhã,21,453,24,51,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+70,Overnight Oats com cenoura,Café da Manhã,24,254,23,26,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+71,Overnight Oats com tomate,Café da Manhã,6,315,18,26,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+72,Overnight Oats com espinafre,Café da Manhã,21,340,17,21,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+73,Omelete Proteico com brócolis,Café da Manhã,20,448,16,36,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+74,Omelete Proteico com brócolis,Café da Manhã,34,352,13,44,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+75,Omelete Proteico com brócolis,Café da Manhã,8,335,25,15,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar. Almoço",False
+76,Frango com Arroz Integral com abobrinha,Almoço,6,182,32,48,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+77,Carne Moída com Legumes com cenoura,Almoço,6,493,33,36,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+78,Carne Moída com Legumes com cenoura,Almoço,6,513,33,25,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+79,Frango com Arroz Integral com tomate,Almoço,34,480,24,22,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+80,Carne Moída com Legumes com cenoura,Almoço,31,251,17,15,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+81,Carne Moída com Legumes com cenoura,Almoço,20,416,35,32,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+82,Frango com Arroz Integral com cenoura,Almoço,13,508,15,43,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+83,Carne Moída com Legumes com abobrinha,Almoço,35,369,25,17,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+84,Frango com Arroz Integral com cenoura,Almoço,12,535,20,27,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+85,Frango com Arroz Integral com espinafre,Almoço,21,532,15,16,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+86,Carne Moída com Legumes com abobrinha,Almoço,20,180,37,27,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+87,Frango com Arroz Integral com espinafre,Almoço,30,185,23,52,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+88,Frango com Arroz Integral com cenoura,Almoço,5,200,23,51,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+89,Frango com Arroz Integral com tomate,Almoço,33,454,19,36,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+90,Carne Moída com Legumes com abobrinha,Almoço,21,296,36,20,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+91,Carne Moída com Legumes com espinafre,Almoço,7,365,12,42,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+92,Frango com Arroz Integral com espinafre,Almoço,34,446,35,16,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+93,Frango com Arroz Integral com abobrinha,Almoço,16,466,34,53,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+94,Carne Moída com Legumes com abobrinha,Almoço,21,508,35,44,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+95,Frango com Arroz Integral com espinafre,Almoço,18,474,27,29,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+96,Frango com Arroz Integral com cenoura,Almoço,32,483,34,35,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+97,Carne Moída com Legumes com abobrinha,Almoço,27,482,35,34,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+98,Frango com Arroz Integral com tomate,Almoço,6,295,15,27,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+99,Carne Moída com Legumes com brócolis,Almoço,21,228,32,33,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+100,Carne Moída com Legumes com abobrinha,Almoço,22,273,29,44,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+101,Frango com Arroz Integral com espinafre,Almoço,10,289,13,38,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+102,Carne Moída com Legumes com espinafre,Almoço,12,355,17,32,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+103,Carne Moída com Legumes com brócolis,Almoço,23,279,26,20,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+104,Carne Moída com Legumes com tomate,Almoço,20,246,19,40,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+105,Frango com Arroz Integral com cenoura,Almoço,33,264,35,35,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+106,Frango com Arroz Integral com abobrinha,Almoço,34,413,30,15,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+107,Frango com Arroz Integral com tomate,Almoço,19,349,28,54,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+108,Carne Moída com Legumes com abobrinha,Almoço,26,195,12,34,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+109,Frango com Arroz Integral com espinafre,Almoço,13,453,15,22,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+110,Carne Moída com Legumes com abobrinha,Almoço,8,184,18,43,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+111,Frango com Arroz Integral com espinafre,Almoço,24,442,14,55,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+112,Frango com Arroz Integral com espinafre,Almoço,20,362,23,50,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+113,Frango com Arroz Integral com abobrinha,Almoço,17,338,25,50,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+114,Carne Moída com Legumes com abobrinha,Almoço,34,285,35,44,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+115,Frango com Arroz Integral com brócolis,Almoço,32,247,32,23,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+116,Frango com Arroz Integral com brócolis,Almoço,10,339,37,31,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+117,Frango com Arroz Integral com abobrinha,Almoço,20,486,13,44,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+118,Frango com Arroz Integral com abobrinha,Almoço,23,539,33,24,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+119,Carne Moída com Legumes com abobrinha,Almoço,28,384,36,37,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+120,Frango com Arroz Integral com abobrinha,Almoço,24,327,34,48,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+121,Frango com Arroz Integral com espinafre,Almoço,30,289,18,51,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+122,Frango com Arroz Integral com abobrinha,Almoço,20,314,12,48,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+123,Carne Moída com Legumes com tomate,Almoço,34,438,24,47,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+124,Frango com Arroz Integral com abobrinha,Almoço,23,504,27,21,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+125,Frango com Arroz Integral com abobrinha,Almoço,13,323,35,29,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+126,Carne Moída com Legumes com espinafre,Almoço,21,362,28,40,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+127,Carne Moída com Legumes com tomate,Almoço,9,539,32,31,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+128,Carne Moída com Legumes com abobrinha,Almoço,19,255,31,39,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+129,Frango com Arroz Integral com abobrinha,Almoço,13,535,29,33,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+130,Carne Moída com Legumes com tomate,Almoço,32,507,26,41,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+131,Frango com Arroz Integral com espinafre,Almoço,14,466,36,53,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+132,Frango com Arroz Integral com cenoura,Almoço,6,377,13,15,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+133,Carne Moída com Legumes com abobrinha,Almoço,14,341,14,48,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+134,Frango com Arroz Integral com tomate,Almoço,6,501,14,30,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+135,Carne Moída com Legumes com tomate,Almoço,27,540,20,29,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+136,Frango com Arroz Integral com cenoura,Almoço,26,476,38,33,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+137,Frango com Arroz Integral com brócolis,Almoço,34,263,33,22,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+138,Carne Moída com Legumes com espinafre,Almoço,21,205,18,19,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+139,Carne Moída com Legumes com tomate,Almoço,30,360,16,28,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+140,Carne Moída com Legumes com tomate,Almoço,7,487,26,43,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+141,Frango com Arroz Integral com abobrinha,Almoço,28,485,16,35,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+142,Carne Moída com Legumes com brócolis,Almoço,13,472,36,43,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+143,Frango com Arroz Integral com tomate,Almoço,22,341,31,20,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+144,Frango com Arroz Integral com cenoura,Almoço,9,286,34,48,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+145,Carne Moída com Legumes com abobrinha,Almoço,27,496,36,48,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+146,Frango com Arroz Integral com abobrinha,Almoço,9,364,20,52,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+147,Frango com Arroz Integral com abobrinha,Almoço,12,346,22,53,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+148,Carne Moída com Legumes com espinafre,Almoço,24,264,18,45,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+149,Carne Moída com Legumes com brócolis,Almoço,33,330,34,19,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+150,Frango com Arroz Integral com abobrinha,Almoço,32,235,37,45,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar. Jantar",False
+151,Wrap Integral com brócolis,Jantar,30,527,38,52,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+152,Wrap Integral com cenoura,Jantar,9,353,33,27,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+153,Sopa de Legumes com tomate,Jantar,30,465,22,16,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+154,Sopa de Legumes com abobrinha,Jantar,28,429,37,23,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+155,Sopa de Legumes com brócolis,Jantar,26,541,30,16,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+156,Wrap Integral com abobrinha,Jantar,11,471,35,50,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+157,Sopa de Legumes com abobrinha,Jantar,6,363,25,29,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+158,Wrap Integral com espinafre,Jantar,11,421,23,52,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+159,Sopa de Legumes com tomate,Jantar,26,369,36,45,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+160,Sopa de Legumes com tomate,Jantar,21,313,26,54,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+161,Wrap Integral com cenoura,Jantar,12,325,13,51,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+162,Wrap Integral com espinafre,Jantar,32,356,22,37,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+163,Wrap Integral com brócolis,Jantar,26,443,27,24,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+164,Wrap Integral com espinafre,Jantar,9,181,17,28,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+165,Sopa de Legumes com brócolis,Jantar,28,496,23,37,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+166,Sopa de Legumes com abobrinha,Jantar,32,463,19,43,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+167,Wrap Integral com brócolis,Jantar,35,231,18,18,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+168,Wrap Integral com brócolis,Jantar,33,389,36,20,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+169,Wrap Integral com espinafre,Jantar,20,223,12,29,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+170,Wrap Integral com abobrinha,Jantar,27,187,37,49,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+171,Wrap Integral com espinafre,Jantar,30,212,14,35,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+172,Sopa de Legumes com cenoura,Jantar,31,264,21,26,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+173,Wrap Integral com abobrinha,Jantar,23,377,15,27,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+174,Wrap Integral com cenoura,Jantar,15,212,32,33,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+175,Sopa de Legumes com espinafre,Jantar,33,475,28,25,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+176,Wrap Integral com abobrinha,Jantar,32,334,29,26,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+177,Sopa de Legumes com brócolis,Jantar,33,387,16,32,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+178,Sopa de Legumes com brócolis,Jantar,7,193,18,26,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+179,Wrap Integral com brócolis,Jantar,11,538,38,39,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+180,Sopa de Legumes com brócolis,Jantar,17,389,33,27,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+181,Wrap Integral com espinafre,Jantar,20,218,37,50,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+182,Sopa de Legumes com cenoura,Jantar,21,299,12,39,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+183,Wrap Integral com espinafre,Jantar,17,241,34,49,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+184,Sopa de Legumes com abobrinha,Jantar,8,325,33,40,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+185,Wrap Integral com tomate,Jantar,8,501,18,20,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+186,Sopa de Legumes com cenoura,Jantar,32,449,22,28,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+187,Sopa de Legumes com abobrinha,Jantar,33,395,12,24,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+188,Sopa de Legumes com abobrinha,Jantar,31,446,23,47,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+189,Wrap Integral com brócolis,Jantar,6,201,37,42,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+190,Sopa de Legumes com espinafre,Jantar,11,230,30,18,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+191,Sopa de Legumes com cenoura,Jantar,28,345,20,26,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+192,Wrap Integral com espinafre,Jantar,28,507,23,30,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+193,Wrap Integral com abobrinha,Jantar,35,486,29,32,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+194,Sopa de Legumes com abobrinha,Jantar,16,379,29,18,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+195,Wrap Integral com tomate,Jantar,17,369,32,30,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+196,Wrap Integral com brócolis,Jantar,24,529,27,34,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+197,Sopa de Legumes com brócolis,Jantar,34,214,20,15,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+198,Sopa de Legumes com brócolis,Jantar,20,249,18,34,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+199,Wrap Integral com cenoura,Jantar,11,497,38,15,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+200,Wrap Integral com cenoura,Jantar,7,209,13,48,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+201,Wrap Integral com brócolis,Jantar,9,223,37,21,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+202,Sopa de Legumes com abobrinha,Jantar,35,541,24,41,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+203,Wrap Integral com brócolis,Jantar,12,365,29,17,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+204,Wrap Integral com espinafre,Jantar,5,250,36,23,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+205,Wrap Integral com cenoura,Jantar,7,436,30,36,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+206,Sopa de Legumes com cenoura,Jantar,10,325,16,39,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+207,Wrap Integral com tomate,Jantar,10,237,33,35,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+208,Wrap Integral com cenoura,Jantar,30,414,33,28,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+209,Sopa de Legumes com tomate,Jantar,5,412,30,23,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+210,Sopa de Legumes com cenoura,Jantar,29,339,28,39,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+211,Sopa de Legumes com cenoura,Jantar,6,246,33,25,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+212,Wrap Integral com tomate,Jantar,21,338,23,55,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+213,Wrap Integral com abobrinha,Jantar,25,307,33,50,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+214,Wrap Integral com tomate,Jantar,14,354,16,28,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+215,Sopa de Legumes com abobrinha,Jantar,32,539,16,35,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+216,Sopa de Legumes com espinafre,Jantar,35,421,12,27,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+217,Sopa de Legumes com espinafre,Jantar,29,491,22,33,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+218,Wrap Integral com espinafre,Jantar,9,456,28,16,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+219,Sopa de Legumes com tomate,Jantar,34,242,28,48,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+220,Sopa de Legumes com abobrinha,Jantar,19,525,24,23,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+221,Sopa de Legumes com brócolis,Jantar,33,527,28,41,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+222,Wrap Integral com brócolis,Jantar,9,255,30,41,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+223,Sopa de Legumes com abobrinha,Jantar,31,337,30,22,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+224,Sopa de Legumes com cenoura,Jantar,6,497,19,21,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+225,Wrap Integral com cenoura,Jantar,32,272,34,24,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar. Lanches",False
+226,Pipoca Caseira com brócolis,Lanches,11,422,29,33,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+227,Pipoca Caseira com espinafre,Lanches,13,286,28,36,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+228,Iogurte com Frutas com tomate,Lanches,11,475,21,42,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+229,Pipoca Caseira com brócolis,Lanches,11,415,27,55,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+230,Pipoca Caseira com brócolis,Lanches,12,211,16,54,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+231,Iogurte com Frutas com cenoura,Lanches,20,504,16,54,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+232,Iogurte com Frutas com abobrinha,Lanches,9,402,33,27,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+233,Pipoca Caseira com tomate,Lanches,22,403,26,35,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+234,Pipoca Caseira com abobrinha,Lanches,20,310,35,18,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+235,Iogurte com Frutas com tomate,Lanches,18,546,21,39,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+236,Iogurte com Frutas com cenoura,Lanches,19,309,14,36,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+237,Pipoca Caseira com tomate,Lanches,9,320,25,25,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+238,Iogurte com Frutas com brócolis,Lanches,8,345,26,19,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+239,Iogurte com Frutas com tomate,Lanches,23,491,35,28,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+240,Iogurte com Frutas com espinafre,Lanches,5,316,17,33,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+241,Pipoca Caseira com cenoura,Lanches,10,432,21,51,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+242,Pipoca Caseira com cenoura,Lanches,35,266,27,31,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+243,Pipoca Caseira com brócolis,Lanches,15,347,18,43,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+244,Pipoca Caseira com tomate,Lanches,20,526,15,27,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+245,Iogurte com Frutas com espinafre,Lanches,7,326,19,30,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+246,Iogurte com Frutas com tomate,Lanches,18,390,33,30,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+247,Iogurte com Frutas com brócolis,Lanches,15,314,29,36,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+248,Pipoca Caseira com cenoura,Lanches,19,234,12,44,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+249,Iogurte com Frutas com tomate,Lanches,7,234,29,48,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+250,Pipoca Caseira com tomate,Lanches,22,518,25,39,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+251,Iogurte com Frutas com abobrinha,Lanches,22,319,34,26,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+252,Iogurte com Frutas com tomate,Lanches,31,541,29,15,16,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+253,Iogurte com Frutas com abobrinha,Lanches,14,377,35,47,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+254,Pipoca Caseira com espinafre,Lanches,18,531,13,40,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+255,Pipoca Caseira com brócolis,Lanches,7,494,17,45,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+256,Iogurte com Frutas com brócolis,Lanches,33,415,36,28,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+257,Pipoca Caseira com espinafre,Lanches,6,510,37,22,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+258,Pipoca Caseira com brócolis,Lanches,34,341,29,22,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+259,Iogurte com Frutas com cenoura,Lanches,21,453,23,18,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+260,Iogurte com Frutas com tomate,Lanches,13,449,33,19,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+261,Pipoca Caseira com brócolis,Lanches,18,321,19,29,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+262,Iogurte com Frutas com cenoura,Lanches,14,226,23,19,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+263,Pipoca Caseira com brócolis,Lanches,16,223,32,34,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+264,Iogurte com Frutas com tomate,Lanches,9,315,21,42,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+265,Pipoca Caseira com espinafre,Lanches,29,196,22,48,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+266,Pipoca Caseira com abobrinha,Lanches,13,437,38,21,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+267,Iogurte com Frutas com brócolis,Lanches,24,198,34,35,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+268,Pipoca Caseira com tomate,Lanches,10,284,12,26,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+269,Iogurte com Frutas com espinafre,Lanches,17,426,24,29,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+270,Iogurte com Frutas com tomate,Lanches,31,466,21,41,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+271,Iogurte com Frutas com brócolis,Lanches,5,334,31,18,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+272,Pipoca Caseira com cenoura,Lanches,18,349,23,20,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+273,Iogurte com Frutas com cenoura,Lanches,29,288,22,44,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+274,Iogurte com Frutas com brócolis,Lanches,23,215,27,16,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+275,Pipoca Caseira com cenoura,Lanches,12,220,20,24,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+276,Pipoca Caseira com abobrinha,Lanches,31,491,38,54,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+277,Pipoca Caseira com brócolis,Lanches,18,438,13,35,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+278,Iogurte com Frutas com brócolis,Lanches,14,387,22,21,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+279,Iogurte com Frutas com tomate,Lanches,11,334,16,36,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+280,Pipoca Caseira com brócolis,Lanches,33,492,13,19,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+281,Iogurte com Frutas com tomate,Lanches,26,307,35,53,18,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+282,Pipoca Caseira com espinafre,Lanches,20,440,27,21,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+283,Iogurte com Frutas com abobrinha,Lanches,23,442,15,51,17,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+284,Pipoca Caseira com cenoura,Lanches,32,336,35,23,11,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+285,Pipoca Caseira com brócolis,Lanches,21,268,17,50,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+286,Iogurte com Frutas com espinafre,Lanches,14,472,35,23,9,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+287,Pipoca Caseira com tomate,Lanches,24,537,24,52,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+288,Pipoca Caseira com abobrinha,Lanches,35,183,24,26,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+289,Pipoca Caseira com brócolis,Lanches,20,467,31,15,12,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+290,Pipoca Caseira com cenoura,Lanches,34,539,32,20,8,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+291,Pipoca Caseira com espinafre,Lanches,10,492,37,32,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+292,Pipoca Caseira com tomate,Lanches,13,408,19,55,10,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+293,Pipoca Caseira com brócolis,Lanches,6,339,25,54,13,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+294,Iogurte com Frutas com brócolis,Lanches,21,492,22,23,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+295,Iogurte com Frutas com tomate,Lanches,33,326,17,40,5,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+296,Pipoca Caseira com brócolis,Lanches,29,184,18,50,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+297,Iogurte com Frutas com tomate,Lanches,11,360,27,36,14,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+298,Pipoca Caseira com abobrinha,Lanches,30,276,25,55,6,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+299,Pipoca Caseira com tomate,Lanches,20,336,31,33,15,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar.",False
+300,Pipoca Caseira com abobrinha,Lanches,23,240,17,47,7,"Promover saciedade, praticidade, controle calórico moderado e aderência alimentar. Referências Científicas- OMS – Healthy Diet- CDC – Healthy Weight- Dietary Guidelines for Americans- Diretrizes Brasileiras de Obesidade- Nutrição Comportamental Documento atualizado em 20/05/2026 14:25",False
