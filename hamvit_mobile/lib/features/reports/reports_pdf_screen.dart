@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/hamvit_date_utils.dart';
 import '../../core/premium/premium_access_matrix.dart';
 import '../../core/premium/premium_widgets.dart';
+import '../privacy/app_blur_overlay.dart';
+import '../security/biometric_gate.dart';
 import '../auth/providers/auth_provider.dart';
 import '../../shared/widgets/hamvit_components.dart';
 import 'reports_service.dart';
@@ -29,9 +31,12 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
     final svc = ref.watch(reportsServiceProvider);
     final profile = ref.watch(currentProfileProvider);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+    return HamvitBiometricGate(
+      reason: 'Confirme sua biometria para acessar relatórios PDF.',
+      child: HamvitProtectedScreenWrapper(
+        child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
         const HamvitHeader(title: 'PDF HAMVIT', subtitle: 'Exportacao com branding oficial e estrutura profissional.'),
         const SizedBox(height: 12),
         PremiumFeatureGate(
@@ -50,6 +55,13 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
               HamvitButton(
                 label: 'Gerar PDF Premium',
                 onPressed: () async {
+                  final allowed = await requireBiometricForAction(
+                    context,
+                    ref,
+                    reason: 'Confirme sua biometria para gerar PDF.',
+                  );
+                  if (!allowed) return;
+
                   final end = DateTime.now();
                   final start = end.subtract(const Duration(days: 7));
                   final result = await svc.createReport(start: start, end: end, premium: true, reportType: 'weekly');
@@ -81,6 +93,14 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
                   onShare: _pdfBytes == null
                       ? null
                       : () async {
+                          final allowed = await requireBiometricForAction(
+                            context,
+                            ref,
+                            reason:
+                                'Confirme sua biometria para compartilhar relatório profissional.',
+                          );
+                          if (!allowed) return;
+
                           await svc.sharePdfBytes(bytes: _pdfBytes!, filename: 'hamvit_relatorio.pdf');
                           if (_reportId != null) {
                             await svc.registerShare(reportId: _reportId!, channel: 'share_sheet');
@@ -95,7 +115,9 @@ class _ReportsPdfScreenState extends ConsumerState<ReportsPdfScreen> {
           const SizedBox(height: 8),
           Text(_message),
         ],
-      ],
+        ],
+        ),
+      ),
     );
   }
 }

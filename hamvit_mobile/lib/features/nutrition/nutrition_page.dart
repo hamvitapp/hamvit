@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/premium/premium_access_matrix.dart';
 import '../../core/premium/premium_widgets.dart';
 import '../../features/onboarding/providers/onboarding_profile_provider.dart';
+import '../privacy/app_blur_overlay.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import '../meal_recommendations/meal_recommendations_page.dart';
 import '../../shared/widgets/hamvit_module_widgets.dart';
@@ -193,9 +194,10 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     final progress =
         calorieGoal <= 0 ? 0.0 : (consumed / calorieGoal).clamp(0.0, 1.0);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+    return HamvitProtectedScreenWrapper(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
         const HamvitSectionHeader(
           title: 'Diário alimentar',
           subtitle:
@@ -208,7 +210,7 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
             subtitle:
                 'Isso ajuda a personalizar recomendações sem bloquear o uso do diário alimentar.',
             buttonLabel: 'Configurar alimentação',
-            onTap: () => context.go('/nutrition/preferences'),
+            onTap: () => context.push('/nutrition/preferences'),
           ),
           const SizedBox(height: 10),
         ],
@@ -421,12 +423,13 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
           action: Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton(
-              onPressed: () => context.go('/nutrition/preferences'),
+              onPressed: () => context.push('/nutrition/preferences'),
               child: const Text('Editar preferências'),
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -65,7 +65,7 @@ class _ActivityProfileFlowState extends ConsumerState<ActivityProfileFlow> {
               );
 
               if (!context.mounted) return;
-              context.go('/onboarding/food');
+              context.push('/onboarding/food');
             },
             onSecondary: () => context.go('/home'),
           ),

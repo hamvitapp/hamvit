@@ -330,5 +330,5 @@ class HamvitPremiumPreviewCard extends StatelessWidget {
 }
 
 void openOnboardingFlow(BuildContext context, String route) {
-  context.go(route);
+  context.push(route);
 }

@@ -73,7 +73,7 @@ class _GeneralProfileFlowState extends ConsumerState<GeneralProfileFlow> {
 
               await notifier.saveGeneralProfile(objective: selected);
               if (!context.mounted) return;
-              context.go('/onboarding/activity');
+              context.push('/onboarding/activity');
             },
             onSecondary: () => context.go('/home'),
           ),

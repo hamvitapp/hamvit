@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/hamvit_date_utils.dart';
+import '../privacy/app_blur_overlay.dart';
+import '../security/biometric_gate.dart';
 import 'evolution_models.dart';
 
 class ProgressPhotosScreen extends StatefulWidget {
@@ -64,11 +66,14 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Fotos corporais')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+    return HamvitBiometricGate(
+      reason: 'Confirme sua biometria para visualizar fotos corporais.',
+      child: HamvitProtectedScreenWrapper(
+        child: Scaffold(
+        appBar: AppBar(title: const Text('Fotos corporais')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
           const Text('Acompanhe sua evolucao no seu ritmo.'),
           const SizedBox(height: 10),
           FilledButton.icon(
@@ -111,7 +116,9 @@ class _ProgressPhotosScreenState extends State<ProgressPhotosScreen> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
+      ),
       ),
     );
   }

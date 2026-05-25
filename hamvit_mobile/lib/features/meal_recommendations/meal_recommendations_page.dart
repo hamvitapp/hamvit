@@ -71,7 +71,7 @@ class _MealRecommendationsPageState extends State<MealRecommendationsPage> {
       isPremium: widget.isPremium,
       fallback: PremiumTeaserCard(
         feature: HamvitFeature.nutritionSmartRecommendations,
-        onTap: () => context.go('/premium'),
+        onTap: () => context.push('/premium'),
       ),
       child: ListView(
         padding: const EdgeInsets.all(16),

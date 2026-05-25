@@ -34,13 +34,20 @@ import '../features/legal/terms_screen.dart';
 import '../features/premium/advanced_analytics_screen.dart';
 import '../features/premium/premium_page.dart';
 import '../features/reports/analytics_screen.dart';
-import '../features/reports/reports_pdf_screen.dart';
+import '../features/reports/evolution_report_screen.dart';
 import '../features/reports/reports_period_screen.dart';
 import '../features/reports/reports_page.dart';
 import '../features/reports/reports_daily_screen.dart';
+import '../features/settings/accessibility/accessibility_settings_screen.dart';
+import '../features/settings/account/account_settings_screen.dart';
+import '../features/settings/data_export/data_export_settings_screen.dart';
+import '../features/settings/notifications/notification_settings_screen.dart';
 import '../features/settings/preferences_page.dart';
+import '../features/settings/privacy/privacy_settings_screen.dart';
+import '../features/settings/security/security_settings_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/sleep/sleep_page.dart';
+import '../features/security/biometric_gate.dart';
 import '../shared/widgets/hamvit_back_app_bar.dart';
 import '../shared/widgets/hamvit_scaffold.dart';
 
@@ -65,8 +72,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/legal/terms',
     '/legal/privacy',
     '/settings',
+    '/settings/account',
+    '/settings/security',
+    '/settings/notifications',
+    '/settings/privacy',
+    '/settings/accessibility',
+    '/settings/data-export',
     '/activities',
     '/reports',
+    '/reports/evolution',
     '/reports/daily',
     '/welcome',
     '/meu-perfil',
@@ -99,7 +113,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     '/reports/weekly',
     '/reports/monthly',
     '/reports/professional',
-    '/reports/pdf',
     '/advanced-analytics',
   };
 
@@ -184,14 +197,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile/body-data',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Dados corporais'),
-          body: const BodyDataPage(),
+          body: const HamvitBiometricGate(
+            reason: 'Confirme sua biometria para acessar seus dados corporais.',
+            child: BodyDataPage(),
+          ),
         ),
       ),
       GoRoute(
         path: '/profile/body',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Dados corporais'),
-          body: const BodyDataPage(),
+          body: const HamvitBiometricGate(
+            reason: 'Confirme sua biometria para acessar seus dados corporais.',
+            child: BodyDataPage(),
+          ),
         ),
       ),
       GoRoute(path: '/profile/food-preferences', builder: (context, state) => const FoodPreferencesScreen()),
@@ -237,10 +256,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       GoRoute(
         path: '/settings',
-        builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Configurações'),
-          body: const SettingsScreen(),
-        ),
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/settings/preferences',
@@ -248,6 +264,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           appBar: hamvitBackAppBar(context, title: 'Preferências'),
           body: const PreferencesPage(),
         ),
+      ),
+      GoRoute(
+        path: '/settings/account',
+        builder: (context, state) => const AccountSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/security',
+        builder: (context, state) => const SecuritySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/notifications',
+        builder: (context, state) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/privacy',
+        builder: (context, state) => const PrivacySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/accessibility',
+        builder: (context, state) => const AccessibilitySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/data-export',
+        builder: (context, state) => const DataExportSettingsScreen(),
       ),
       GoRoute(
         path: '/legal/terms',
@@ -300,6 +340,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/reports/evolution',
+        builder: (context, state) => const EvolutionReportScreen(),
+      ),
+      GoRoute(
         path: '/reports/daily',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Score diário'),
@@ -325,13 +369,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Relatório Profissional'),
           body: ReportsPeriodScreen(reportType: 'professional', isPremium: ref.read(isPremiumProvider)),
-        ),
-      ),
-      GoRoute(
-        path: '/reports/pdf',
-        builder: (context, state) => Scaffold(
-          appBar: hamvitBackAppBar(context, title: 'Exportar PDF'),
-          body: ReportsPdfScreen(isPremium: ref.read(isPremiumProvider)),
         ),
       ),
       GoRoute(

@@ -81,7 +81,7 @@ class PremiumTeaserCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(access.teaser),
             const SizedBox(height: 8),
-            const Text('Sem mensalidade â€¢ Sem anúncios â€¢ Evolua no seu ritmo.'),
+            const Text('Sem mensalidade • Sem anúncios • Evolua no seu ritmo.'),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -143,7 +143,7 @@ class PremiumUpsellSheet extends StatelessWidget {
               child: FilledButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  context.go('/premium');
+                  context.push('/premium');
                 },
                 child: const Text('Ver plano Premium'),
               ),
@@ -193,3 +193,4 @@ class PremiumFeatureGate extends StatelessWidget {
     );
   }
 }
+

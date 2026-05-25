@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/supabase_provider.dart';
 import '../../shared/widgets/hamvit_components.dart';
+import '../privacy/app_blur_overlay.dart';
+import '../security/biometric_gate.dart';
 import '../legal/privacy_policy_screen.dart';
 import '../legal/terms_screen.dart';
 import '../premium/premium_page.dart';
-import '../reports/reports_service.dart';
+import '../reports/evolution_report_screen.dart';
 
 enum DrawerSubItemType {
   premiumBenefits,
@@ -14,7 +16,6 @@ enum DrawerSubItemType {
   premiumPaymentHistory,
   premiumCoupons,
   reportsSummary,
-  reportsExportPdf,
   reportsSendNutritionist,
   reportsHistory,
   proLink,
@@ -43,8 +44,7 @@ String drawerSubItemTitle(DrawerSubItemType type) {
     DrawerSubItemType.premiumBuy => 'Comprar Premium',
     DrawerSubItemType.premiumPaymentHistory => 'Histórico de pagamento',
     DrawerSubItemType.premiumCoupons => 'Cupons',
-    DrawerSubItemType.reportsSummary => 'Resumo de evolução',
-    DrawerSubItemType.reportsExportPdf => 'Exportar PDF',
+    DrawerSubItemType.reportsSummary => 'Relatório de evolução',
     DrawerSubItemType.reportsSendNutritionist => 'Enviar ao nutricionista',
     DrawerSubItemType.reportsHistory => 'Histórico de relatórios',
     DrawerSubItemType.proLink => 'Vincular profissional',
@@ -173,48 +173,16 @@ class _DrawerSubItemPageState extends ConsumerState<DrawerSubItemPage> {
     }
 
     if (type == DrawerSubItemType.reportsSummary) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          HamvitHeader(title: 'Resumo de Evolução', subtitle: 'Visão consolidada para acompanhamento profissional.'),
-          SizedBox(height: 12),
-          HamvitIconCard(assetPath: 'assets/icons/progresso.png', label: 'Evolução corporal'),
-          SizedBox(height: 8),
-          HamvitIconCard(assetPath: 'assets/icons/hidratacao.png', label: 'Constância de hidratação'),
-          SizedBox(height: 8),
-          HamvitIconCard(assetPath: 'assets/icons/habitos.png', label: 'Checklist de hábitos'),
-        ],
-      );
-    }
-
-    if (type == DrawerSubItemType.reportsExportPdf) {
-      final svc = ref.watch(reportsServiceProvider);
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const HamvitHeader(title: 'Exportar PDF', subtitle: 'Disponível apenas no Premium.'),
-          const SizedBox(height: 12),
-          HamvitButton(
-            label: widget.isPremium ? 'Gerar PDF agora' : 'Plano Free: PDF bloqueado',
-            onPressed: () async {
-              final result = await svc.createReport(
-                start: DateTime.now().subtract(const Duration(days: 7)),
-                end: DateTime.now(),
-                premium: widget.isPremium,
-              );
-              if (!mounted) return;
-              setState(() => _feedback = result?['mode'] == 'pdf' ? 'Relatório gerado: ${result?['report']['id']}' : (result?['message'] ?? 'Sem retorno'));
-            },
-          ),
-          if (_feedback.isNotEmpty) ...[const SizedBox(height: 8), Text(_feedback)],
-        ],
-      );
+      return const EvolutionReportScreen();
     }
 
     if (type == DrawerSubItemType.reportsSendNutritionist || type == DrawerSubItemType.proShareReport) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+      return HamvitBiometricGate(
+        reason: 'Confirme sua biometria para compartilhar relatório com profissional.',
+        child: HamvitProtectedScreenWrapper(
+          child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
           const HamvitHeader(title: 'Compartilhar Relatório', subtitle: 'Canal orientado para nutricionista/profissional.'),
           const SizedBox(height: 12),
           HamvitTextField(controller: _textCtrl, label: 'Contato do profissional (e-mail/WhatsApp)'),
@@ -222,13 +190,23 @@ class _DrawerSubItemPageState extends ConsumerState<DrawerSubItemPage> {
           HamvitButton(
             label: 'Registrar compartilhamento',
             onPressed: () async {
+              final allowed = await requireBiometricForAction(
+                context,
+                ref,
+                reason:
+                    'Confirme sua biometria para registrar compartilhamento profissional.',
+              );
+              if (!allowed) return;
+
               await _audit('report_share_requested', {'target': _textCtrl.text.trim()});
               if (!mounted) return;
               setState(() => _feedback = 'Solicitação registrada para compartilhamento.');
             },
           ),
           if (_feedback.isNotEmpty) ...[const SizedBox(height: 8), Text(_feedback)],
-        ],
+          ],
+          ),
+        ),
       );
     }
 

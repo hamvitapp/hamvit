@@ -23,55 +23,55 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
 
   static const _eatingStyles = [
     'Caseiro',
-    'EconÃ´mico',
-    'RÃ¡pido',
+    'Econômico',
+    'Rápido',
     'Marmita',
     'Low carb',
     'Vegetariano',
     'Vegano',
-    'FlexÃ­vel',
-    'Alto em proteÃ­na',
+    'Flexível',
+    'Alto em proteína',
     'Simples do dia a dia',
     'Sem frituras',
-    'Pouco aÃ§Ãºcar',
+    'Pouco açúcar',
   ];
 
   static const _restrictionOptions = [
     'Lactose',
-    'GlÃºten',
+    'Glúten',
     'Amendoim',
     'Frutos do mar',
     'Ovo',
     'Soja',
-    'AÃ§Ãºcar',
+    'Açúcar',
     'Castanhas',
     'Leite',
-    'Nenhuma restriÃ§Ã£o',
+    'Nenhuma restrição',
   ];
 
   static const _foodGoals = [
     'Emagrecer com saciedade',
     'Comer melhor',
     'Controlar calorias',
-    'Aumentar proteÃ­na',
-    'Reduzir aÃ§Ãºcar',
+    'Aumentar proteína',
+    'Reduzir açúcar',
     'Melhorar rotina',
     'Reduzir ultraprocessados',
     'Ter praticidade',
   ];
 
   static const _usualMeals = [
-    'CafÃ© da manhÃ£',
-    'Lanche da manhÃ£',
-    'AlmoÃ§o',
+    'Café da manhã',
+    'Lanche da manhã',
+    'Almoço',
     'Lanche da tarde',
     'Jantar',
     'Ceia',
   ];
 
   static const _suggestionStyle = [
-    'Mais econÃ´micas',
-    'Mais rÃ¡pidas',
+    'Mais econômicas',
+    'Mais rápidas',
     'Mais variadas',
     'Mais simples',
     'Mais proteicas',
@@ -90,7 +90,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
     ref.listen(foodPreferencesControllerProvider, (previous, next) {
       if (next.saved && previous?.saved != true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PreferÃªncias salvas com sucesso.')),
+          const SnackBar(content: Text('Preferências salvas com sucesso.')),
         );
         ref.read(foodPreferencesControllerProvider.notifier).resetSavedFlag();
         if (context.canPop()) {
@@ -158,7 +158,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'PreferÃªncias Alimentares',
+                          'Preferências Alimentares',
                           style: TextStyle(
                               color: HamvitColors.darkText,
                               fontSize: 21,
@@ -166,7 +166,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Personalize sua alimentaÃ§Ã£o para sugestÃµes mais inteligentes.',
+                          'Personalize sua alimentação para sugestões mais inteligentes.',
                           style: TextStyle(color: HamvitColors.darkTextMuted),
                         ),
                       ],
@@ -193,8 +193,8 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                     ),
                   ),
                   HamvitPreferenceSection(
-                    title: '2. RestriÃ§Ãµes e alergias',
-                    subtitle: 'Inclua restriÃ§Ãµes para sugestÃµes mais seguras.',
+                    title: '2. Restrições e alergias',
+                    subtitle: 'Inclua restrições para sugestões mais seguras.',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -205,7 +205,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                         ),
                         const SizedBox(height: 10),
                         HamvitFoodSearchInput(
-                          hintText: 'Adicionar restriÃ§Ã£o personalizada',
+                          hintText: 'Adicionar restrição personalizada',
                           controller: _restrictionCtrl,
                           onAdd: () {
                             controller
@@ -236,12 +236,12 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                     ),
                   ),
                   HamvitPreferenceSection(
-                    title: '3. Alimentos que nÃ£o gosta',
+                    title: '3. Alimentos que não gosta',
                     subtitle: 'Adicionar alimento que deseja evitar.',
                     child: Column(
                       children: [
                         HamvitFoodSearchInput(
-                          hintText: 'Ex.: brÃ³colis, peixe, frango, ovo, leite',
+                          hintText: 'Ex.: brócolis, peixe, frango, ovo, leite',
                           controller: _dislikedCtrl,
                           onAdd: () {
                             controller.addDislikedFood(_dislikedCtrl.text);
@@ -277,7 +277,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                     child: Column(
                       children: [
                         HamvitFoodSearchInput(
-                          hintText: 'Ex.: arroz, feijÃ£o, frango, banana, aveia',
+                          hintText: 'Ex.: arroz, feijão, frango, banana, aveia',
                           controller: _favoriteCtrl,
                           onAdd: () {
                             controller.addFavoriteFood(_favoriteCtrl.text);
@@ -313,7 +313,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         HamvitMealRoutineSelector(
-                          title: 'Quantas refeiÃ§Ãµes costuma fazer por dia?',
+                          title: 'Quantas refeições costuma fazer por dia?',
                           options: const ['2', '3', '4', '5', '6+'],
                           selected: model.mealsPerDay == null
                               ? null
@@ -326,16 +326,16 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                         const SizedBox(height: 12),
                         HamvitMealRoutineSelector(
                           title: 'Costuma cozinhar?',
-                          options: const ['Sim', 'Ã€s vezes', 'Quase nunca'],
+                          options: const ['Sim', 'Às vezes', 'Quase nunca'],
                           selected: model.cookingFrequency,
                           onSelected: controller.setCookingFrequency,
                         ),
                         const SizedBox(height: 12),
                         HamvitMealRoutineSelector(
-                          title: 'Tempo disponÃ­vel para preparar comida',
+                          title: 'Tempo disponível para preparar comida',
                           options: const [
-                            'AtÃ© 10 min',
-                            '15â€“30 min',
+                            'Até 10 min',
+                            '15–30 min',
                             'Mais de 30 min'
                           ],
                           selected: model.prepTimePreference,
@@ -344,7 +344,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                         const SizedBox(height: 12),
                         HamvitMealRoutineSelector(
                           title: 'Costuma levar marmita?',
-                          options: const ['Sim', 'NÃ£o', 'Ã€s vezes'],
+                          options: const ['Sim', 'Não', 'Às vezes'],
                           selected: model.lunchboxHabit,
                           onSelected: controller.setLunchboxHabit,
                         ),
@@ -360,9 +360,9 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                     ),
                   ),
                   HamvitPreferenceSection(
-                    title: '7. HorÃ¡rios / refeiÃ§Ãµes',
+                    title: '7. Horários / refeições',
                     subtitle:
-                        'Marque as refeiÃ§Ãµes que costuma fazer e, se quiser, o horÃ¡rio aproximado.',
+                        'Marque as refeições que costuma fazer e, se quiser, o horário aproximado.',
                     child: Column(
                       children: [
                         HamvitPreferenceChipGroup(
@@ -403,7 +403,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                                     },
                                     decoration: const InputDecoration(
                                       hintText:
-                                          'HorÃ¡rio aproximado (ex.: 07:30)',
+                                          'Horário aproximado (ex.: 07:30)',
                                       hintStyle: TextStyle(
                                           color: HamvitColors.darkTextMuted),
                                     ),
@@ -421,8 +421,8 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                     ),
                   ),
                   HamvitPreferenceSection(
-                    title: '8. OrÃ§amento / praticidade',
-                    subtitle: 'Como prefere suas sugestÃµes?',
+                    title: '8. Orçamento / praticidade',
+                    subtitle: 'Como prefere suas sugestões?',
                     child: HamvitPreferenceChipGroup(
                       options: _suggestionStyle,
                       selected: model.suggestionStyle.toSet(),
@@ -431,12 +431,12 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                   ),
                   HamvitPremiumFoodSuggestionsCard(
                     isPremium: state.isPremium,
-                    onKnowPremium: () => context.go('/premium'),
+                    onKnowPremium: () => context.push('/premium'),
                     onContinueFree: () =>
                         ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content:
-                              Text('PreferÃªncias serÃ£o salvas no plano Free.')),
+                              Text('Preferências serão salvas no plano Free.')),
                     ),
                   ),
                 ],
@@ -471,7 +471,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
                 child: FilledButton(
                   onPressed: state.isSaving ? null : controller.save,
                   child: Text(
-                      state.isSaving ? 'Salvando...' : 'Salvar preferÃªncias'),
+                      state.isSaving ? 'Salvando...' : 'Salvar preferências'),
                 ),
               ),
             ],
@@ -502,7 +502,7 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Com essas informaÃ§Ãµes, o app entende sua rotina, preferÃªncias e restriÃ§Ãµes para montar sugestÃµes mais prÃ³ximas do seu dia a dia.',
+            'Com essas informações, o app entende sua rotina, preferências e restrições para montar sugestões mais próximas do seu dia a dia.',
             style: TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 10),
@@ -518,8 +518,8 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
               ),
               child: Text(
                 isPremium
-                    ? 'SugestÃµes personalizadas ativas.'
-                    : 'Premium desbloqueia sugestÃµes inteligentes.',
+                    ? 'Sugestões personalizadas ativas.'
+                    : 'Premium desbloqueia sugestões inteligentes.',
                 style: TextStyle(
                   color: isPremium ? HamvitColors.accentMint : Colors.white,
                   fontWeight: FontWeight.w600,
@@ -532,4 +532,5 @@ class _FoodPreferencesScreenState extends ConsumerState<FoodPreferencesScreen> {
     );
   }
 }
+
 

@@ -642,7 +642,7 @@ class HomeDashboardRepository {
           .select('log_date, amount_ml, ml, logged_at')
           .eq('user_id', uid)
           .gte('logged_at', start.toIso8601String())
-          .lt(now.add(const Duration(days: 1)).toIso8601String());
+          .lt('logged_at', now.add(const Duration(days: 1)).toIso8601String());
 
       for (final row in hydration) {
         final key = (row['log_date'] ?? '').toString().isNotEmpty
@@ -662,7 +662,7 @@ class HomeDashboardRepository {
           .select('meal_date, consumed_at, total_calories_kcal')
           .eq('user_id', uid)
           .gte('created_at', start.toIso8601String())
-          .lt(now.add(const Duration(days: 1)).toIso8601String());
+          .lt('created_at', now.add(const Duration(days: 1)).toIso8601String());
       for (final row in meals) {
         final dateRaw = (row['meal_date'] ?? '').toString();
         final key = dateRaw.isNotEmpty
@@ -682,7 +682,7 @@ class HomeDashboardRepository {
           .select('log_date, logged_at, completed, done')
           .eq('user_id', uid)
           .gte('created_at', start.toIso8601String())
-          .lt(now.add(const Duration(days: 1)).toIso8601String());
+          .lt('created_at', now.add(const Duration(days: 1)).toIso8601String());
 
       for (final row in habits) {
         final completed = row['completed'] == true || row['done'] == true;
@@ -703,7 +703,7 @@ class HomeDashboardRepository {
           .select('started_at, duration_seconds, finished_at, ended_at')
           .eq('user_id', uid)
           .gte('started_at', start.toIso8601String())
-          .lt(now.add(const Duration(days: 1)).toIso8601String());
+          .lt('started_at', now.add(const Duration(days: 1)).toIso8601String());
 
       for (final row in activity) {
         final startedAt =

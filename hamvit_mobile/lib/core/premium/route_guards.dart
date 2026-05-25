@@ -21,7 +21,6 @@ class PremiumRouteGuard {
     '/reports/weekly',
     '/reports/monthly',
     '/reports/professional',
-    '/reports/pdf',
     '/advanced-analytics',
   };
 }

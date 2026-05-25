@@ -137,24 +137,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    OutlinedButton(onPressed: () => context.go('/reports/weekly'), child: const Text('Semanal')),
-                    OutlinedButton(onPressed: () => context.go('/reports/monthly'), child: const Text('Mensal')),
-                    OutlinedButton(onPressed: () => context.go('/reports/professional'), child: const Text('Profissional')),
-                    FilledButton(
-                      onPressed: () {
-                        if (PremiumAccessMatrix.isAllowed(HamvitFeature.reportsPdfExport, isPremium: widget.isPremium)) {
-                          context.go('/reports/pdf');
-                          return;
-                        }
-                        showModalBottomSheet(
-                          context: context,
-                          useSafeArea: true,
-                          builder: (_) => const PremiumUpsellSheet(feature: HamvitFeature.reportsPdfExport),
-                        );
-                      },
-                      child: const Text('PDF'),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/reports/evolution'),
+                      icon: const Icon(Icons.timeline_outlined),
+                      label: const Text('Relatório de evolução'),
                     ),
-                    FilledButton(onPressed: () => context.go('/analytics'), child: const Text('Analytics')),
+                    FilledButton(onPressed: () => context.push('/analytics'), child: const Text('Analytics')),
                   ],
                 ),
                 if (!widget.isPremium) ...[

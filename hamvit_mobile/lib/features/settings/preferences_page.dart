@@ -82,7 +82,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
           title: const Text('Preferências alimentares'),
           subtitle: const Text('Editar preferências e restrições usadas nas sugestões.'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go('/nutrition/preferences'),
+          onTap: () => context.push('/nutrition/preferences'),
         ),
         ListTile(
           title: const Text('Preferências de lembretes'),
@@ -100,7 +100,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
           title: const Text('Meta de água'),
           subtitle: const Text('Ajuste a meta no módulo de hidratação.'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go('/hydration'),
+          onTap: () => context.push('/hydration'),
         ),
       ],
     );

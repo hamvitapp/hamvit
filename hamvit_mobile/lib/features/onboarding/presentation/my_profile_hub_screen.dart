@@ -9,7 +9,7 @@ class MyProfileHubScreen extends StatelessWidget {
       child: ListTile(
         title: Text(title),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.go(route),
+        onTap: () => context.push(route),
       ),
     );
   }

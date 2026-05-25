@@ -17,52 +17,40 @@ class HamvitMiniProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = value.clamp(0.0, 1.0);
-    final hasProgress = progress > 0;
-    final visibleProgress = hasProgress ? progress : 0.0;
 
     return SizedBox(
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(999),
-        child: Container(
+        child: SizedBox(
           height: height,
-          color: Colors.white.withValues(alpha: 0.12),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final minVisiblePx = hasProgress ? 8.0 : 0.0;
-              final minVisibleFactor = constraints.maxWidth == 0
-                  ? 0.0
-                  : (minVisiblePx / constraints.maxWidth).clamp(0.0, 1.0);
-
-              return TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: visibleProgress),
-                duration: const Duration(milliseconds: 850),
-                curve: Curves.easeOutCubic,
-                builder: (context, animated, child) {
-                  final widthFactor = animated > 0
-                      ? animated.clamp(minVisibleFactor, 1.0)
-                      : 0.0;
-
-                  return Align(
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: widthFactor,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: gradient ??
-                                const [
-                                  HamvitColors.accentBlue,
-                                  HamvitColors.accentCyan,
-                                ],
-                          ),
-                        ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final fillWidth = constraints.maxWidth * progress;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeOutCubic,
+                    width: fillWidth,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: gradient ??
+                            const [
+                              HamvitColors.accentBlue,
+                              HamvitColors.accentCyan,
+                            ],
                       ),
                     ),
                   );
                 },
-              );
-            },
+              ),
+            ],
           ),
         ),
       ),

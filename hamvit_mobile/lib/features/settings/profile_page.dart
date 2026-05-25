@@ -25,7 +25,7 @@ class ProfilePage extends ConsumerWidget {
       title: Text(title),
       subtitle: Text(completed ? 'Completo' : 'Pendente'),
       trailing: OutlinedButton(
-        onPressed: () => context.go(route),
+        onPressed: () => context.push(route),
         child: const Text('Editar'),
       ),
     );
@@ -47,7 +47,7 @@ class ProfilePage extends ConsumerWidget {
               Text(isPremium ? 'Premium Vitalício' : 'Plano Free', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: () => context.go('/profile/edit'),
+                onPressed: () => context.push('/profile/edit'),
                 icon: const Icon(Icons.edit_outlined),
                 label: const Text('Editar perfil completo'),
               ),

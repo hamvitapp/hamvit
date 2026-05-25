@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/app_env.dart';
+import 'features/privacy/app_blur_overlay.dart';
+import 'features/privacy/privacy_protection_service.dart';
+import 'features/security/biometric_lock_screen.dart';
+import 'features/security/biometric_settings_provider.dart';
 import 'router/app_router.dart';
 import 'theme/hamvit_theme.dart';
 
@@ -15,12 +19,29 @@ Future<void> main() async {
   runApp(const ProviderScope(child: HamvitApp()));
 }
 
-class HamvitApp extends ConsumerWidget {
+class HamvitApp extends ConsumerStatefulWidget {
   const HamvitApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HamvitApp> createState() => _HamvitAppState();
+}
+
+class _HamvitAppState extends ConsumerState<HamvitApp> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(privacyProtectionServiceProvider).ensureInitialized(),
+    );
+    Future.microtask(
+      () => ref.read(biometricAppLockControllerProvider).ensureInitialized(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+
     return MaterialApp.router(
       title: 'HAMVIT',
       debugShowCheckedModeBanner: false,
@@ -35,6 +56,13 @@ class HamvitApp extends ConsumerWidget {
         Locale('pt', 'BR'),
         Locale('en', 'US'),
       ],
+      builder: (context, child) {
+        return HamvitBiometricAppLockOverlay(
+          child: HamvitAppBlurOverlay(
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
       routerConfig: router,
     );
   }

@@ -43,7 +43,7 @@ class WelcomeScreen extends ConsumerWidget {
             onPressed: () async {
               await notifier.markWelcomeSeen();
               if (!context.mounted) return;
-              context.go('/onboarding/goal');
+              context.push('/onboarding/goal');
             },
             child: const Text('Comecar'),
           ),

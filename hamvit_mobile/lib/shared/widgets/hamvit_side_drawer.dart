@@ -31,12 +31,17 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
     context.go(route, extra: extra);
   }
 
+  void _push(BuildContext context, String route, {Object? extra}) {
+    Navigator.of(context).pop();
+    context.push(route, extra: extra);
+  }
+
   Widget _sub(String title, DrawerSubItemType type) {
     return Builder(
       builder: (context) => HamvitMenuTile(
         title: title,
         icon: Icons.chevron_right_rounded,
-        onTap: () => _go(context, '/drawer/subitem', extra: type),
+        onTap: () => _push(context, '/drawer/subitem', extra: type),
       ),
     );
   }
@@ -154,27 +159,27 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   HamvitMenuTile(
                     title: 'Editar perfil',
                     icon: Icons.edit_outlined,
-                    onTap: () => _go(context, '/profile/edit'),
+                    onTap: () => _push(context, '/profile/edit'),
                   ),
                   HamvitMenuTile(
                     title: 'Objetivos',
                     icon: Icons.flag_outlined,
-                    onTap: () => _go(context, '/profile/goals'),
+                    onTap: () => _push(context, '/profile/goals'),
                   ),
                   HamvitMenuTile(
                     title: 'Dados corporais',
                     icon: Icons.monitor_weight_outlined,
-                    onTap: () => _go(context, '/profile/body-data'),
+                    onTap: () => _push(context, '/profile/body-data'),
                   ),
                   HamvitMenuTile(
                     title: 'Alimentação',
                     icon: Icons.restaurant_menu,
-                    onTap: () => _go(context, '/nutrition/preferences'),
+                    onTap: () => _push(context, '/nutrition/preferences'),
                   ),
                   HamvitMenuTile(
                     title: 'Atividade Física',
                     icon: Icons.directions_run,
-                    onTap: () => _go(context, '/activities/preferences'),
+                    onTap: () => _push(context, '/activities/preferences'),
                   ),
                   HamvitMenuTile(
                     title: 'Hábitos',
@@ -184,17 +189,17 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   HamvitMenuTile(
                     title: 'Sono',
                     icon: Icons.nightlight_round,
-                    onTap: () => _go(context, '/sleep/settings'),
+                    onTap: () => _push(context, '/sleep/settings'),
                   ),
                   HamvitMenuTile(
                     title: 'Hidratação',
                     icon: Icons.local_drink_outlined,
-                    onTap: () => _go(context, '/hydration/settings'),
+                    onTap: () => _push(context, '/hydration/settings'),
                   ),
                   HamvitMenuTile(
                     title: 'Preferências',
                     icon: Icons.tune,
-                    onTap: () => _go(context, '/settings/preferences'),
+                    onTap: () => _push(context, '/settings/preferences'),
                   ),
                 ],
               ),
@@ -213,8 +218,11 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 title: 'Relatórios',
                 icon: Icons.insert_chart_outlined_rounded,
                 children: [
-                  _sub('Resumo de evolução', DrawerSubItemType.reportsSummary),
-                  _sub('Exportar PDF', DrawerSubItemType.reportsExportPdf),
+                  HamvitMenuTile(
+                    title: 'Relatório de evolução',
+                    icon: Icons.timeline_outlined,
+                    onTap: () => _push(context, '/reports/evolution'),
+                  ),
                   _sub('Enviar ao nutricionista',
                       DrawerSubItemType.reportsSendNutritionist),
                   _sub('Histórico de relatórios',
@@ -246,14 +254,36 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 title: 'Configurações',
                 icon: Icons.settings_outlined,
                 children: [
-                  _sub('Conta', DrawerSubItemType.settingsAccount),
-                  _sub('Segurança', DrawerSubItemType.settingsSecurity),
-                  _sub('Notificações', DrawerSubItemType.settingsNotifications),
-                  _sub('Privacidade', DrawerSubItemType.settingsPrivacy),
-                  _sub('Acessibilidade',
-                      DrawerSubItemType.settingsAccessibility),
-                  _sub('Dados e exportação',
-                      DrawerSubItemType.settingsDataExport),
+                  HamvitMenuTile(
+                    title: 'Conta',
+                    icon: Icons.person_outline,
+                    onTap: () => _push(context, '/settings/account'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Segurança',
+                    icon: Icons.security_outlined,
+                    onTap: () => _push(context, '/settings/security'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Notificações',
+                    icon: Icons.notifications_outlined,
+                    onTap: () => _push(context, '/settings/notifications'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Privacidade',
+                    icon: Icons.privacy_tip_outlined,
+                    onTap: () => _push(context, '/settings/privacy'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Acessibilidade',
+                    icon: Icons.accessibility_new_outlined,
+                    onTap: () => _push(context, '/settings/accessibility'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Dados e exportação',
+                    icon: Icons.file_download_outlined,
+                    onTap: () => _push(context, '/settings/data-export'),
+                  ),
                 ],
               ),
               _mainMenu(
@@ -265,12 +295,12 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                   HamvitMenuTile(
                     title: 'Termos',
                     icon: Icons.gavel_outlined,
-                    onTap: () => _go(context, '/legal/terms'),
+                    onTap: () => _push(context, '/legal/terms'),
                   ),
                   HamvitMenuTile(
                     title: 'Política de privacidade',
                     icon: Icons.privacy_tip_outlined,
-                    onTap: () => _go(context, '/legal/privacy'),
+                    onTap: () => _push(context, '/legal/privacy'),
                   ),
                 ],
               ),
@@ -291,7 +321,7 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                     HamvitMenuTile(
                       title: 'Atalhos Admin',
                       icon: Icons.admin_panel_settings_outlined,
-                      onTap: () => _go(context, '/drawer/admin'),
+                      onTap: () => _push(context, '/drawer/admin'),
                     ),
                   ],
                 ),

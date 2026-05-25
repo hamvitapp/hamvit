@@ -559,7 +559,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
             subtitle:
                 'Consistencia vale mais que intensidade. Voce pode iniciar agora.',
             buttonLabel: 'Completar dados',
-            onTap: () => context.go('/profile/body-data'),
+            onTap: () => context.push('/profile/body-data'),
           ),
           const SizedBox(height: 10),
         ],

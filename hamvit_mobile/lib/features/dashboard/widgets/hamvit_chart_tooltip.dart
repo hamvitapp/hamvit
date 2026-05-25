@@ -31,7 +31,7 @@ LineTouchTooltipData buildHamvitTooltip({
 
         return LineTooltipItem(
           '$main$goalText',
-          TextStyle(
+          const TextStyle(
             color: Colors.white,
             fontSize: 11,
             fontWeight: FontWeight.w600,

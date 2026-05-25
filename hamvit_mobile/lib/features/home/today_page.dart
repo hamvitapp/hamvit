@@ -176,7 +176,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           if (onboarding.completionPercent < 60) ...[
             HamvitProfileCompletionCard(
               percent: onboarding.completionPercent,
-              onContinue: () => context.go('/onboarding/goal'),
+              onContinue: () => context.push('/onboarding/goal'),
             ),
             const SizedBox(height: 10),
           ],
@@ -232,7 +232,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                   : 0.0;
 
               final evolutionSubtitle = hasGoalProgress
-                  ? 'Atual ${safeCurrentWeight.toStringAsFixed(1)} kg â€¢ alvo ${safeTargetWeight.toStringAsFixed(1)} kg'
+                  ? 'Atual ${safeCurrentWeight.toStringAsFixed(1)} kg • alvo ${safeTargetWeight.toStringAsFixed(1)} kg'
                   : 'Acompanhe peso, IMC e historico corporal';
 
               return Column(
@@ -298,7 +298,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         _HomeModuleCard(
                           title: 'Hábitos',
                             subtitle:
-                              '${adjustedDashboard.habitsDone} de ${adjustedDashboard.habitsTotal} concluÃ­dos hoje',
+                              '${adjustedDashboard.habitsDone} de ${adjustedDashboard.habitsTotal} concluídos hoje',
                           icon: Icons.checklist_rounded,
                           progress: adjustedDashboard.habitsTotal == 0
                               ? 0
@@ -358,7 +358,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         _HomeModuleCard(
                           title: 'Score diário',
                           subtitle:
-                              'Veja detalhes e histÃ³rico do score real de hoje',
+                              'Veja detalhes e histórico do score real de hoje',
                           icon: Icons.insights_outlined,
                           progress: (adjustedDashboard.score / 100).clamp(0.0, 1.0),
                           onTap: () => _navigateAndRefresh('/reports/daily'),
@@ -459,4 +459,5 @@ class _HomeModuleCard extends StatelessWidget {
     );
   }
 }
+
 

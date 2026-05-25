@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../privacy/app_blur_overlay.dart';
 import '../../theme/hamvit_colors.dart';
 import 'add_weight_screen.dart';
 import 'body_measurements_screen.dart';
@@ -103,45 +104,46 @@ class _EvolutionScreenState extends ConsumerState<EvolutionScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(evolutionDashboardProvider);
 
-    return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text('Falha ao carregar evolucao: $error'),
+    return HamvitProtectedScreenWrapper(
+      child: async.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Falha ao carregar evolucao: $error'),
+          ),
         ),
-      ),
-      data: (data) {
-        final allLogsAsc = [...data.weightLogs]..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
-        final cutoff = _cutoffFor(_range);
-        final rangeLogs = _range == _WeightRange.all
-            ? allLogsAsc
-            : allLogsAsc.where((e) => !e.loggedAt.isBefore(cutoff)).toList();
+        data: (data) {
+          final allLogsAsc = [...data.weightLogs]..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
+          final cutoff = _cutoffFor(_range);
+          final rangeLogs = _range == _WeightRange.all
+              ? allLogsAsc
+              : allLogsAsc.where((e) => !e.loggedAt.isBefore(cutoff)).toList();
 
-        final summary = WeightProgressEngine.build(
-          logs: allLogsAsc,
-          fallbackCurrentWeight: data.profileWeightKg,
-          targetWeight: data.targetWeightKg,
-        );
+          final summary = WeightProgressEngine.build(
+            logs: allLogsAsc,
+            fallbackCurrentWeight: data.profileWeightKg,
+            targetWeight: data.targetWeightKg,
+          );
 
-        final initialBmi = allLogsAsc.isNotEmpty
-            ? (allLogsAsc.first.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.first.weightKg, heightCm: data.profileHeightCm))
-            : null;
-        final currentBmi = allLogsAsc.isNotEmpty
-            ? (allLogsAsc.last.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.last.weightKg, heightCm: data.profileHeightCm))
-            : null;
+          final initialBmi = allLogsAsc.isNotEmpty
+              ? (allLogsAsc.first.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.first.weightKg, heightCm: data.profileHeightCm))
+              : null;
+          final currentBmi = allLogsAsc.isNotEmpty
+              ? (allLogsAsc.last.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.last.weightKg, heightCm: data.profileHeightCm))
+              : null;
 
-        final insights = EvolutionInsightsEngine.build(
-          summary: summary,
-          registerCount: allLogsAsc.length,
-          latestBmi: currentBmi,
-        );
+          final insights = EvolutionInsightsEngine.build(
+            summary: summary,
+            registerCount: allLogsAsc.length,
+            latestBmi: currentBmi,
+          );
 
-        final bodyDeltas = BodyMetricsService.computeDeltas(data.measurements);
+          final bodyDeltas = BodyMetricsService.computeDeltas(data.measurements);
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
             Text(
               'Peso, medidas e consistencia com visao de longo prazo.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HamvitColors.darkTextMuted),
@@ -218,9 +220,10 @@ class _EvolutionScreenState extends ConsumerState<EvolutionScreen> {
             ),
             const SizedBox(height: 6),
             HamvitEvolutionInsightsCard(insights: insights),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 }
