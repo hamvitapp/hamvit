@@ -59,12 +59,14 @@ class HabitsController extends StateNotifier<HabitsState> {
     required String category,
     required String frequency,
     required String description,
+    String? reminderTime,
   }) async {
     await repository.createHabit(
       title: title,
       description: description,
       category: category,
       frequency: frequency,
+      reminderTime: reminderTime,
     );
     await load();
   }

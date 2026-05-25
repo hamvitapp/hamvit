@@ -74,6 +74,7 @@ class HabitRepository {
 
   Future<Set<String>> _fetchCompletedHabitIdsForToday(String uid) async {
     final today = HamvitDateUtils.toIsoDate(DateTime.now());
+    final doneIds = <String>{};
 
     try {
       final rows = await client
@@ -83,20 +84,42 @@ class HabitRepository {
           .eq('log_date', today)
           .eq('completed', true);
 
-      return rows.map((item) => (item['habit_id'] ?? '').toString()).where((id) => id.isNotEmpty).toSet();
-    } catch (_) {
-      final start = DateTime.now();
-      final dayStart = DateTime(start.year, start.month, start.day);
-      final dayEnd = dayStart.add(const Duration(days: 1));
+      doneIds.addAll(rows
+          .map((item) => (item['habit_id'] ?? '').toString())
+          .where((id) => id.isNotEmpty));
+    } catch (_) {}
+
+    final start = DateTime.now();
+    final dayStart = DateTime(start.year, start.month, start.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    try {
       final rows = await client
           .from('habit_logs')
           .select('user_habit_id, done, logged_at')
+          .eq('user_id', uid)
           .eq('done', true)
           .gte('logged_at', dayStart.toIso8601String())
           .lt('logged_at', dayEnd.toIso8601String());
 
-      return rows.map((item) => (item['user_habit_id'] ?? '').toString()).where((id) => id.isNotEmpty).toSet();
+      doneIds.addAll(rows
+          .map((item) => (item['user_habit_id'] ?? '').toString())
+          .where((id) => id.isNotEmpty));
+    } catch (_) {
+      try {
+        final rows = await client
+            .from('habit_logs')
+            .select('user_habit_id, done, logged_at')
+            .eq('done', true)
+            .gte('logged_at', dayStart.toIso8601String())
+            .lt('logged_at', dayEnd.toIso8601String());
+        doneIds.addAll(rows
+            .map((item) => (item['user_habit_id'] ?? '').toString())
+            .where((id) => id.isNotEmpty));
+      } catch (_) {}
     }
+
+    return doneIds;
   }
 
   Future<HabitModel> createHabit({
@@ -104,6 +127,7 @@ class HabitRepository {
     required String description,
     required String category,
     required String frequency,
+    String? reminderTime,
   }) async {
     final uid = userId;
     if (uid == null) throw Exception('Usuário não autenticado');
@@ -120,6 +144,8 @@ class HabitRepository {
             'target_value': 1,
             'target_unit': 'vez',
             'active': true,
+            'reminder_time': reminderTime == null ? null : '$reminderTime:00',
+            'reminder_enabled': reminderTime != null,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .select('*')
@@ -141,6 +167,8 @@ class HabitRepository {
         description: description,
         category: category,
         frequency: frequency,
+        reminderTime: reminderTime,
+        reminderEnabled: reminderTime != null,
       );
     }
   }
@@ -153,6 +181,8 @@ class HabitRepository {
         'category': habit.category,
         'frequency': habit.frequency,
         'active': habit.active,
+        'reminder_time': habit.reminderTime == null ? null : '${habit.reminderTime}:00',
+        'reminder_enabled': habit.reminderEnabled && habit.reminderTime != null,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', habit.id);
     } catch (_) {

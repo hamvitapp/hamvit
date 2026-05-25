@@ -51,7 +51,7 @@ String drawerSubItemTitle(DrawerSubItemType type) {
     DrawerSubItemType.proShareReport => 'Compartilhar relatório',
     DrawerSubItemType.challengesActive => 'Desafios ativos',
     DrawerSubItemType.challengesAchievements => 'Conquistas',
-    DrawerSubItemType.challengesStreaks => 'Streaks',
+    DrawerSubItemType.challengesStreaks => 'Frequências',
     DrawerSubItemType.challengesHistory => 'Histórico',
     DrawerSubItemType.settingsAccount => 'Conta',
     DrawerSubItemType.settingsSecurity => 'Segurança',
@@ -366,11 +366,11 @@ class _DrawerSubItemPageState extends ConsumerState<DrawerSubItemPage> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const HamvitLoading();
           final rows = snapshot.data!;
-          if (rows.isEmpty) return const HamvitEmptyState(message: 'Sem streaks registrados.');
+          if (rows.isEmpty) return const HamvitEmptyState(message: 'Sem frequências registradas.');
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const HamvitHeader(title: 'Streaks'),
+              const HamvitHeader(title: 'Frequências'),
               const SizedBox(height: 12),
               for (final r in rows) ...[
                 HamvitCard(child: Text('Tipo: ${r['streak_type'] ?? '-'}\nAtual: ${r['current_count'] ?? 0}')),

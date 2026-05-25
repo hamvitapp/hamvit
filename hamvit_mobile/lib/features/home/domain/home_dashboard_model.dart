@@ -9,6 +9,7 @@ class HomeDashboardModel {
   final int? stepsToday;
   final double distanceKm;
   final int activeMinutes;
+  final int activityCaloriesKcal;
   final double? sleepHours;
   final int score;
   final int dayCompletionPercent;
@@ -30,6 +31,7 @@ class HomeDashboardModel {
     required this.stepsToday,
     required this.distanceKm,
     required this.activeMinutes,
+    required this.activityCaloriesKcal,
     required this.sleepHours,
     required this.score,
     required this.dayCompletionPercent,
@@ -81,6 +83,7 @@ class HomeDashboardModel {
       stepsToday: stepsToday,
       distanceKm: distanceKm,
       activeMinutes: activeMinutes,
+      activityCaloriesKcal: activityCaloriesKcal,
       sleepHours: sleepHours,
       score: score,
       dayCompletionPercent: dayCompletionPercent,

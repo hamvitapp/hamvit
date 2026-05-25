@@ -16,6 +16,7 @@ class HamvitHomeDashboardData {
   final int habitsTotal;
   final int? steps;
   final double distanceKm;
+  final int activityCaloriesKcal;
   final Duration? sleepDuration;
   final int dayCompletionPercent;
   final String primaryInsight;
@@ -39,6 +40,7 @@ class HamvitHomeDashboardData {
     required this.habitsTotal,
     required this.steps,
     required this.distanceKm,
+    required this.activityCaloriesKcal,
     required this.sleepDuration,
     required this.dayCompletionPercent,
     required this.primaryInsight,
@@ -88,6 +90,7 @@ class HamvitHomeDashboard extends StatelessWidget {
             habitsTotal: data.habitsTotal,
             steps: data.steps,
             distanceKm: data.distanceKm,
+            activityCaloriesKcal: data.activityCaloriesKcal,
             sleepDuration: data.sleepDuration,
             onWaterTap: data.onWaterTap,
             onCaloriesTap: data.onCaloriesTap,

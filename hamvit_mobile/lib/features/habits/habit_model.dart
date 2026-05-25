@@ -8,6 +8,8 @@ class HabitModel {
   final bool doneToday;
   final int currentStreak;
   final int bestStreak;
+  final String? reminderTime;
+  final bool reminderEnabled;
 
   const HabitModel({
     required this.id,
@@ -19,6 +21,8 @@ class HabitModel {
     required this.doneToday,
     required this.currentStreak,
     required this.bestStreak,
+    required this.reminderTime,
+    required this.reminderEnabled,
   });
 
   HabitModel copyWith({
@@ -30,6 +34,8 @@ class HabitModel {
     bool? doneToday,
     int? currentStreak,
     int? bestStreak,
+    String? reminderTime,
+    bool? reminderEnabled,
   }) {
     return HabitModel(
       id: id,
@@ -41,10 +47,17 @@ class HabitModel {
       doneToday: doneToday ?? this.doneToday,
       currentStreak: currentStreak ?? this.currentStreak,
       bestStreak: bestStreak ?? this.bestStreak,
+      reminderTime: reminderTime ?? this.reminderTime,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
     );
   }
 
   static HabitModel fromMap(Map<String, dynamic> map) {
+    final reminderRaw = (map['reminder_time'] ?? '').toString().trim();
+    final reminderParsed = reminderRaw.isEmpty
+        ? null
+        : (reminderRaw.length >= 5 ? reminderRaw.substring(0, 5) : reminderRaw);
+
     return HabitModel(
       id: map['id'].toString(),
       title: (map['title'] ?? map['name'] ?? 'Hábito').toString(),
@@ -55,6 +68,10 @@ class HabitModel {
       doneToday: false,
       currentStreak: (map['current_streak'] as num?)?.toInt() ?? 0,
       bestStreak: (map['best_streak'] as num?)?.toInt() ?? 0,
+      reminderTime: reminderParsed,
+      reminderEnabled: map['reminder_enabled'] is bool
+          ? map['reminder_enabled'] as bool
+          : reminderParsed != null,
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../theme/hamvit_colors.dart';
 import 'hamvit_stat_card.dart';
@@ -12,6 +12,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
   final int habitsTotal;
   final int? steps;
   final double distanceKm;
+  final int activityCaloriesKcal;
   final Duration? sleepDuration;
   final VoidCallback? onWaterTap;
   final VoidCallback? onCaloriesTap;
@@ -29,6 +30,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     required this.habitsTotal,
     required this.steps,
     required this.distanceKm,
+    required this.activityCaloriesKcal,
     required this.sleepDuration,
     this.onWaterTap,
     this.onCaloriesTap,
@@ -68,9 +70,9 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     final cards = [
       HamvitStatCard(
         icon: Icons.water_drop_outlined,
-        title: 'Água',
+        title: 'Agua',
         value: '${_formatLiters(waterMl)} / ${_formatLiters(waterGoalMl)}',
-        subtitle: 'Meta diária',
+        subtitle: 'Meta diaria',
         progress: waterProgress,
         progressGradient: const [
           HamvitColors.accentCyan,
@@ -78,7 +80,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         ],
         progressLabel: '${(waterProgress * 100).round()}%',
         footerNote:
-            waterMl == 0 ? '0% • Registre seu primeiro consumo hoje' : null,
+            waterMl == 0 ? '0% - Registre seu primeiro consumo hoje' : null,
         onTap: onWaterTap,
       ),
       HamvitStatCard(
@@ -101,16 +103,16 @@ class HamvitDailyStatsGrid extends StatelessWidget {
       ),
       HamvitStatCard(
         icon: Icons.checklist_rounded,
-        title: 'Hábitos',
-        value: '$habitsDone/$habitsTotal concluídos',
-        subtitle: 'Rotina diária',
+        title: 'Habitos',
+        value: '$habitsDone/$habitsTotal concluidos',
+        subtitle: 'Rotina diaria',
         progress: habitsProgress,
         progressGradient: const [
           HamvitColors.accentCyan,
           HamvitColors.accentBlue
         ],
         progressLabel: '${(habitsProgress * 100).round()}%',
-        footerNote: habitsTotal == 0 ? '0% • Nenhum habito ativo hoje' : null,
+        footerNote: habitsTotal == 0 ? '0% - Nenhum habito ativo hoje' : null,
         onTap: onHabitsTap,
       ),
       HamvitStatCard(
@@ -118,7 +120,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         title: 'Atividade',
         value: steps == null
             ? '${distanceKm.toStringAsFixed(1)} km'
-            : '$steps • ${distanceKm.toStringAsFixed(1)} km',
+            : '$steps - ${distanceKm.toStringAsFixed(1)} km',
         subtitle: 'Movimento hoje',
         progress: activityProgress,
         progressGradient: const [
@@ -126,7 +128,9 @@ class HamvitDailyStatsGrid extends StatelessWidget {
           HamvitColors.accentBlue
         ],
         progressLabel: '${(activityProgress * 100).round()}%',
-        footerNote: distanceKm == 0 ? '0% • Inicie uma caminhada' : null,
+        footerNote: distanceKm == 0
+            ? '0% - Inicie uma atividade'
+            : 'Calorias estimadas: $activityCaloriesKcal kcal',
         onTap: onActivityTap,
       ),
       HamvitStatCard(
@@ -136,7 +140,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
             ? 'Sem registro'
             : _formatSleep(sleepDuration!),
         subtitle:
-            sleepDuration == null ? 'Toque para registrar' : 'Último registro',
+            sleepDuration == null ? 'Toque para registrar' : 'Ultimo registro',
         progress: sleepProgress,
         progressGradient: const [
           HamvitColors.accentCyan,
@@ -144,7 +148,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         ],
         progressLabel: '${(sleepProgress * 100).round()}%',
         footerNote:
-            sleepDuration == null ? '0% • Sono ainda nao registrado' : null,
+            sleepDuration == null ? '0% - Sono ainda nao registrado' : null,
         onTap: onSleepTap,
       ),
     ];

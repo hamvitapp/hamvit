@@ -40,7 +40,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/branding/inicio.png"
+  image_path: "assets/icons/inicio.png"
   adaptive_icon_background: "#071A2D"
-  adaptive_icon_foreground: "assets/branding/inicio.png"
-  adaptive_icon_foreground_inset: 18
+  adaptive_icon_foreground: "assets/icons/inicio.png"
+  adaptive_icon_foreground_inset: 30

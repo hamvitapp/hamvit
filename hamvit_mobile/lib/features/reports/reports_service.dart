@@ -241,7 +241,7 @@ class ReportsService {
           sectionTitle('Página 3 - Hábitos / Hidratação / Sono'),
           pw.Text('Hábitos concluídos: $habits'),
           pw.Text('Água total: $water ml'),
-          pw.Text('Streak e constância em heatmap no app.'),
+          pw.Text('Frequência e constância em heatmap no app.'),
           pw.SizedBox(height: 14),
           sectionTitle('Página 4 - Treino / Caminhada'),
           pw.Text('Distância total: $distance km'),

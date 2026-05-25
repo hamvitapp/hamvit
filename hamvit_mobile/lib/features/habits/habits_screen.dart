@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../home/providers/home_dashboard_provider.dart';
@@ -17,12 +17,55 @@ class HabitsScreen extends ConsumerStatefulWidget {
 class _HabitsScreenState extends ConsumerState<HabitsScreen> {
   HabitTemplate? _selectedTemplate;
 
-  Future<void> _openCreateHabitSheet(BuildContext context, WidgetRef ref, {HabitModel? habit}) async {
+  String _normalizeReminderDisplay(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    final text = raw.trim();
+    if (text.length >= 5) return text.substring(0, 5);
+    return text;
+  }
+
+  Future<void> _pickReminderTime(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    TimeOfDay initialTime = TimeOfDay.now();
+    if (controller.text.trim().length == 5 && controller.text.contains(':')) {
+      final parts = controller.text.split(':');
+      final h = int.tryParse(parts.first) ?? initialTime.hour;
+      final m = int.tryParse(parts.last) ?? initialTime.minute;
+      initialTime = TimeOfDay(hour: h.clamp(0, 23), minute: m.clamp(0, 59));
+    }
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child ?? const SizedBox.shrink(),
+      ),
+    );
+
+    if (picked == null) return;
+    controller.text =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _openCreateHabitSheet(BuildContext context, WidgetRef ref,
+      {HabitModel? habit}) async {
     final titleCtrl = TextEditingController(text: habit?.title ?? '');
     final descriptionCtrl = TextEditingController(text: habit?.description ?? '');
     final frequencyCtrl = TextEditingController(text: habit?.frequency ?? 'Diário');
-    final reminderCtrl = TextEditingController();
-    const categories = ['Saúde', 'Água', 'Sono', 'Movimento', 'Alimentação', 'Mente'];
+    final reminderCtrl = TextEditingController(
+      text: _normalizeReminderDisplay(habit?.reminderTime),
+    );
+    const categories = [
+      'Saúde',
+      'Água',
+      'Sono',
+      'Movimento',
+      'Alimentação',
+      'Mente'
+    ];
     var selectedCategory = habit?.category ?? categories.first;
 
     await showModalBottomSheet<void>(
@@ -43,7 +86,10 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(habit == null ? 'Criar hábito' : 'Editar hábito', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      habit == null ? 'Criar hábito' : 'Editar hábito',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 10),
                     TextField(
                       controller: titleCtrl,
@@ -54,7 +100,8 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                       initialValue: selectedCategory,
                       decoration: const InputDecoration(labelText: 'Categoria'),
                       items: categories
-                          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                          .map((item) =>
+                              DropdownMenuItem(value: item, child: Text(item)))
                           .toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -70,7 +117,17 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: reminderCtrl,
-                      decoration: const InputDecoration(labelText: 'Lembrete opcional'),
+                      readOnly: true,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Lembrete (hora)',
+                        hintText: 'HH:mm',
+                        suffixIcon: IconButton(
+                          onPressed: () => _pickReminderTime(context, reminderCtrl),
+                          icon: const Icon(Icons.access_time_rounded),
+                        ),
+                      ),
+                      onTap: () => _pickReminderTime(context, reminderCtrl),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -85,20 +142,31 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                           final title = titleCtrl.text.trim();
                           if (title.isEmpty) return;
 
+                          final reminderTime = reminderCtrl.text.trim().isEmpty
+                              ? null
+                              : reminderCtrl.text.trim();
+
                           if (habit == null) {
                             await ref.read(habitsControllerProvider.notifier).createHabit(
                                   title: title,
                                   category: selectedCategory,
-                                  frequency: frequencyCtrl.text.trim().isEmpty ? 'Diário' : frequencyCtrl.text.trim(),
+                                  frequency: frequencyCtrl.text.trim().isEmpty
+                                      ? 'Diário'
+                                      : frequencyCtrl.text.trim(),
                                   description: descriptionCtrl.text.trim(),
+                                  reminderTime: reminderTime,
                                 );
                           } else {
                             await ref.read(habitsControllerProvider.notifier).updateHabit(
                                   habit.copyWith(
                                     title: title,
                                     category: selectedCategory,
-                                    frequency: frequencyCtrl.text.trim().isEmpty ? 'Diário' : frequencyCtrl.text.trim(),
+                                    frequency: frequencyCtrl.text.trim().isEmpty
+                                        ? 'Diário'
+                                        : frequencyCtrl.text.trim(),
                                     description: descriptionCtrl.text.trim(),
+                                    reminderTime: reminderTime,
+                                    reminderEnabled: reminderTime != null,
                                   ),
                                 );
                           }

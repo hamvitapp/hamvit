@@ -237,10 +237,10 @@ class HamvitHabitStreakCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Streak', style: TextStyle(color: HamvitColors.darkText, fontWeight: FontWeight.w700)),
+            const Text('Frequência', style: TextStyle(color: HamvitColors.darkText, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Streak atual: $currentStreak dias', style: const TextStyle(color: HamvitColors.darkText)),
-            Text('Melhor streak: $bestStreak dias', style: const TextStyle(color: HamvitColors.darkText)),
+            Text('Frequência atual: $currentStreak dias', style: const TextStyle(color: HamvitColors.darkText)),
+            Text('Melhor frequência: $bestStreak dias', style: const TextStyle(color: HamvitColors.darkText)),
             const SizedBox(height: 6),
             const Text('Continue no seu ritmo.', style: TextStyle(color: HamvitColors.darkTextMuted)),
           ],

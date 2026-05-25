@@ -89,6 +89,7 @@ class HomeDashboardRepository {
         stepsToday: activity.stepsToday,
         distanceKm: activity.distanceKm,
         activeMinutes: activity.activeMinutes,
+        activityCaloriesKcal: activity.caloriesKcal,
         sleepHours: sleep,
         score: scoreData.score,
         dayCompletionPercent: scoreData.dayCompletionPercent,
@@ -359,33 +360,35 @@ class HomeDashboardRepository {
 
     final mealIds = <String>[];
     try {
-      final mealLogs = await client
+      final mealLogsByDate = await client
           .from('meal_logs')
           .select('id, total_calories_kcal')
           .eq('user_id', uid)
           .eq('meal_date', isoDate);
 
-      for (final row in mealLogs) {
+      for (final row in mealLogsByDate) {
         final id = row['id']?.toString();
         if (id != null && id.isNotEmpty) {
           mealIds.add(id);
         }
         calories += _toInt(row['total_calories_kcal']);
       }
-    } catch (_) {
-      final mealLogs = await client
+    } catch (_) {}
+
+    try {
+      final mealLogsByConsumedAt = await client
           .from('meal_logs')
           .select('id')
           .eq('user_id', uid)
           .gte('consumed_at', dayStart.toIso8601String())
           .lt('consumed_at', dayEnd.toIso8601String());
-      for (final row in mealLogs) {
+      for (final row in mealLogsByConsumedAt) {
         final id = row['id']?.toString();
-        if (id != null && id.isNotEmpty) {
+        if (id != null && id.isNotEmpty && !mealIds.contains(id)) {
           mealIds.add(id);
         }
       }
-    }
+    } catch (_) {}
 
     if (mealIds.isNotEmpty) {
       final items = await client
@@ -439,23 +442,33 @@ class HomeDashboardRepository {
         .eq('active', true);
     total = habits.length;
 
+    final completedIds = <String>{};
     try {
       final completed = await client
           .from('habit_logs')
-          .select('id')
+          .select('habit_id')
           .eq('user_id', uid)
           .eq('log_date', isoDate)
           .eq('completed', true);
-      done = completed.length;
-    } catch (_) {
-      final completed = await client
+      completedIds.addAll(completed
+          .map((row) => (row['habit_id'] ?? '').toString())
+          .where((id) => id.isNotEmpty));
+    } catch (_) {}
+
+    try {
+      final completedLegacy = await client
           .from('habit_logs')
-          .select('id')
+          .select('user_habit_id')
+          .eq('user_id', uid)
           .eq('done', true)
           .gte('logged_at', dayStart.toIso8601String())
           .lt('logged_at', dayEnd.toIso8601String());
-      done = completed.length;
-    }
+      completedIds.addAll(completedLegacy
+          .map((row) => (row['user_habit_id'] ?? '').toString())
+          .where((id) => id.isNotEmpty));
+    } catch (_) {}
+
+    done = completedIds.length;
 
     if (done > total && total > 0) {
       done = total;
@@ -474,7 +487,7 @@ class HomeDashboardRepository {
       final sessions = await client
           .from('activity_sessions')
           .select(
-              'distance_meters, duration_seconds, started_at, finished_at, steps_count')
+              'distance_meters, manual_distance_meters, duration_seconds, started_at, finished_at, steps_count, estimated_calories_kcal')
           .eq('user_id', uid)
           .gte('started_at', dayStart.toIso8601String())
           .lt('started_at', dayEnd.toIso8601String());
@@ -482,10 +495,15 @@ class HomeDashboardRepository {
       var distanceMeters = 0.0;
       var activeMinutes = 0;
       var stepsToday = 0;
+      var caloriesKcal = 0;
 
       for (final row in sessions) {
-        distanceMeters += (row['distance_meters'] as num?)?.toDouble() ?? 0;
+        final distanceGps = (row['distance_meters'] as num?)?.toDouble() ?? 0;
+        final distanceManual =
+            (row['manual_distance_meters'] as num?)?.toDouble() ?? 0;
+        distanceMeters += distanceGps > 0 ? distanceGps : distanceManual;
         stepsToday += (row['steps_count'] as num?)?.toInt() ?? 0;
+        caloriesKcal += (row['estimated_calories_kcal'] as num?)?.round() ?? 0;
 
         final durationSeconds = (row['duration_seconds'] as num?)?.toInt();
         if (durationSeconds != null) {
@@ -508,7 +526,8 @@ class HomeDashboardRepository {
       return _ActivityData(
           distanceKm: distanceMeters / 1000,
           activeMinutes: activeMinutes,
-          stepsToday: stepsToday == 0 ? null : stepsToday);
+          stepsToday: stepsToday == 0 ? null : stepsToday,
+          caloriesKcal: caloriesKcal);
     } catch (_) {
       final sessions = await client
           .from('activity_sessions')
@@ -519,6 +538,7 @@ class HomeDashboardRepository {
 
       var distanceKm = 0.0;
       var activeMinutes = 0;
+      const caloriesKcal = 0;
 
       for (final row in sessions) {
         distanceKm += ((row['distance_m'] as num?)?.toDouble() ?? 0) / 1000;
@@ -536,7 +556,8 @@ class HomeDashboardRepository {
       return _ActivityData(
           distanceKm: distanceKm,
           activeMinutes: activeMinutes,
-          stepsToday: null);
+          stepsToday: null,
+          caloriesKcal: caloriesKcal);
     }
   }
 
@@ -751,11 +772,13 @@ class _ActivityData {
   final double distanceKm;
   final int activeMinutes;
   final int? stepsToday;
+  final int caloriesKcal;
 
   const _ActivityData(
       {required this.distanceKm,
       required this.activeMinutes,
-      required this.stepsToday});
+      required this.stepsToday,
+      required this.caloriesKcal});
 }
 
 class _ScoreData {

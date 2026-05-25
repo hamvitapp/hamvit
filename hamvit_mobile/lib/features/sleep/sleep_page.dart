@@ -73,7 +73,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
         final weekday = _weekdayShort(date);
         final mins = _minutesFromRow(row);
         final quality = _qualityFromRow(row);
-        return '$weekday: ${_formatMinutes(mins)} - Qualidade $quality';
+        return '$weekday: ${_formatMinutes(mins)} - Qualidade ${_qualityLabel(quality)}';
       }).toList();
 
       setState(() {
@@ -102,8 +102,16 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   int _qualityFromRow(Map<String, dynamic> row) {
     final v1 = row['quality'];
     if (v1 is num) return v1.toInt().clamp(1, 4).toInt();
+    if (v1 is String) {
+      final parsed = int.tryParse(v1.trim());
+      if (parsed != null) return parsed.clamp(1, 4).toInt();
+    }
     final v2 = row['sleep_quality'];
     if (v2 is num) return v2.toInt().clamp(1, 4).toInt();
+    if (v2 is String) {
+      final parsed = int.tryParse(v2.trim());
+      if (parsed != null) return parsed.clamp(1, 4).toInt();
+    }
     return 3;
   }
 

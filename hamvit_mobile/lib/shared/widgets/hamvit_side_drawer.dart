@@ -238,7 +238,7 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 children: [
                   _sub('Desafios ativos', DrawerSubItemType.challengesActive),
                   _sub('Conquistas', DrawerSubItemType.challengesAchievements),
-                  _sub('Streaks', DrawerSubItemType.challengesStreaks),
+                  _sub('Frequências', DrawerSubItemType.challengesStreaks),
                   _sub('Histórico', DrawerSubItemType.challengesHistory),
                 ],
               ),

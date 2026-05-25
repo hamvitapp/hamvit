@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,7 +10,6 @@ import '../../theme/hamvit_colors.dart';
 import 'widgets/daily_stats/hamvit_mini_progress_bar.dart';
 import 'widgets/home_dashboard/hamvit_home_dashboard.dart';
 import 'widgets/insights/hamvit_insight_card.dart';
-import 'widgets/quick_actions/hamvit_quick_actions_row.dart';
 
 class TodayPage extends ConsumerStatefulWidget {
   final bool isPremium;
@@ -32,64 +31,6 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     await _refreshDashboard();
   }
 
-  Future<void> _runQuickAction(
-      Future<void> Function() action, String successMessage) async {
-    try {
-      await action();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(successMessage)));
-      await _refreshDashboard();
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Nao foi possivel concluir a acao: $error')),
-      );
-    }
-  }
-
-  Future<void> _quickAddMeal() async {
-    final controller = TextEditingController(text: '350');
-    final calories = await showDialog<int>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Registrar refeicao rapida'),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Calorias (kcal)',
-              hintText: 'Ex.: 350',
-            ),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar')),
-            FilledButton(
-              onPressed: () {
-                final value = int.tryParse(controller.text.trim());
-                if (value == null || value <= 0) {
-                  return;
-                }
-                Navigator.of(context).pop(value);
-              },
-              child: const Text('Salvar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (calories == null) return;
-
-    await _runQuickAction(
-      () => ref.read(homeDashboardActionsProvider).quickAddMeal(calories),
-      'Refeicao registrada com dados reais.',
-    );
-  }
-
   HamvitHomeDashboardData _mapDashboardData(HomeDashboardModel model) {
     return HamvitHomeDashboardData(
       score: model.score,
@@ -102,6 +43,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
       habitsTotal: model.habitsTotal,
       steps: model.stepsToday,
       distanceKm: model.distanceKm,
+      activityCaloriesKcal: model.activityCaloriesKcal,
       sleepDuration: model.sleepHours == null
           ? null
           : Duration(minutes: (model.sleepHours! * 60).round()),
@@ -197,7 +139,6 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   Widget build(BuildContext context) {
     final onboarding = ref.watch(onboardingProfileProvider);
     final dashboardAsync = ref.watch(homeDashboardProvider);
-    final actions = ref.read(homeDashboardActionsProvider);
     final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     const bottomNavHeight = kBottomNavigationBarHeight;
     final bottomContentPadding = bottomSafeArea + bottomNavHeight + 24;
@@ -248,7 +189,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                   : 0.0;
 
               final evolutionSubtitle = hasGoalProgress
-                  ? 'Atual ${safeCurrentWeight.toStringAsFixed(1)} kg • alvo ${safeTargetWeight.toStringAsFixed(1)} kg'
+                  ? 'Atual ${safeCurrentWeight.toStringAsFixed(1)} kg â€¢ alvo ${safeTargetWeight.toStringAsFixed(1)} kg'
                   : 'Acompanhe peso, IMC e historico corporal';
 
               return Column(
@@ -288,7 +229,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                             color: Colors.white.withValues(alpha: 0.08)),
                       ),
                       child: Text(
-                        'Ainda nao ha registros reais hoje. Use as acoes rapidas abaixo para iniciar seu dia.',
+                        'Ainda não há registros reais hoje. Use os módulos abaixo para iniciar seu dia.',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -296,41 +237,6 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  HamvitQuickActionsRow(
-                    onWater: () => _runQuickAction(
-                      () => actions.quickAddWater(),
-                      '+200 ml registrados com sucesso.',
-                    ),
-                    onMeal: _quickAddMeal,
-                    onWalk: () => _runQuickAction(
-                      () => actions.quickStartWalk(),
-                      'Sessao de caminhada iniciada no seu historico.',
-                    ),
-                    onHabit: () async {
-                      try {
-                        final completed = await actions.quickCompleteHabit();
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              completed
-                                  ? 'Habito concluido e salvo no banco.'
-                                  : 'Todos os habitos ja estao concluidos hoje.',
-                            ),
-                          ),
-                        );
-                        await _refreshDashboard();
-                      } catch (error) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Falha ao registrar habito: $error')),
-                        );
-                      }
-                    },
-                  ),
                   const SizedBox(height: 10),
                   Text(
                     'Módulos principais',
@@ -349,7 +255,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         _HomeModuleCard(
                           title: 'Hábitos',
                           subtitle:
-                              '${dashboard.habitsDone} de ${dashboard.habitsTotal} concluídos hoje',
+                              '${dashboard.habitsDone} de ${dashboard.habitsTotal} concluÃ­dos hoje',
                           icon: Icons.checklist_rounded,
                           progress: dashboard.habitsTotal == 0
                               ? 0
@@ -407,7 +313,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                         _HomeModuleCard(
                           title: 'Score diário',
                           subtitle:
-                              'Veja detalhes e histórico do score real de hoje',
+                              'Veja detalhes e histÃ³rico do score real de hoje',
                           icon: Icons.insights_outlined,
                           progress: (dashboard.score / 100).clamp(0.0, 1.0),
                           onTap: () => _navigateAndRefresh('/reports/daily'),
@@ -508,3 +414,4 @@ class _HomeModuleCard extends StatelessWidget {
     );
   }
 }
+

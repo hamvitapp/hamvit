@@ -173,10 +173,10 @@ class PremiumAccessMatrix {
       premiumDescription: 'Vínculo profissional, cupons e relatórios.',
       teaser: 'Integre acompanhamento profissional.',
     ),
-    HamvitFeature.gamificationBasic: HamvitFeatureAccess(
+      HamvitFeature.gamificationBasic: HamvitFeatureAccess(
       premiumRequired: false,
       title: 'Gamificação básica',
-      freeDescription: 'Streak básico no Free.',
+      freeDescription: 'Frequência básica no Free.',
       premiumDescription: 'Base para consistência diária.',
       teaser: 'Mantenha sua sequência ativa.',
     ),

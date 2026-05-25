@@ -46,15 +46,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: EdgeInsets.zero,
         children: [
           SizedBox(
-            height: 98,
+            height: 120,
             width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Image.asset(
-                'assets/branding/hamvit_hoje_exata.png',
-                fit: BoxFit.contain,
-                alignment: Alignment.topCenter,
-              ),
+            child: Image.asset(
+              'assets/branding/hamvit_hoje_exata.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.center,
             ),
           ),
           Padding(
@@ -87,17 +84,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          HamvitButton(
-            label: loading ? 'Entrando...' : 'Entrar',
-            onPressed: loading
-                ? null
-                : () async {
-                    if (!_formKey.currentState!.validate()) return;
-                    await notifier.login(
-                      email: _emailCtrl.text.trim(),
-                      password: _passwordCtrl.text.trim(),
-                    );
-                  },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HamvitButton(
+              label: loading ? 'Entrando...' : 'Entrar',
+              onPressed: loading
+                  ? null
+                  : () async {
+                      if (!_formKey.currentState!.validate()) return;
+                      await notifier.login(
+                        email: _emailCtrl.text.trim(),
+                        password: _passwordCtrl.text.trim(),
+                      );
+                    },
+            ),
           ),
           const SizedBox(height: 8),
           TextButton(
