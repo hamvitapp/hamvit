@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/onboarding/providers/onboarding_profile_provider.dart';
+import '../../features/activities/providers/activity_refresh_provider.dart';
+import '../../features/activities/providers/activity_live_provider.dart';
 import 'domain/home_dashboard_model.dart';
 import 'providers/home_dashboard_provider.dart';
 import '../../shared/widgets/hamvit_onboarding_widgets.dart';
@@ -20,6 +22,11 @@ class TodayPage extends ConsumerStatefulWidget {
 }
 
 class _TodayPageState extends ConsumerState<TodayPage> {
+  int _lastSeenActivityTick = 0;
+  @override
+  void initState() {
+    super.initState();
+  }
   Future<void> _refreshDashboard() async {
     ref.invalidate(homeDashboardProvider);
     await ref.read(homeDashboardProvider.future);
@@ -137,8 +144,16 @@ class _TodayPageState extends ConsumerState<TodayPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Observe global activity tick and invalidate dashboard when it increments.
+    final tick = ref.watch(activityRefreshTickProvider);
+    if (tick != _lastSeenActivityTick) {
+      _lastSeenActivityTick = tick;
+      debugPrint('TodayPage: activity tick changed to $tick, invalidating dashboard');
+      ref.invalidate(homeDashboardProvider);
+    }
     final onboarding = ref.watch(onboardingProfileProvider);
     final dashboardAsync = ref.watch(homeDashboardProvider);
+    final live = ref.watch(activityLiveStateProvider);
     final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     const bottomNavHeight = kBottomNavigationBarHeight;
     final bottomContentPadding = bottomSafeArea + bottomNavHeight + 24;
@@ -169,7 +184,35 @@ class _TodayPageState extends ConsumerState<TodayPage> {
             loading: _loadingState,
             error: (error, _) => _errorState(error),
             data: (model) {
-              final dashboard = _mapDashboardData(model);
+                final dashboard = _mapDashboardData(model);
+                // merge live activity overlay if disponível
+                final adjustedDashboard = live != null
+                  ? HamvitHomeDashboardData(
+                    score: dashboard.score,
+                    statusText: dashboard.statusText,
+                    waterMl: dashboard.waterMl,
+                    waterGoalMl: dashboard.waterGoalMl,
+                    calories: dashboard.calories,
+                    caloriesGoal: dashboard.caloriesGoal,
+                    habitsDone: dashboard.habitsDone,
+                    habitsTotal: dashboard.habitsTotal,
+                    steps: dashboard.steps,
+                    distanceKm: dashboard.distanceKm + live.distanceKm,
+                    activityCaloriesKcal:
+                      dashboard.activityCaloriesKcal + live.caloriesKcal,
+                    sleepDuration: dashboard.sleepDuration,
+                    dayCompletionPercent: dashboard.dayCompletionPercent,
+                    primaryInsight: dashboard.primaryInsight,
+                    secondaryInsight: dashboard.secondaryInsight,
+                    trend: dashboard.trend,
+                    onScoreTap: dashboard.onScoreTap,
+                    onWaterTap: dashboard.onWaterTap,
+                    onCaloriesTap: dashboard.onCaloriesTap,
+                    onHabitsTap: dashboard.onHabitsTap,
+                    onActivityTap: dashboard.onActivityTap,
+                    onSleepTap: dashboard.onSleepTap,
+                  )
+                  : dashboard;
               final currentWeight = onboarding.weightKg;
               final targetWeight = onboarding.targetWeightKg;
               final hasGoalProgress = currentWeight != null &&
@@ -216,7 +259,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  HamvitHomeDashboard(data: dashboard),
+                  HamvitHomeDashboard(data: adjustedDashboard),
                   if (model.isEmpty) ...[
                     const SizedBox(height: 10),
                     Container(
@@ -254,53 +297,55 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                       final moduleCards = [
                         _HomeModuleCard(
                           title: 'Hábitos',
-                          subtitle:
-                              '${dashboard.habitsDone} de ${dashboard.habitsTotal} concluÃ­dos hoje',
+                            subtitle:
+                              '${adjustedDashboard.habitsDone} de ${adjustedDashboard.habitsTotal} concluÃ­dos hoje',
                           icon: Icons.checklist_rounded,
-                          progress: dashboard.habitsTotal == 0
+                          progress: adjustedDashboard.habitsTotal == 0
                               ? 0
-                              : dashboard.habitsDone / dashboard.habitsTotal,
+                              : adjustedDashboard.habitsDone /
+                                  adjustedDashboard.habitsTotal,
                           onTap: () => _navigateAndRefresh('/habits'),
                         ),
                         _HomeModuleCard(
                           title: 'Água',
-                          subtitle:
-                              '${((dashboard.waterMl / dashboard.waterGoalMl) * 100).round()}% da meta diária',
+                            subtitle:
+                              '${((adjustedDashboard.waterMl / adjustedDashboard.waterGoalMl) * 100).round()}% da meta diária',
                           icon: Icons.water_drop_outlined,
-                          progress: dashboard.waterMl / dashboard.waterGoalMl,
+                          progress: adjustedDashboard.waterMl /
+                              adjustedDashboard.waterGoalMl,
                           onTap: () => _navigateAndRefresh('/hydration'),
                         ),
                         _HomeModuleCard(
                           title: 'Alimentação',
-                          subtitle: dashboard.caloriesGoal == null
-                              ? '${dashboard.calories} kcal registradas (meta pendente)'
-                              : '${dashboard.calories} kcal registradas',
+                            subtitle: adjustedDashboard.caloriesGoal == null
+                              ? '${adjustedDashboard.calories} kcal registradas (meta pendente)'
+                              : '${adjustedDashboard.calories} kcal registradas',
                           icon: Icons.restaurant_menu_outlined,
-                          progress: dashboard.caloriesGoal == null ||
-                                  dashboard.caloriesGoal == 0
+                            progress: adjustedDashboard.caloriesGoal == null ||
+                                adjustedDashboard.caloriesGoal == 0
                               ? 0
-                              : dashboard.calories / dashboard.caloriesGoal!,
+                              : adjustedDashboard.calories / adjustedDashboard.caloriesGoal!,
                           onTap: () => _navigateAndRefresh('/nutrition'),
                         ),
                         _HomeModuleCard(
                           title: 'Atividades',
-                          subtitle:
-                              '${dashboard.distanceKm.toStringAsFixed(1)} km registrados hoje',
+                            subtitle:
+                              '${adjustedDashboard.distanceKm.toStringAsFixed(1)} km registrados hoje',
                           icon: Icons.directions_walk_outlined,
-                          progress:
-                              (dashboard.distanceKm / 3.0).clamp(0.0, 1.0),
+                            progress:
+                              (adjustedDashboard.distanceKm / 3.0).clamp(0.0, 1.0),
                           onTap: () => _navigateAndRefresh('/activities'),
                         ),
                         _HomeModuleCard(
                           title: 'Sono',
-                          subtitle: dashboard.sleepDuration == null
+                            subtitle: adjustedDashboard.sleepDuration == null
                               ? 'Sem registro recente'
-                              : 'Último registro ${(dashboard.sleepDuration!.inMinutes / 60).toStringAsFixed(1)}h',
+                              : 'Último registro ${(adjustedDashboard.sleepDuration!.inMinutes / 60).toStringAsFixed(1)}h',
                           icon: Icons.bedtime_outlined,
-                          progress: dashboard.sleepDuration == null
+                            progress: adjustedDashboard.sleepDuration == null
                               ? 0
-                              : (dashboard.sleepDuration!.inMinutes / (8 * 60))
-                                  .clamp(0.0, 1.0),
+                              : (adjustedDashboard.sleepDuration!.inMinutes / (8 * 60))
+                                .clamp(0.0, 1.0),
                           onTap: () => _navigateAndRefresh('/sleep'),
                         ),
                         _HomeModuleCard(
@@ -315,7 +360,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                           subtitle:
                               'Veja detalhes e histÃ³rico do score real de hoje',
                           icon: Icons.insights_outlined,
-                          progress: (dashboard.score / 100).clamp(0.0, 1.0),
+                          progress: (adjustedDashboard.score / 100).clamp(0.0, 1.0),
                           onTap: () => _navigateAndRefresh('/reports/daily'),
                         ),
                       ];
@@ -336,9 +381,9 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                   ),
                   const SizedBox(height: 10),
                   HamvitInsightCard(
-                    primaryInsight: dashboard.primaryInsight,
-                    secondaryInsight: dashboard.secondaryInsight,
-                    trend: dashboard.trend,
+                    primaryInsight: adjustedDashboard.primaryInsight,
+                    secondaryInsight: adjustedDashboard.secondaryInsight,
+                    trend: adjustedDashboard.trend,
                   ),
                 ],
               );

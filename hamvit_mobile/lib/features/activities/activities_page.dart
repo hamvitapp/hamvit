@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'providers/activity_refresh_provider.dart';
+import 'providers/activity_live_provider.dart';
 
 import '../../shared/widgets/hamvit_module_widgets.dart';
 import '../../shared/widgets/hamvit_onboarding_widgets.dart';
@@ -347,12 +349,31 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       if (!mounted || !_running || _paused) return;
       // Atualiza UI local
       setState(() {});
-      // Invalida o provider do dashboard periodicamente (cada 10s)
+      // Incrementa o tick global para notificar outras telas (ex: Hoje)
       try {
         final elapsed = _elapsedSeconds;
         if (elapsed - _lastDashboardInvalidateAt >= 10) {
           _lastDashboardInvalidateAt = elapsed;
-          ref.invalidate(homeDashboardProvider);
+          // incrementa o provider global
+          // debug print para verificar que o tick está sendo incrementado
+          try {
+            debugPrint('ActivitiesPage: incrementing activity tick at ${DateTime.now()}');
+            ref.read(activityRefreshTickProvider.notifier).state++;
+            // atualiza provider com dados em memoria para dashboard consumir
+            try {
+              final weightKg = ref.read(onboardingProfileProvider).weightKg ?? 70;
+              final overlay = ActivityLiveData(
+                distanceKm: _currentDistanceMeters() / 1000,
+                activeMinutes: _minutesFromSeconds(_elapsedSeconds),
+                caloriesKcal: _estimatedCalories(weightKg).round(),
+              );
+              ref.read(activityLiveStateProvider.notifier).state = overlay;
+            } catch (e) {
+              debugPrint('ActivitiesPage: failed to update live overlay: $e');
+            }
+          } catch (e) {
+            debugPrint('ActivitiesPage: failed to increment tick: $e');
+          }
         }
       } catch (_) {}
     });
@@ -463,6 +484,10 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     }
 
     _sessionId = null;
+    // limpar overlay live
+    try {
+      ref.read(activityLiveStateProvider.notifier).state = null;
+    } catch (_) {}
     await _loadWeeklyFromDb();
     ref.invalidate(homeDashboardProvider);
     setState(() {});

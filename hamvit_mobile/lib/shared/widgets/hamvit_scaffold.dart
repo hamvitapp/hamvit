@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/domain/auth_state.dart';
+import '../../features/dashboard/dashboard_page.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/habits/habits_page.dart';
 import '../../features/home/today_page.dart';
@@ -41,13 +42,14 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
 
     final pages = [
       TodayPage(isPremium: isPremium),
+      const DashboardPage(),
       const HabitsPage(),
       NutritionPage(isPremium: isPremium),
       const ProgressPage(),
       ProfilePage(name: profile?.displayName, isPremium: isPremium, onLogout: () => auth.logout()),
     ];
 
-    final titles = ['Hoje', 'Hábitos', 'Alimentação', 'Evolução', 'Perfil'];
+    final titles = ['Hoje', 'Dashboard', 'Hábitos', 'Alimentação', 'Evolução', 'Perfil'];
 
     return Scaffold(
       appBar: AppBar(

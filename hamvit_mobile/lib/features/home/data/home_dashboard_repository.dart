@@ -629,7 +629,152 @@ class HomeDashboardRepository {
       }
     } catch (_) {}
 
-    return const [];
+    // fallback real: compute score from raw daily logs to avoid mock trend.
+    final dayMap = <String, _TrendDayData>{
+      for (var i = 0; i < 7; i++)
+        HamvitDateUtils.toIsoDate(start.add(Duration(days: i))):
+            const _TrendDayData()
+    };
+
+    try {
+      final hydration = await client
+          .from('hydration_logs')
+          .select('log_date, amount_ml, ml, logged_at')
+          .eq('user_id', uid)
+          .gte('logged_at', start.toIso8601String())
+          .lt(now.add(const Duration(days: 1)).toIso8601String());
+
+      for (final row in hydration) {
+        final key = (row['log_date'] ?? '').toString().isNotEmpty
+            ? (row['log_date'] ?? '').toString()
+            : HamvitDateUtils.toIsoDate(
+                DateTime.tryParse((row['logged_at'] ?? '').toString()) ?? now);
+        final current = dayMap[key] ?? const _TrendDayData();
+        dayMap[key] = current.copyWith(
+          waterMl: current.waterMl + _toInt(row['amount_ml']) + _toInt(row['ml']),
+        );
+      }
+    } catch (_) {}
+
+    try {
+      final meals = await client
+          .from('meal_logs')
+          .select('meal_date, consumed_at, total_calories_kcal')
+          .eq('user_id', uid)
+          .gte('created_at', start.toIso8601String())
+          .lt(now.add(const Duration(days: 1)).toIso8601String());
+      for (final row in meals) {
+        final dateRaw = (row['meal_date'] ?? '').toString();
+        final key = dateRaw.isNotEmpty
+            ? dateRaw
+            : HamvitDateUtils.toIsoDate(
+                DateTime.tryParse((row['consumed_at'] ?? '').toString()) ?? now);
+        final current = dayMap[key] ?? const _TrendDayData();
+        dayMap[key] = current.copyWith(
+          calories: current.calories + _toInt(row['total_calories_kcal']),
+        );
+      }
+    } catch (_) {}
+
+    try {
+      final habits = await client
+          .from('habit_logs')
+          .select('log_date, logged_at, completed, done')
+          .eq('user_id', uid)
+          .gte('created_at', start.toIso8601String())
+          .lt(now.add(const Duration(days: 1)).toIso8601String());
+
+      for (final row in habits) {
+        final completed = row['completed'] == true || row['done'] == true;
+        if (!completed) continue;
+        final dateRaw = (row['log_date'] ?? '').toString();
+        final key = dateRaw.isNotEmpty
+            ? dateRaw
+            : HamvitDateUtils.toIsoDate(
+                DateTime.tryParse((row['logged_at'] ?? '').toString()) ?? now);
+        final current = dayMap[key] ?? const _TrendDayData();
+        dayMap[key] = current.copyWith(habitsDone: current.habitsDone + 1);
+      }
+    } catch (_) {}
+
+    try {
+      final activity = await client
+          .from('activity_sessions')
+          .select('started_at, duration_seconds, finished_at, ended_at')
+          .eq('user_id', uid)
+          .gte('started_at', start.toIso8601String())
+          .lt(now.add(const Duration(days: 1)).toIso8601String());
+
+      for (final row in activity) {
+        final startedAt =
+            DateTime.tryParse((row['started_at'] ?? '').toString());
+        if (startedAt == null) continue;
+        final key = HamvitDateUtils.toIsoDate(startedAt);
+        final current = dayMap[key] ?? const _TrendDayData();
+
+        var activeMinutes = _minutesFromSeconds(_toInt(row['duration_seconds']));
+        if (activeMinutes <= 0) {
+          final endedAt =
+              DateTime.tryParse((row['finished_at'] ?? '').toString()) ??
+                  DateTime.tryParse((row['ended_at'] ?? '').toString());
+          if (endedAt != null && endedAt.isAfter(startedAt)) {
+            activeMinutes =
+                _minutesFromSeconds(endedAt.difference(startedAt).inSeconds);
+          }
+        }
+
+        dayMap[key] = current.copyWith(
+          activeMinutes: current.activeMinutes + activeMinutes,
+        );
+      }
+    } catch (_) {}
+
+    try {
+      final sleepRows = await client
+          .from('sleep_logs')
+          .select('sleep_date, duration_minutes, total_sleep_minutes')
+          .eq('user_id', uid)
+          .gte('sleep_date', HamvitDateUtils.toIsoDate(start))
+          .lte('sleep_date', HamvitDateUtils.toIsoDate(now));
+
+      for (final row in sleepRows) {
+        final key = (row['sleep_date'] ?? '').toString();
+        if (key.isEmpty) continue;
+        final current = dayMap[key] ?? const _TrendDayData();
+        final hours = (_toInt(row['duration_minutes']) +
+                _toInt(row['total_sleep_minutes'])) /
+            60.0;
+        dayMap[key] = current.copyWith(sleepHours: hours);
+      }
+    } catch (_) {}
+
+    return dayMap.entries.map((entry) {
+      final day = entry.value;
+      var score = 0.0;
+      var weight = 0.0;
+
+      score += _safeProgress(day.waterMl, 2500) * 0.25;
+      weight += 0.25;
+
+      if (day.calories > 0) {
+        score += _safeProgress(day.calories, 2000) * 0.25;
+        weight += 0.25;
+      }
+
+      score += (day.habitsDone / 3).clamp(0.0, 1.0) * 0.2;
+      weight += 0.2;
+
+      score += (day.activeMinutes / 30).clamp(0.0, 1.0) * 0.2;
+      weight += 0.2;
+
+      if (day.sleepHours > 0) {
+        score += (day.sleepHours / 8).clamp(0.0, 1.0) * 0.1;
+        weight += 0.1;
+      }
+
+      final normalized = weight > 0 ? score / weight : 0.0;
+      return (normalized * 100).clamp(0.0, 100.0);
+    }).toList(growable: false);
   }
 
   _ScoreData _computeScore({
@@ -790,4 +935,36 @@ class _ScoreData {
       {required this.score,
       required this.dayCompletionPercent,
       required this.status});
+}
+
+class _TrendDayData {
+  final int waterMl;
+  final int calories;
+  final int habitsDone;
+  final int activeMinutes;
+  final double sleepHours;
+
+  const _TrendDayData({
+    this.waterMl = 0,
+    this.calories = 0,
+    this.habitsDone = 0,
+    this.activeMinutes = 0,
+    this.sleepHours = 0,
+  });
+
+  _TrendDayData copyWith({
+    int? waterMl,
+    int? calories,
+    int? habitsDone,
+    int? activeMinutes,
+    double? sleepHours,
+  }) {
+    return _TrendDayData(
+      waterMl: waterMl ?? this.waterMl,
+      calories: calories ?? this.calories,
+      habitsDone: habitsDone ?? this.habitsDone,
+      activeMinutes: activeMinutes ?? this.activeMinutes,
+      sleepHours: sleepHours ?? this.sleepHours,
+    );
+  }
 }

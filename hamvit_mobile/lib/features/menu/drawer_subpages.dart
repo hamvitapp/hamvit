@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/supabase_provider.dart';
 import '../../shared/widgets/hamvit_components.dart';
+import '../legal/privacy_policy_screen.dart';
+import '../legal/terms_screen.dart';
 import '../premium/premium_page.dart';
 import '../reports/reports_service.dart';
 
@@ -420,6 +422,13 @@ class _DrawerSubItemPageState extends ConsumerState<DrawerSubItemPage> {
         type == DrawerSubItemType.supportContact ||
         type == DrawerSubItemType.supportTerms ||
         type == DrawerSubItemType.supportPrivacyPolicy) {
+      if (type == DrawerSubItemType.supportTerms) {
+        return TermsScreen();
+      }
+      if (type == DrawerSubItemType.supportPrivacyPolicy) {
+        return PrivacyPolicyScreen();
+      }
+
       final map = {
         DrawerSubItemType.supportHelp: 'Central de ajuda',
         DrawerSubItemType.supportContact: 'Falar com suporte',

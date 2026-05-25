@@ -29,6 +29,8 @@ import '../features/profile/goals_page.dart';
 import '../features/profile/profile_edit_screen.dart';
 import '../features/onboarding/presentation/my_profile_hub_screen.dart';
 import '../features/hydration/hydration_page.dart';
+import '../features/legal/privacy_policy_screen.dart';
+import '../features/legal/terms_screen.dart';
 import '../features/premium/advanced_analytics_screen.dart';
 import '../features/premium/premium_page.dart';
 import '../features/reports/analytics_screen.dart';
@@ -55,10 +57,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   final authenticatedRoutes = <String>{
     '/home',
+    '/dashboard',
     '/habits',
     '/nutrition',
     '/progress',
     '/profile',
+    '/legal/terms',
+    '/legal/privacy',
     '/settings',
     '/activities',
     '/reports',
@@ -224,10 +229,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(path: '/home', builder: (context, state) => const HamvitScaffold(initialIndex: 0)),
-      GoRoute(path: '/habits', builder: (context, state) => const HamvitScaffold(initialIndex: 1)),
-      GoRoute(path: '/nutrition', builder: (context, state) => const HamvitScaffold(initialIndex: 2)),
-      GoRoute(path: '/progress', builder: (context, state) => const HamvitScaffold(initialIndex: 3)),
-      GoRoute(path: '/profile', builder: (context, state) => const HamvitScaffold(initialIndex: 4)),
+      GoRoute(path: '/dashboard', builder: (context, state) => const HamvitScaffold(initialIndex: 1)),
+      GoRoute(path: '/habits', builder: (context, state) => const HamvitScaffold(initialIndex: 2)),
+      GoRoute(path: '/nutrition', builder: (context, state) => const HamvitScaffold(initialIndex: 3)),
+      GoRoute(path: '/progress', builder: (context, state) => const HamvitScaffold(initialIndex: 4)),
+      GoRoute(path: '/profile', builder: (context, state) => const HamvitScaffold(initialIndex: 5)),
 
       GoRoute(
         path: '/settings',
@@ -242,6 +248,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           appBar: hamvitBackAppBar(context, title: 'Preferências'),
           body: const PreferencesPage(),
         ),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        builder: (context, state) => TermsScreen(),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        builder: (context, state) => PrivacyPolicyScreen(),
       ),
       GoRoute(
         path: '/activities',
@@ -335,7 +349,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           body: const PremiumPage(),
         ),
       ),
-      GoRoute(path: '/food-ai', builder: (context, state) => const HamvitScaffold(initialIndex: 2)),
+      GoRoute(path: '/food-ai', builder: (context, state) => const HamvitScaffold(initialIndex: 3)),
       GoRoute(
         path: '/meal-suggestions',
         builder: (context, state) => Scaffold(

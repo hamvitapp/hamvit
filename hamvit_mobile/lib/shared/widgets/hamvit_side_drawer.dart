@@ -262,9 +262,16 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                 children: [
                   _sub('Central de ajuda', DrawerSubItemType.supportHelp),
                   _sub('Falar com suporte', DrawerSubItemType.supportContact),
-                  _sub('Termos', DrawerSubItemType.supportTerms),
-                  _sub('Política de privacidade',
-                      DrawerSubItemType.supportPrivacyPolicy),
+                  HamvitMenuTile(
+                    title: 'Termos',
+                    icon: Icons.gavel_outlined,
+                    onTap: () => _go(context, '/legal/terms'),
+                  ),
+                  HamvitMenuTile(
+                    title: 'Política de privacidade',
+                    icon: Icons.privacy_tip_outlined,
+                    onTap: () => _go(context, '/legal/privacy'),
+                  ),
                 ],
               ),
               const Divider(height: 20, thickness: 1),

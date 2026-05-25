@@ -49,11 +49,16 @@ class HamvitDailyStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final waterProgress =
-        waterGoalMl == 0 ? 0.0 : (waterMl / waterGoalMl).clamp(0.0, 1.0);
-    final caloriesRawProgress = (caloriesGoal == null || caloriesGoal == 0)
-        ? 0.0
-        : calories / caloriesGoal!;
+    const defaultWaterGoalMl = 2500;
+    const defaultCaloriesGoal = 2000;
+
+    final effectiveWaterGoal = waterGoalMl > 0 ? waterGoalMl : defaultWaterGoalMl;
+    final waterProgress = (waterMl / effectiveWaterGoal).clamp(0.0, 1.0);
+
+    final effectiveCaloriesGoal = (caloriesGoal != null && caloriesGoal! > 0)
+      ? caloriesGoal!
+      : defaultCaloriesGoal;
+    final caloriesRawProgress = calories / effectiveCaloriesGoal;
     final caloriesProgress = caloriesRawProgress.clamp(0.0, 1.0);
     final caloriesOverTarget =
         (caloriesGoal != null && caloriesGoal! > 0) && calories > caloriesGoal!;
@@ -97,7 +102,9 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         ],
         progressLabel: '${(caloriesProgress * 100).round()}%',
         footerNote: caloriesGoal == null
+          ? (calories == 0
             ? 'Meta pendente'
+            : 'Meta pendente - referencia $defaultCaloriesGoal kcal')
             : (caloriesOverTarget ? 'Levemente acima da meta hoje' : null),
         onTap: onCaloriesTap,
       ),

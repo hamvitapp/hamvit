@@ -1,4 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
+import '../../theme/hamvit_colors.dart';
 
 class _NavIcon extends StatelessWidget {
   final IconData icon;
@@ -22,17 +26,102 @@ class HamvitBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      height: 72,
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      destinations: [
-        NavigationDestination(icon: _NavIcon(icon: Icons.today_outlined, selected: currentIndex == 0), label: 'Hoje'),
-        NavigationDestination(icon: _NavIcon(icon: Icons.checklist_rounded, selected: currentIndex == 1), label: 'Hábitos'),
-        NavigationDestination(icon: _NavIcon(icon: Icons.restaurant_menu_outlined, selected: currentIndex == 2), label: 'Alimentação'),
-        NavigationDestination(icon: _NavIcon(icon: Icons.show_chart_rounded, selected: currentIndex == 3), label: 'Evolução'),
-        NavigationDestination(icon: _NavIcon(icon: Icons.person_outline_rounded, selected: currentIndex == 4), label: 'Perfil'),
-      ],
+    final items = [
+      (label: 'Hoje', icon: Icons.today_outlined),
+      (label: 'Dashboard', icon: Icons.dashboard_outlined),
+      (label: 'Hábitos', icon: Icons.checklist_rounded),
+      (label: 'Alimentação', icon: Icons.restaurant_menu_outlined),
+      (label: 'Evolução', icon: Icons.show_chart_rounded),
+      (label: 'Perfil', icon: Icons.person_outline_rounded),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            height: 76,
+            decoration: BoxDecoration(
+              color: HamvitColors.darkCard.withValues(alpha: 0.34),
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+              ),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  const SizedBox(width: 6),
+                  for (var i = 0; i < items.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: _BottomItem(
+                        label: items[i].label,
+                        icon: items[i].icon,
+                        selected: currentIndex == i,
+                        onTap: () => onTap(i),
+                      ),
+                    ),
+                  const SizedBox(width: 6),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = selected
+        ? HamvitColors.accentCyan.withValues(alpha: 0.18)
+        : Colors.transparent;
+    final fg = selected ? HamvitColors.darkText : HamvitColors.darkTextMuted;
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: SizedBox(
+          height: 56,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _NavIcon(icon: icon, selected: selected),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
