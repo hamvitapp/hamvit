@@ -55,11 +55,6 @@ class GoalsPage extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const HamvitSectionHeader(
-          title: 'Objetivos e dados do perfil',
-          subtitle: 'Resumo das escolhas e metas usadas para personalizar o HAMVIT.',
-        ),
-        const SizedBox(height: 12),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(12),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/hamvit_date_utils.dart';
 import '../../shared/widgets/hamvit_date_field.dart';
 import '../../shared/widgets/hamvit_module_widgets.dart';
+import '../evolution/evolution_provider.dart';
 import '../onboarding/providers/onboarding_profile_provider.dart';
 
 class BodyDataPage extends ConsumerStatefulWidget {
@@ -87,6 +88,7 @@ class _BodyDataPageState extends ConsumerState<BodyDataPage> {
       birthDateIso: _birthDateIso,
       biologicalSex: _biologicalSex,
     );
+    ref.invalidate(evolutionDashboardProvider);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -114,6 +116,37 @@ class _BodyDataPageState extends ConsumerState<BodyDataPage> {
     );
   }
 
+  void _showEstimatedMetricsInfo() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Como interpretar as estimativas'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'TMB estimada: taxa metabólica basal, calorias que seu corpo gasta em repouso.\n'
+            'Cálculo: fórmula de Mifflin-St Jeor com peso, altura, idade e sexo biológico.\n\n'
+            'Gasto diário estimado (TDEE): total de calorias gastas no dia.\n'
+            'Cálculo: TMB × fator de atividade (sedentário a alto).\n\n'
+            'Meta diária sugerida: alvo de calorias para o objetivo atual.\n'
+            'Cálculo: TDEE ajustado por superávit/déficit conforme objetivo.\n\n'
+            'Déficit aplicado: redução calórica para emagrecimento seguro.\n'
+            'Cálculo: percentual do TDEE (ex.: 15%) e valor absoluto em kcal.\n\n'
+            'Proteína estimada: meta diária de proteína para suporte muscular.\n'
+            'Cálculo: gramas por kg de peso corporal, variando pelo objetivo.\n\n'
+            'Meta de água estimada: ingestão diária recomendada de água.\n'
+            'Cálculo: aproximadamente 35 ml por kg de peso corporal.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingProfileProvider);
@@ -122,10 +155,6 @@ class _BodyDataPageState extends ConsumerState<BodyDataPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Dados corporais', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 6),
-        const Text('Edite peso, altura e dados base usados nas estimativas do app.'),
-        const SizedBox(height: 12),
         TextField(
           controller: _weightCtrl,
           keyboardType: TextInputType.number,
@@ -169,6 +198,11 @@ class _BodyDataPageState extends ConsumerState<BodyDataPage> {
         const SizedBox(height: 12),
         HamvitModuleSummaryCard(
           title: 'Meta calórica estimada',
+          titleTrailing: IconButton(
+            tooltip: 'Entender estimativas',
+            onPressed: _showEstimatedMetricsInfo,
+            icon: const Icon(Icons.help_outline),
+          ),
           description: targets == null
               ? 'Preencha peso, altura e data de nascimento para calcular sua meta inicial segura.'
               : 'TMB estimada: ${targets.bmr.toStringAsFixed(0)} kcal\n'

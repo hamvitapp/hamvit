@@ -52,8 +52,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           HamvitButton(
             label: 'Salvar nova senha',
             onPressed: () async {
-              final password = _passwordCtrl.text.trim();
-              final confirm = _confirmCtrl.text.trim();
+              final password = _passwordCtrl.text;
+              final confirm = _confirmCtrl.text;
               if (!_passwordRegex.hasMatch(password)) {
                 setState(() => _error = 'Senha inválida para a política atual.');
                 return;

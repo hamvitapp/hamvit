@@ -13,6 +13,7 @@ class AppProfile {
   final String id;
   final String userId;
   final String? displayName;
+  final String? photoUrl;
   final String role;
   final String plan;
   final bool premiumActive;
@@ -22,6 +23,7 @@ class AppProfile {
     required this.id,
     required this.userId,
     this.displayName,
+    this.photoUrl,
     required this.role,
     required this.plan,
     required this.premiumActive,
@@ -33,6 +35,7 @@ class AppProfile {
       id: (map['id'] ?? '').toString(),
       userId: (map['user_id'] ?? map['id'] ?? '').toString(),
       displayName: map['display_name'] as String? ?? map['full_name'] as String?,
+      photoUrl: map['photo_url'] as String?,
       role: (map['role'] ?? 'user').toString(),
       plan: (map['plan'] ?? 'free').toString(),
       premiumActive: (map['premium_active'] as bool?) ?? false,

@@ -1,4 +1,4 @@
-﻿# HAMVIT - CHECKLIST FINAL DE ACEITE RCP (Execução Local)
+# HAMVIT - CHECKLIST FINAL DE ACEITE RCP (Execução Local)
 
 Data: 2026-05-21
 
@@ -28,7 +28,7 @@ Data: 2026-05-21
 - [x] Segredos sensíveis fora do Flutter (backend/functions).
 
 ## 4) Testes e execução
-- [x] `supabase start` OK.
+- [x] `supabase db push` OK.
 - [x] `supabase db reset` OK.
 - [x] Testes HTTP reais das functions OK (arquivo `docs/edge_functions_test_results.json`).
 - [x] `flutter test` OK.

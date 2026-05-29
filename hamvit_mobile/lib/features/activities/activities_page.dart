@@ -1,18 +1,22 @@
 ﻿import 'dart:async';
 import 'dart:math';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/activity_refresh_provider.dart';
 import 'providers/activity_live_provider.dart';
 
 import '../../shared/widgets/hamvit_module_widgets.dart';
 import '../../shared/widgets/hamvit_onboarding_widgets.dart';
+import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import '../onboarding/providers/onboarding_profile_provider.dart';
+import '../reports/report_controller.dart';
 import 'activity_tracking_engine.dart';
 import 'activity_type_selector.dart';
 import 'calorie_estimation_service.dart';
@@ -27,6 +31,7 @@ class ActivitiesPage extends ConsumerStatefulWidget {
 }
 
 class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
+  static const _pendingActivitySessionsKey = 'hamvit_pending_activity_sessions_v1';
   static const _options = <ActivityTypeOption>[
     ActivityTypeOption(
       id: 'caminhada_outdoor',
@@ -76,7 +81,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   Timer? _clockTicker;
   int _lastDashboardInvalidateAt = 0;
   final List<Position> _points = [];
-  List<String> _history = const [];
+  List<_ActivityHistoryEntry> _history = const [];
 
   bool _running = false;
   bool _paused = false;
@@ -201,6 +206,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     final client = Supabase.instance.client;
     final user = client.auth.currentUser;
     if (user == null) return;
+    await _flushPendingActivitySessions();
 
     final since = DateTime.now().subtract(const Duration(days: 7));
 
@@ -227,7 +233,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     var totalMin = 0;
     var totalKm = 0.0;
     var totalCalories = 0.0;
-    final history = <String>[];
+    final history = <_ActivityHistoryEntry>[];
 
     for (final row in rows) {
       final startedAt = DateTime.tryParse((row['started_at'] ?? '').toString());
@@ -261,8 +267,15 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
               'indoor'
           ? 'indoor'
           : 'outdoor';
-      history.add(
-          '$type ($env) - ${km.toStringAsFixed(2)} km - ${durationMin} min');
+      history.add(_ActivityHistoryEntry(
+        type: type,
+        environment: env,
+        distanceKm: km,
+        durationMin: durationMin,
+        caloriesKcal: _toDouble(row['estimated_calories_kcal']).round(),
+        paceLabel: _paceLabel(_toInt(row['average_pace_seconds'])),
+        startedAt: startedAt,
+      ));
     }
 
     if (!mounted) return;
@@ -272,9 +285,11 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       _weekCaloriesBase = totalCalories;
       _history = history.take(7).toList(growable: false);
     });
+    debugPrint('ActivitiesPage: history refreshed with ${_history.length} items');
   }
 
   Future<void> _start(ActivityTypeOption type) async {
+    debugPrint('ActivitiesPage: atividade iniciada ${type.id}');
     if (type.environment == ActivityEnvironment.outdoor) {
       final enabled = await Geolocator.isLocationServiceEnabled();
       if (!enabled) return;
@@ -402,10 +417,38 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   void _pauseOrResume() {
     if (!_running) return;
     setState(() => _paused = !_paused);
+    debugPrint('ActivitiesPage: atividade ${_paused ? 'pausada' : 'retomada'}');
+  }
+
+  Future<void> _queuePendingActivitySession(Map<String, dynamic> payload) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getStringList(_pendingActivitySessionsKey) ?? <String>[];
+    existing.add(jsonEncode(payload));
+    await prefs.setStringList(_pendingActivitySessionsKey, existing);
+    debugPrint('ActivitiesPage: payload salvo local/offline');
+  }
+
+  Future<void> _flushPendingActivitySessions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final queue = prefs.getStringList(_pendingActivitySessionsKey) ?? <String>[];
+    if (queue.isEmpty) return;
+    final client = Supabase.instance.client;
+    final pending = <String>[];
+    for (final raw in queue) {
+      try {
+        final payload = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+        await client.from('activity_sessions').insert(payload);
+        debugPrint('ActivitiesPage: pending activity synced');
+      } catch (_) {
+        pending.add(raw);
+      }
+    }
+    await prefs.setStringList(_pendingActivitySessionsKey, pending);
   }
 
   Future<void> _finish() async {
     if (!_running) return;
+    debugPrint('ActivitiesPage: atividade finalizada');
     _endedAt = DateTime.now();
     _running = false;
     _paused = false;
@@ -458,29 +501,47 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
 
     final client = Supabase.instance.client;
     final sessionId = _sessionId;
+    final user = client.auth.currentUser;
 
+    final payload = <String, dynamic>{
+      if (user != null) 'user_id': user.id,
+      'activity_type': _currentType.id,
+      'activity_environment': _isIndoor ? 'indoor' : 'outdoor',
+      'tracking_mode': _isIndoor ? 'manual' : 'gps',
+      'started_at': _startedAt?.toIso8601String(),
+      'finished_at': _endedAt!.toIso8601String(),
+      'duration_seconds': durationSeconds,
+      'distance_meters': _isIndoor ? null : finalDistanceM,
+      'manual_distance_meters': _isIndoor ? finalDistanceM : null,
+      'manual_speed_kmh': _isIndoor ? finalSpeedKmh : null,
+      'average_pace_seconds': paceSeconds,
+      'average_speed_kmh': avgSpeed,
+      'estimated_calories_kcal': calories,
+      'created_at': _startedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
+    };
+    debugPrint('ActivitiesPage: payload salvo => $payload');
+
+    var persisted = false;
     if (sessionId != null) {
       try {
-        await client.from('activity_sessions').update({
-          'finished_at': _endedAt!.toIso8601String(),
-          'duration_seconds': durationSeconds,
-          'distance_meters': _isIndoor ? null : finalDistanceM,
-          'manual_distance_meters': _isIndoor ? finalDistanceM : null,
-          'manual_speed_kmh': _isIndoor ? finalSpeedKmh : null,
-          'average_pace_seconds': paceSeconds,
-          'average_speed_kmh': avgSpeed,
-          'estimated_calories_kcal': calories,
-          'activity_environment': _isIndoor ? 'indoor' : 'outdoor',
-          'tracking_mode': _isIndoor ? 'manual' : 'gps',
-        }).eq('id', sessionId);
+        await client.from('activity_sessions').update(payload).eq('id', sessionId);
+        persisted = true;
+        debugPrint('ActivitiesPage: update sessão ok');
       } catch (_) {
-        try {
-          await client.from('activity_sessions').update({
-            'ended_at': _endedAt!.toIso8601String(),
-            'distance_m': finalDistanceM,
-          }).eq('id', sessionId);
-        } catch (_) {}
+        debugPrint('ActivitiesPage: falha update sessão, tentando insert final');
       }
+    }
+    if (!persisted) {
+      try {
+        await client.from('activity_sessions').insert(payload);
+        persisted = true;
+        debugPrint('ActivitiesPage: insert sessão final ok');
+      } catch (_) {
+        debugPrint('ActivitiesPage: falha insert remoto, salvando offline');
+      }
+    }
+    if (!persisted) {
+      await _queuePendingActivitySession(payload);
     }
 
     _sessionId = null;
@@ -489,8 +550,13 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       ref.read(activityLiveStateProvider.notifier).state = null;
     } catch (_) {}
     await _loadWeeklyFromDb();
+    ref.read(activityRefreshTickProvider.notifier).state++;
     ref.invalidate(homeDashboardProvider);
+    ref.invalidate(dashboardSnapshotProvider);
+    ref.invalidate(evolutionReportProvider);
+    ref.invalidate(reportHistoryProvider);
     setState(() {});
+    debugPrint('ActivitiesPage: providers invalidados apos finalizar');
 
     if (!mounted) return;
     await showDialog<void>(
@@ -547,12 +613,6 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const HamvitSectionHeader(
-          title: 'Atividade fisica',
-          subtitle:
-              'Outdoor com GPS e indoor por estimativa. Movimento tambem conta.',
-        ),
-        const SizedBox(height: 12),
         if (onboarding.needsActivitySoftGate) ...[
           HamvitSoftGateCard(
             title: 'Complete seus dados para estimativas mais precisas.',
@@ -594,19 +654,31 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
             speedKmh: _currentSpeedKmh(),
             caloriesKcal: _estimatedCalories(weightKg),
           ),
-        Card(
-          child: ListTile(
-            title: Text(_paused ? 'Retomar atividade' : 'Pausar atividade'),
-            subtitle: const Text('Pausa/retoma o rastreio'),
-            onTap: _running ? _pauseOrResume : null,
-          ),
-        ),
-        Card(
-          child: ListTile(
-            title: const Text('Finalizar atividade'),
-            subtitle: const Text('Finaliza e congela os totais'),
-            onTap: _running ? _finish : null,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _running ? _pauseOrResume : null,
+                icon: Icon(
+                  _paused ? Icons.play_arrow : Icons.pause, 
+                  size: 18,
+                ),
+                label: Text(_paused ? 'Retomar' : 'Pausar'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _running ? _finish : null,
+                icon: const Icon(Icons.flag, size: 18),
+                label: const Text('Finalizar'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Row(
@@ -646,12 +718,114 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
           paceLabel: _paceLabel(_currentPaceSeconds()),
         ),
         const SizedBox(height: 8),
-        HamvitHistoryCard(
-          title: 'Historico de atividades',
-          items: _history,
-          icon: Icons.route_outlined,
-        ),
+        _ActivityHistoryCard(entries: _history),
       ],
+    );
+  }
+}
+
+class _ActivityHistoryEntry {
+  final String type;
+  final String environment;
+  final double distanceKm;
+  final int durationMin;
+  final int caloriesKcal;
+  final String paceLabel;
+  final DateTime? startedAt;
+
+  const _ActivityHistoryEntry({
+    required this.type,
+    required this.environment,
+    required this.distanceKm,
+    required this.durationMin,
+    required this.caloriesKcal,
+    required this.paceLabel,
+    required this.startedAt,
+  });
+}
+
+class _ActivityHistoryCard extends StatelessWidget {
+  final List<_ActivityHistoryEntry> entries;
+  const _ActivityHistoryCard({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    String groupOf(DateTime? startedAt) {
+      if (startedAt == null) return 'Mais antigas';
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final day = DateTime(startedAt.year, startedAt.month, startedAt.day);
+      final diff = today.difference(day).inDays;
+      if (diff == 0) return 'Hoje';
+      if (diff == 1) return 'Ontem';
+      if (diff <= 6) return 'Esta semana';
+      return 'Mais antigas';
+    }
+
+    String fmt(DateTime? value) {
+      if (value == null) return '--';
+      String two(int n) => n.toString().padLeft(2, '0');
+      return '${two(value.day)}/${two(value.month)} ${two(value.hour)}:${two(value.minute)}';
+    }
+
+    final grouped = <String, List<_ActivityHistoryEntry>>{
+      'Hoje': [],
+      'Ontem': [],
+      'Esta semana': [],
+      'Mais antigas': [],
+    };
+    for (final item in entries) {
+      grouped[groupOf(item.startedAt)]!.add(item);
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.route_outlined, size: 18),
+                const SizedBox(width: 6),
+                Text('Historico de atividades', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (entries.isEmpty) const Text('Sem historico ainda.'),
+            if (entries.isNotEmpty)
+              for (final group in ['Hoje', 'Ontem', 'Esta semana', 'Mais antigas'])
+                if (grouped[group]!.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 6),
+                    child: Text(group, style: Theme.of(context).textTheme.titleSmall),
+                  ),
+                  for (final item in grouped[group]!)
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(item.environment == 'indoor' ? Icons.home_outlined : Icons.explore_outlined, size: 18),
+                                const SizedBox(width: 6),
+                                Expanded(child: Text('${item.type} • ${item.environment}', style: Theme.of(context).textTheme.titleSmall)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text('${item.distanceKm.toStringAsFixed(2)} km • ${item.durationMin} min • ${item.caloriesKcal} kcal'),
+                            Text('Ritmo: ${item.paceLabel} • ${fmt(item.startedAt)}', style: Theme.of(context).textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+          ],
+        ),
+      ),
     );
   }
 }

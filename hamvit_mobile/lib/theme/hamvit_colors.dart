@@ -19,4 +19,15 @@ class HamvitColors {
   static const darkCard = Color(0xFF102840);
   static const darkText = Color(0xFFEAF2FF);
   static const darkTextMuted = Color(0xFFAFC0D7);
+
+  // --- Primary brand colors ---
+  static const Color primary = Color(0xFF168DFF);
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFF6F8FB);
+  static const Color surfaceVariant = Color(0xFFEEF1F5);
+
+  // --- Macro colors ---
+  static const Color proteinColor = Color(0xFFE74C3C);
+  static const Color carbsColor = Color(0xFFF39C12);
+  static const Color fatColor = Color(0xFF2ECC71);
 }

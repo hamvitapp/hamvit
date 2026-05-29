@@ -24,6 +24,9 @@ class EvolutionRepository {
     }
 
     final profile = await _fetchHealthProfile(uid);
+    final prefTarget = await _fetchTargetWeightFromPreferences(uid);
+    final goalHistoryTarget = await _fetchTargetWeightFromGoalHistory(uid);
+    final resolvedTarget = profile.targetWeightKg ?? prefTarget ?? goalHistoryTarget;
     final weights = await _fetchWeightLogs(uid, profileHeightCm: profile.heightCm);
     final measurements = await _fetchMeasurements(uid);
     final photos = await _fetchPhotos(uid);
@@ -34,8 +37,51 @@ class EvolutionRepository {
       photos: photos,
       profileWeightKg: profile.weightKg,
       profileHeightCm: profile.heightCm,
-      targetWeightKg: profile.targetWeightKg,
+      targetWeightKg: resolvedTarget,
     );
+  }
+
+  Future<double?> _fetchTargetWeightFromPreferences(String uid) async {
+    try {
+      final rows = await client
+          .from('user_preferences')
+          .select('data')
+          .eq('user_id', uid)
+          .order('created_at', ascending: false)
+          .limit(1);
+      if (rows.isEmpty) return null;
+      final row = Map<String, dynamic>.from(rows.first as Map);
+      final data = row['data'] is Map
+          ? Map<String, dynamic>.from(row['data'] as Map)
+          : <String, dynamic>{};
+      final onboarding = data['onboarding'] is Map
+          ? Map<String, dynamic>.from(data['onboarding'] as Map)
+          : <String, dynamic>{};
+      final body = onboarding['body'] is Map
+          ? Map<String, dynamic>.from(onboarding['body'] as Map)
+          : <String, dynamic>{};
+      return _toDouble(body['target_weight_kg']) ??
+          _toDouble(body['target_weight']) ??
+          _toDouble(body['goal_weight_kg']);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<double?> _fetchTargetWeightFromGoalHistory(String uid) async {
+    try {
+      final rows = await client
+          .from('goal_history')
+          .select('target_weight_kg')
+          .eq('user_id', uid)
+          .order('created_at', ascending: false)
+          .limit(1);
+      if (rows.isEmpty) return null;
+      final row = Map<String, dynamic>.from(rows.first as Map);
+      return _toDouble(row['target_weight_kg']);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> addWeightLog({
@@ -145,26 +191,34 @@ class EvolutionRepository {
 
   Future<_HealthProfileData> _fetchHealthProfile(String uid) async {
     try {
-      final row = await client
-          .from('health_profiles')
-          .select('current_weight_kg, weight_kg, height_cm, target_weight_kg')
+          final rows = await client
+            .from('health_profiles')
+            .select('*')
           .eq('user_id', uid)
-          .maybeSingle();
+          .order('created_at', ascending: false)
+          .limit(1);
+      final row = rows.isNotEmpty ? Map<String, dynamic>.from(rows.first as Map) : null;
+        final targetWeight = _toDouble(row?['target_weight_kg']) ??
+            _toDouble(row?['desired_weight_kg']);
       return _HealthProfileData(
         weightKg: _toDouble(row?['current_weight_kg']) ?? _toDouble(row?['weight_kg']),
         heightCm: _toInt(row?['height_cm']),
-        targetWeightKg: _toDouble(row?['target_weight_kg']),
+        targetWeightKg: targetWeight,
       );
     } catch (_) {
-      final row = await client
-          .from('health_profiles')
-          .select('weight_kg, height_cm')
+          final rows = await client
+            .from('health_profiles')
+            .select('*')
           .eq('user_id', uid)
-          .maybeSingle();
+          .order('created_at', ascending: false)
+          .limit(1);
+      final row = rows.isNotEmpty ? Map<String, dynamic>.from(rows.first as Map) : null;
+        final targetWeight = _toDouble(row?['target_weight_kg']) ??
+            _toDouble(row?['desired_weight_kg']);
       return _HealthProfileData(
         weightKg: _toDouble(row?['weight_kg']),
         heightCm: _toInt(row?['height_cm']),
-        targetWeightKg: null,
+        targetWeightKg: targetWeight,
       );
     }
   }

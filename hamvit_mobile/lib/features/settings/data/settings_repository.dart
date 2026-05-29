@@ -5,6 +5,7 @@ class SettingsAccountData {
   final String userId;
   final String name;
   final String email;
+  final String? photoUrl;
   final String planLabel;
   final DateTime? createdAt;
   final String? objective;
@@ -13,6 +14,7 @@ class SettingsAccountData {
     required this.userId,
     required this.name,
     required this.email,
+    required this.photoUrl,
     required this.planLabel,
     required this.createdAt,
     required this.objective,
@@ -221,6 +223,7 @@ class SettingsRepository {
       userId: user.id,
       name: normalizedName,
       email: user.email ?? '-',
+      photoUrl: profile['avatar_url']?.toString(),
       planLabel: isPremium ? 'Premium Vitalício' : 'Free',
       createdAt: profileCreated ?? userCreated,
       objective: onboarding['objective']?.toString(),

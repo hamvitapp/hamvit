@@ -1,4 +1,4 @@
-﻿# HAMVIT - Checklist de Implementação (Execução Atual)
+# HAMVIT - Checklist de Implementação (Execução Atual)
 
 ## Etapas concluídas nesta execução
 - [x] Leitura dos RCPs e índice mestre com precedência.
@@ -18,7 +18,7 @@
 - [x] `flutter analyze` (passou; 2 lints informativos de `const`, sem erro).
 - [x] `npm run build` no admin (sucesso).
 - [x] `supabase init` (sucesso).
-- [x] `supabase start` (sucesso).
+- [x] `supabase db push` (sucesso).
 - [x] `supabase db reset` com migrations + seed oficial (sucesso).
 - [x] Teste real local de Edge Functions:
   - [x] `scanner` (resolução/cache local funcionando).
@@ -40,7 +40,7 @@
 - [ ] Testes automatizados críticos (navegação, RLS, Premium/Free, offline).
 
 ## Pendências de instalação de ambiente
-- [x] Docker Desktop (ativo e funcional com WSL2).
+- [x] Supabase Cloud (ativo e funcional com WSL2).
 - [x] Android SDK + cmdline-tools (instalado localmente no projeto).
 - [x] JDK 17 (instalado localmente no projeto).
 - [ ] (Opcional) Android Studio para gerenciamento do SDK/AVD.

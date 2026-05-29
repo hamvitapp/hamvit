@@ -210,8 +210,12 @@ class HamvitBMIHistoryCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               delta == null
-                  ? 'Registre mais pesagens para acompanhar seu IMC historico.'
-                  : (delta < 0 ? 'Seu IMC reduziu desde o inicio.' : 'Seu IMC evoluiu no periodo analisado.'),
+                  ? (currentBmi == null
+                      ? 'Defina peso e altura para calcular seu IMC atual.'
+                      : 'IMC atual calculado com peso e altura do perfil. Registre pesagens para acompanhar o histórico.')
+                  : (delta < 0
+                      ? 'Seu IMC reduziu desde o inicio.'
+                      : 'Seu IMC evoluiu no periodo analisado.'),
             ),
           ],
         ),

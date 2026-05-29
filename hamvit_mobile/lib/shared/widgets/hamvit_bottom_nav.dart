@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -33,43 +33,8 @@ class _HamvitBottomNavState extends State<HamvitBottomNav> {
   final _items = const [
     (label: 'Hoje', icon: Icons.today_outlined),
     (label: 'Dashboard', icon: Icons.dashboard_outlined),
-    (label: 'Hábitos', icon: Icons.checklist_rounded),
-    (label: 'Alimentação', icon: Icons.restaurant_menu_outlined),
-    (label: 'Evolução', icon: Icons.show_chart_rounded),
     (label: 'Perfil', icon: Icons.person_outline_rounded),
   ];
-
-  late final List<GlobalKey> _itemKeys;
-
-  @override
-  void initState() {
-    super.initState();
-    _itemKeys = List.generate(_items.length, (_) => GlobalKey());
-    WidgetsBinding.instance.addPostFrameCallback((_) => _centerSelected());
-  }
-
-  @override
-  void didUpdateWidget(covariant HamvitBottomNav oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentIndex != widget.currentIndex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _centerSelected());
-    }
-  }
-
-  void _centerSelected() {
-    if (!mounted || widget.currentIndex < 0 || widget.currentIndex >= _itemKeys.length) {
-      return;
-    }
-    final targetContext = _itemKeys[widget.currentIndex].currentContext;
-    if (targetContext == null) return;
-    Scrollable.ensureVisible(
-      targetContext,
-      duration: const Duration(milliseconds: 320),
-      alignment: 0.5,
-      curve: Curves.easeOutCubic,
-      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,16 +51,12 @@ class _HamvitBottomNavState extends State<HamvitBottomNav> {
                 top: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
               ),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: [
-                  const SizedBox(width: 6),
-                  for (var i = 0; i < _items.length; i++)
-                    Padding(
-                      key: _itemKeys[i],
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Row(
+              children: [
+                for (var i = 0; i < _items.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                       child: _BottomItem(
                         label: _items[i].label,
                         icon: _items[i].icon,
@@ -103,9 +64,8 @@ class _HamvitBottomNavState extends State<HamvitBottomNav> {
                         onTap: () => widget.onTap(i),
                       ),
                     ),
-                  const SizedBox(width: 6),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -147,9 +107,10 @@ class _BottomItem extends StatelessWidget {
           child: SizedBox(
             height: 56,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _NavIcon(icon: icon, selected: selected),
                   const SizedBox(width: 6),

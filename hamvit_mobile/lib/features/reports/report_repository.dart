@@ -194,6 +194,11 @@ class ReportRepository {
     return points.where((p) => !_startOfDay(p.date).isBefore(start)).toList(growable: false);
   }
 
+  double? _nullablePositive(dynamic value) {
+    final parsed = _toDouble(value);
+    return parsed > 0 ? parsed : null;
+  }
+
   Future<EvolutionReportData> loadEvolutionReport({required ReportPeriodType period}) async {
     final client = _client;
     if (client == null) throw Exception('Supabase indisponível.');
@@ -223,8 +228,8 @@ class ReportRepository {
     final habitsPoints = _filterByDate(aggregated.habits, start);
     final activityPoints = _filterByDate(aggregated.activity, start);
     final sleepPoints = _filterByDate(aggregated.sleep, start);
-    final weightPoints = _filterByDate(aggregated.weight, start);
-    final bmiPoints = _filterByDate(aggregated.bmi, start);
+    var weightPoints = _filterByDate(aggregated.weight, start);
+    var bmiPoints = _filterByDate(aggregated.bmi, start);
     final consistencyPoints = _filterByDate(aggregated.consistency, start);
 
     final validDays = math.max(1, waterPoints.length).toDouble();
@@ -251,7 +256,30 @@ class ReportRepository {
     final sleepMetrics = await _loadSleepMetrics(user.id, start, end);
     final macroMetrics = await _loadMacroMetrics(user.id, start, end);
     final bodyMeasures = await _loadBodyMeasures(user.id);
-    final targetWeight = await _loadTargetWeight(user.id);
+    final prefTargetWeight = await _loadTargetWeightFromPreferences(user.id);
+    final profileSnapshot = await _loadHealthProfileSnapshot(user.id);
+    final targetWeight = await _loadTargetWeight(user.id) ??
+        prefTargetWeight ??
+        profileSnapshot.targetWeightKg ??
+        _nullablePositive(bodyMeasures['target_weight_kg']) ??
+        _nullablePositive(bodyMeasures['desired_weight_kg']) ??
+        _nullablePositive(bodyMeasures['targetWeightKg']) ??
+        _nullablePositive(bodyMeasures['desiredWeightKg']);
+
+    if (weightPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.weightKg != null) {
+      weightPoints = [
+        DashboardPoint(date: end, value: profileSnapshot.weightKg!),
+      ];
+    }
+    if (bmiPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.weightKg != null && profileSnapshot.heightCm != null) {
+      final heightM = profileSnapshot.heightCm! / 100.0;
+      if (heightM > 0) {
+        final bmi = profileSnapshot.weightKg! / (heightM * heightM);
+        bmiPoints = [
+          DashboardPoint(date: end, value: bmi),
+        ];
+      }
+    }
 
     final weightValues = weightPoints.where((p) => p.value > 0).toList(growable: false);
     final bmiValues = bmiPoints.where((p) => p.value > 0).toList(growable: false);
@@ -384,7 +412,7 @@ class ReportRepository {
     try {
       final rows = await client
           .from('activity_sessions')
-          .select('distance_km, distance_m, calories_estimated, started_at')
+          .select('distance_meters, manual_distance_meters, distance_m, estimated_calories_kcal, calories_estimated, started_at')
           .eq('user_id', userId)
           .gte('started_at', start.toIso8601String())
           .lt('started_at', end.add(const Duration(days: 1)).toIso8601String());
@@ -393,10 +421,13 @@ class ReportRepository {
       var calories = 0.0;
       for (final raw in rows) {
         final row = Map<String, dynamic>.from(raw as Map);
-        final directKm = _toDouble(row['distance_km']);
-        final meters = _toDouble(row['distance_m']);
-        distanceKm += directKm > 0 ? directKm : (meters / 1000);
-        calories += _toDouble(row['calories_estimated']);
+        final meters = _toDouble(row['distance_meters']);
+        final manualMeters = _toDouble(row['manual_distance_meters']);
+        final legacyMeters = _toDouble(row['distance_m']);
+        final chosenMeters = meters > 0 ? meters : (manualMeters > 0 ? manualMeters : legacyMeters);
+        distanceKm += chosenMeters / 1000;
+        final kcal = _toDouble(row['estimated_calories_kcal']);
+        calories += kcal > 0 ? kcal : _toDouble(row['calories_estimated']);
       }
 
       return _ActivityMetrics(distanceKm: distanceKm, calories: calories, count: rows.length);
@@ -522,21 +553,96 @@ class ReportRepository {
     if (client == null) return null;
 
     try {
-      final row = await client
+        final row = await client
           .from('health_profiles')
-          .select('target_weight_kg, desired_weight_kg')
+          .select('*')
           .eq('user_id', userId)
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
       if (row == null) return null;
-      final target = _toDouble(row['target_weight_kg']);
-      if (target > 0) return target;
-      final desired = _toDouble(row['desired_weight_kg']);
-      if (desired > 0) return desired;
+        final target = _toDouble(row['target_weight_kg']) ?? _toDouble(row['desired_weight_kg']);
+        if (target > 0) return target;
       return null;
     } catch (_) {
+      // Backward-compat for environments that still have desired_weight_kg only.
+      try {
+        final legacy = await client
+            .from('health_profiles')
+            .select('desired_weight_kg')
+            .eq('user_id', userId)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        if (legacy == null) return null;
+        final desired = _toDouble(legacy['desired_weight_kg']);
+        if (desired > 0) return desired;
+      } catch (_) {}
       return null;
+    }
+  }
+
+  Future<double?> _loadTargetWeightFromPreferences(String userId) async {
+    final client = _client;
+    if (client == null) return null;
+    try {
+      final row = await client
+          .from('user_preferences')
+          .select('data')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (row == null) return null;
+
+      final data = row['data'];
+      final dataMap = data is Map<String, dynamic>
+          ? data
+          : (data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{});
+      final onboarding = dataMap['onboarding'];
+      final onboardingMap = onboarding is Map<String, dynamic>
+          ? onboarding
+          : (onboarding is Map ? Map<String, dynamic>.from(onboarding) : <String, dynamic>{});
+      final body = onboardingMap['body'];
+      final bodyMap = body is Map<String, dynamic>
+          ? body
+          : (body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{});
+
+      return _nullablePositive(bodyMap['target_weight_kg']) ??
+          _nullablePositive(bodyMap['target_weight']) ??
+          _nullablePositive(bodyMap['desired_weight_kg']) ??
+          _nullablePositive(bodyMap['targetWeightKg']) ??
+          _nullablePositive(bodyMap['desiredWeightKg']);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<_HealthProfileSnapshot> _loadHealthProfileSnapshot(String userId) async {
+    final client = _client;
+    if (client == null) return const _HealthProfileSnapshot();
+
+    try {
+      final row = await client
+          .from('health_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (row == null) return const _HealthProfileSnapshot();
+
+      final weightKg = _nullablePositive(row['weight_kg']);
+      final heightCm = _nullablePositive(row['height_cm']);
+      final targetWeightKg = _nullablePositive(row['target_weight_kg']) ?? _nullablePositive(row['desired_weight_kg']);
+
+      return _HealthProfileSnapshot(
+        weightKg: weightKg,
+        heightCm: heightCm,
+        targetWeightKg: targetWeightKg,
+      );
+    } catch (_) {
+      return const _HealthProfileSnapshot();
     }
   }
 
@@ -651,5 +757,17 @@ class _MacroMetrics {
     required this.avgProtein,
     required this.avgCarbs,
     required this.avgFats,
+  });
+}
+
+class _HealthProfileSnapshot {
+  final double? weightKg;
+  final double? heightCm;
+  final double? targetWeightKg;
+
+  const _HealthProfileSnapshot({
+    this.weightKg,
+    this.heightCm,
+    this.targetWeightKg,
   });
 }

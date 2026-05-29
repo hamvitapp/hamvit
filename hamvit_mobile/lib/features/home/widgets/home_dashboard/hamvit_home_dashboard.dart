@@ -18,6 +18,8 @@ class HamvitHomeDashboardData {
   final double distanceKm;
   final int activityCaloriesKcal;
   final Duration? sleepDuration;
+  final double? currentWeightKg;
+  final double? targetWeightKg;
   final int dayCompletionPercent;
   final String primaryInsight;
   final String? secondaryInsight;
@@ -28,6 +30,7 @@ class HamvitHomeDashboardData {
   final VoidCallback? onHabitsTap;
   final VoidCallback? onActivityTap;
   final VoidCallback? onSleepTap;
+  final VoidCallback? onEvolutionTap;
 
   const HamvitHomeDashboardData({
     required this.score,
@@ -42,6 +45,8 @@ class HamvitHomeDashboardData {
     required this.distanceKm,
     required this.activityCaloriesKcal,
     required this.sleepDuration,
+    required this.currentWeightKg,
+    required this.targetWeightKg,
     required this.dayCompletionPercent,
     required this.primaryInsight,
     this.secondaryInsight,
@@ -52,6 +57,7 @@ class HamvitHomeDashboardData {
     this.onHabitsTap,
     this.onActivityTap,
     this.onSleepTap,
+    this.onEvolutionTap,
   });
 }
 
@@ -92,11 +98,14 @@ class HamvitHomeDashboard extends StatelessWidget {
             distanceKm: data.distanceKm,
             activityCaloriesKcal: data.activityCaloriesKcal,
             sleepDuration: data.sleepDuration,
+            currentWeightKg: data.currentWeightKg,
+            targetWeightKg: data.targetWeightKg,
             onWaterTap: data.onWaterTap,
             onCaloriesTap: data.onCaloriesTap,
             onHabitsTap: data.onHabitsTap,
             onActivityTap: data.onActivityTap,
             onSleepTap: data.onSleepTap,
+            onEvolutionTap: data.onEvolutionTap,
           ),
           const SizedBox(height: 10),
           HamvitDayCompletionBar(percent: data.dayCompletionPercent),

@@ -9,14 +9,18 @@ class HamvitSideDrawer extends StatefulWidget {
   final bool isPremium;
   final bool isAdmin;
   final String? userName;
+  final String? photoUrl;
   final VoidCallback onLogout;
+  final VoidCallback? onReturnFromDrawerRoute;
 
   const HamvitSideDrawer({
     super.key,
     required this.isPremium,
     required this.isAdmin,
     this.userName,
+    this.photoUrl,
     required this.onLogout,
+    this.onReturnFromDrawerRoute,
   });
 
   @override
@@ -31,9 +35,12 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
     context.go(route, extra: extra);
   }
 
-  void _push(BuildContext context, String route, {Object? extra}) {
+  Future<void> _push(BuildContext context, String route, {Object? extra}) async {
     Navigator.of(context).pop();
-    context.push(route, extra: extra);
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    await context.push(route, extra: extra);
+    if (!mounted) return;
+    widget.onReturnFromDrawerRoute?.call();
   }
 
   Widget _sub(String title, DrawerSubItemType type) {
@@ -68,6 +75,11 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = widget.photoUrl != null && widget.photoUrl!.trim().isNotEmpty;
+    final initial =
+        ((widget.userName ?? 'U').isNotEmpty ? (widget.userName ?? 'U')[0] : 'U')
+            .toUpperCase();
+
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.82,
       shape: const RoundedRectangleBorder(
@@ -101,17 +113,20 @@ class _HamvitSideDrawerState extends State<HamvitSideDrawer> {
                     Row(
                       children: [
                         CircleAvatar(
+                          radius: 20,
                           backgroundColor:
                               HamvitColors.accentCyan.withValues(alpha: 0.2),
-                          child: Text(
-                            ((widget.userName ?? 'U').isNotEmpty
-                                    ? (widget.userName ?? 'U')[0]
-                                    : 'U')
-                                .toUpperCase(),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700),
-                          ),
+                          foregroundImage: hasPhoto
+                              ? NetworkImage(widget.photoUrl!.trim())
+                              : null,
+                          child: hasPhoto
+                              ? null
+                              : Text(
+                                  initial,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700),
+                                ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(

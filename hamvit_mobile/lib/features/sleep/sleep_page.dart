@@ -374,11 +374,6 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const HamvitSectionHeader(
-          title: 'Sono',
-          subtitle: 'Acompanhe meta de sono, qualidade e historico semanal.',
-        ),
-        const SizedBox(height: 12),
         HamvitModuleSummaryCard(
           title: 'Meta de sono',
           description: '${goal.toStringAsFixed(1)} horas por noite',

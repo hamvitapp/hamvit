@@ -1,7 +1,7 @@
 ﻿# HAMVIT - RELATORIO DE EXECUCAO AUTOMATICA (2026-05-21)
 
-## Supabase local
-- supabase start: OK
+## Supabase Cloud
+- supabase db push: OK
 - supabase db reset: OK (migrations + seed)
 
 ## Edge Functions (teste HTTP real)
@@ -33,3 +33,4 @@
 - status: PRONTO NO CODIGO, nao ativado na execucao atual
 - motivo: secret `GEMINI_API_KEY` nao definido nesta rodada
 - comportamento atual: fallback seguro `deterministic_fallback`
+

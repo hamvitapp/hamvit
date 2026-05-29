@@ -198,9 +198,9 @@ class ChartAggregationService {
 
     double heightMeters = 0;
     try {
-      final profile = await client
+        final profile = await client
           .from('health_profiles')
-          .select('height_cm, target_weight_kg, desired_weight_kg')
+          .select('*')
           .eq('user_id', uid)
           .maybeSingle();
       if (profile != null) {

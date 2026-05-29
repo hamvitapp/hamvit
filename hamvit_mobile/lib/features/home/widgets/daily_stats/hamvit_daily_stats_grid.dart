@@ -14,11 +14,14 @@ class HamvitDailyStatsGrid extends StatelessWidget {
   final double distanceKm;
   final int activityCaloriesKcal;
   final Duration? sleepDuration;
+  final double? currentWeightKg;
+  final double? targetWeightKg;
   final VoidCallback? onWaterTap;
   final VoidCallback? onCaloriesTap;
   final VoidCallback? onHabitsTap;
   final VoidCallback? onActivityTap;
   final VoidCallback? onSleepTap;
+  final VoidCallback? onEvolutionTap;
 
   const HamvitDailyStatsGrid({
     super.key,
@@ -32,11 +35,14 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     required this.distanceKm,
     required this.activityCaloriesKcal,
     required this.sleepDuration,
+    required this.currentWeightKg,
+    required this.targetWeightKg,
     this.onWaterTap,
     this.onCaloriesTap,
     this.onHabitsTap,
     this.onActivityTap,
     this.onSleepTap,
+    this.onEvolutionTap,
   });
 
   String _formatLiters(int ml) => '${(ml / 1000).toStringAsFixed(1)}L';
@@ -68,6 +74,18 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     final sleepProgress = sleepDuration == null
         ? 0.0
         : (sleepDuration!.inMinutes / (8 * 60)).clamp(0.0, 1.0);
+    final hasEvolution = currentWeightKg != null &&
+        targetWeightKg != null &&
+        currentWeightKg != targetWeightKg;
+    final evolutionProgress = hasEvolution
+        ? (((currentWeightKg! - targetWeightKg!).abs() == 0)
+                ? 1.0
+                : 1 -
+                    (((currentWeightKg! - targetWeightKg!).abs() /
+                            (currentWeightKg!).abs())
+                        .clamp(0.0, 1.0)))
+            .clamp(0.0, 1.0)
+        : 0.0;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final cardExtent = screenWidth < 360 ? 188.0 : 172.0;
@@ -75,7 +93,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     final cards = [
       HamvitStatCard(
         icon: Icons.water_drop_outlined,
-        title: 'Agua',
+        title: 'Hidratação',
         value: '${_formatLiters(waterMl)} / ${_formatLiters(waterGoalMl)}',
         subtitle: 'Meta diaria',
         progress: waterProgress,
@@ -90,7 +108,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
       ),
       HamvitStatCard(
         icon: Icons.local_fire_department_outlined,
-        title: 'Calorias',
+        title: 'Alimentação',
         value: caloriesGoal == null
             ? '$calories kcal'
             : '$calories / $caloriesGoal',
@@ -157,6 +175,24 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         footerNote:
             sleepDuration == null ? '0% - Sono ainda nao registrado' : null,
         onTap: onSleepTap,
+      ),
+      HamvitStatCard(
+        icon: Icons.monitor_weight_outlined,
+        title: 'Evolução',
+        value: hasEvolution
+            ? 'Atual ${currentWeightKg!.toStringAsFixed(1)} kg'
+            : 'Sem progresso',
+        subtitle: hasEvolution
+            ? 'Alvo ${targetWeightKg!.toStringAsFixed(1)} kg'
+            : 'Defina peso atual e alvo',
+        progress: evolutionProgress,
+        progressGradient: const [
+          HamvitColors.accentCyan,
+          HamvitColors.accentBlue
+        ],
+        progressLabel: '${(evolutionProgress * 100).round()}%',
+        footerNote: hasEvolution ? null : 'Toque para registrar meta',
+        onTap: onEvolutionTap,
       ),
     ];
 

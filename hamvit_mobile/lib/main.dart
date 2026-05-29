@@ -56,6 +56,7 @@ class _HamvitAppState extends ConsumerState<HamvitApp> {
         Locale('pt', 'BR'),
         Locale('en', 'US'),
       ],
+      scrollBehavior: const _HamvitNoStretchScrollBehavior(),
       builder: (context, child) {
         return HamvitBiometricAppLockOverlay(
           child: HamvitAppBlurOverlay(
@@ -65,5 +66,18 @@ class _HamvitAppState extends ConsumerState<HamvitApp> {
       },
       routerConfig: router,
     );
+  }
+}
+
+class _HamvitNoStretchScrollBehavior extends MaterialScrollBehavior {
+  const _HamvitNoStretchScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }

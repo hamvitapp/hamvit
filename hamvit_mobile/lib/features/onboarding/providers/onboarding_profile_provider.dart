@@ -184,7 +184,7 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       state = OnboardingProfileState(
         isLoading: false,
         objective: _asString(onboarding['objective']),
-        weightKg: _asDouble(health['weight_kg']),
+        weightKg: _asDouble(health['current_weight_kg']) ?? _asDouble(health['weight_kg']),
         heightCm: _asInt(health['height_cm']),
         activityLevel: _asString(onboarding['activity_level']),
         activityPreferences: activityPreferences,
@@ -192,7 +192,10 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
         foodRestrictions: _asStringList(food['restrictions']),
         sleepHours: _asDouble(sleep['hours_target']),
         hydrationGoalMl: _asInt(hydration['ml_target']),
-        targetWeightKg: _asDouble(body['target_weight_kg']),
+        targetWeightKg: _asDouble(body['target_weight_kg']) ??
+            _asDouble(health['target_weight_kg']) ??
+            _asDouble(health['desired_weight_kg']) ??
+            _asDouble(health['goal_weight_kg']),
         birthDateIso: _asString(body['birth_date']),
         biologicalSex: _asString(body['biological_sex']),
         calorieGoal: _asInt(onboarding['calorie_goal']),
@@ -396,11 +399,27 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
     String? birthDateIso,
     String? biologicalSex,
   }) async {
+    final uid = _userId;
+    final client = _client;
+
     await saveActivityProfile(
       weightKg: weightKg,
       heightCm: heightCm,
       activityLevel: state.activityLevel ?? 'moderada',
     );
+
+    if (uid != null && client != null) {
+      try {
+        await client.from('health_profiles').update({
+          'current_weight_kg': weightKg,
+          'weight_kg': weightKg,
+          'height_cm': heightCm,
+          'target_weight_kg': targetWeightKg,
+          'desired_weight_kg': targetWeightKg,
+          'goal_weight_kg': targetWeightKg,
+        }).eq('user_id', uid);
+      } catch (_) {}
+    }
 
     await _savePreferencesPatch((onboarding) {
       onboarding['body'] = {

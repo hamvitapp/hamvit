@@ -71,15 +71,8 @@ class ProfilePage extends ConsumerWidget {
               _profileItem(
                 context: context,
                 icon: Icons.monitor_weight_outlined,
-                title: 'Peso',
-                completed: onboarding.hasWeight,
-                route: '/profile/body-data',
-              ),
-              _profileItem(
-                context: context,
-                icon: Icons.height,
-                title: 'Altura',
-                completed: onboarding.hasHeight,
+                title: 'Dados corporais',
+                completed: onboarding.hasWeight && onboarding.hasHeight,
                 route: '/profile/body-data',
               ),
               _profileItem(

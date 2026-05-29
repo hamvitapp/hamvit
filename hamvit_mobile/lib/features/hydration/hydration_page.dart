@@ -99,12 +99,12 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const HamvitSectionHeader(
+        if (false) const HamvitSectionHeader(
           title: 'Hidratação',
           subtitle:
               'Acompanhe consumo diário, meta calculada por peso e histórico de água.',
         ),
-        const SizedBox(height: 12),
+        if (false) const SizedBox(height: 12),
         HamvitProgressCard(
           title: 'Meta diária de água',
           subtitle: '$consumedMl ml consumidos de $safeGoal ml',

@@ -157,12 +157,14 @@ class HamvitModuleSummaryCard extends StatelessWidget {
   final String title;
   final String description;
   final Widget? action;
+  final Widget? titleTrailing;
 
   const HamvitModuleSummaryCard({
     super.key,
     required this.title,
     required this.description,
     this.action,
+    this.titleTrailing,
   });
 
   @override
@@ -173,7 +175,17 @@ class HamvitModuleSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+                ),
+                if (titleTrailing != null) ...[
+                  const SizedBox(width: 8),
+                  titleTrailing!,
+                ],
+              ],
+            ),
             const SizedBox(height: 6),
             Text(description),
             if (action != null) ...[

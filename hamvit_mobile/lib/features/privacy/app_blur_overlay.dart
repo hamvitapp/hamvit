@@ -121,22 +121,24 @@ class _HamvitProtectedScreenWrapperState
     extends ConsumerState<HamvitProtectedScreenWrapper> {
   bool _hintShown = false;
   int _lastScreenshotTick = 0;
+  late final PrivacyProtectionService _service;
 
   @override
   void initState() {
     super.initState();
+    _service = ref.read(privacyProtectionServiceProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final service = ref.read(privacyProtectionServiceProvider);
-      await service.ensureInitialized();
-      await service.enterProtectedScreen();
-      _lastScreenshotTick = service.screenshotEventTick;
+      await _service.ensureInitialized();
+      await _service.enterProtectedScreen();
+      _lastScreenshotTick = _service.screenshotEventTick;
       _showProtectionHintIfNeeded();
     });
   }
 
   @override
   void dispose() {
-    ref.read(privacyProtectionServiceProvider).leaveProtectedScreen();
+    // Use stored service instance to avoid accessing `ref` after dispose.
+    _service.leaveProtectedScreen();
     super.dispose();
   }
 
@@ -155,8 +157,7 @@ class _HamvitProtectedScreenWrapperState
   void _showProtectionHintIfNeeded() {
     if (!widget.showHint || _hintShown) return;
 
-    final service = ref.read(privacyProtectionServiceProvider);
-    if (!service.isScreenshotBlockingActive) return;
+    if (!_service.isScreenshotBlockingActive) return;
 
     _hintShown = true;
     _showHint(widget.message);

@@ -8,10 +8,13 @@ import '../../core/premium/premium_widgets.dart';
 import '../../features/onboarding/providers/onboarding_profile_provider.dart';
 import '../privacy/app_blur_overlay.dart';
 import '../home/providers/home_dashboard_provider.dart';
-import '../meal_recommendations/meal_recommendations_page.dart';
 import '../../shared/widgets/hamvit_module_widgets.dart';
 import '../../shared/widgets/hamvit_onboarding_widgets.dart';
 import 'nutrition_service.dart';
+import 'recipe_provider.dart';
+import 'recipe_repository.dart';
+import 'screens/recipe_suggestions_screen.dart';
+import 'screens/recipe_details_screen.dart';
 
 class NutritionPage extends ConsumerStatefulWidget {
   final bool isPremium;
@@ -24,17 +27,15 @@ class NutritionPage extends ConsumerStatefulWidget {
 class _NutritionPageState extends ConsumerState<NutritionPage> {
   final barcodeCtrl = TextEditingController();
   final _picker = ImagePicker();
-  final List<String> _recentMeals = const [
-    'Ontem • Jantar: frango grelhado com arroz integral',
-    'Ontem • Almoço: salada + feijão + filé',
-    'Sex • Café: iogurte, banana e aveia',
-  ];
 
   Map<String, dynamic>? barcodeResult;
   Map<String, dynamic>? photoAnalysis;
   bool isAnalyzingPhoto = false;
   bool _loadingMeals = false;
   List<Map<String, dynamic>> _todayMeals = const [];
+  int _totalProtein = 0;
+  int _totalCarbs = 0;
+  int _totalFat = 0;
 
   static const _mealTypeOptions = <Map<String, String>>[
     {'value': 'cafe_da_manha', 'label': 'Café da manhã'},
@@ -71,7 +72,18 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
     try {
       final meals = await service.fetchTodayMeals();
       if (!mounted) return;
-      setState(() => _todayMeals = meals);
+      int totalProt = 0, totalCarb = 0, totalF = 0;
+      for (final m in meals) {
+        totalProt += (m['protein_g'] as num?)?.toInt() ?? 0;
+        totalCarb += (m['carbs_g'] as num?)?.toInt() ?? 0;
+        totalF += (m['fat_g'] as num?)?.toInt() ?? 0;
+      }
+      setState(() {
+        _todayMeals = meals;
+        _totalProtein = totalProt;
+        _totalCarbs = totalCarb;
+        _totalFat = totalF;
+      });
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -198,12 +210,12 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-        const HamvitSectionHeader(
+        if (false) const HamvitSectionHeader(
           title: 'Diário alimentar',
           subtitle:
               'Registre refeições e acompanhe calorias e macronutrientes do dia.',
         ),
-        const SizedBox(height: 12),
+        if (false) const SizedBox(height: 12),
         if (onboarding.needsNutritionSoftGate) ...[
           HamvitSoftGateCard(
             title: 'Complete suas preferências para melhorar suas sugestões.',
@@ -220,21 +232,25 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
           progress: progress,
         ),
         const SizedBox(height: 8),
-        const Row(
+        Row(
           children: [
             Expanded(
                 child: HamvitMetricCard(
                     label: 'Proteínas',
-                    value: '96 g',
+                    value: '${_totalProtein} g',
                     icon: Icons.fitness_center)),
             SizedBox(width: 8),
             Expanded(
                 child: HamvitMetricCard(
-                    label: 'Carboidratos', value: '140 g', icon: Icons.grain)),
+                    label: 'Carboidratos',
+                    value: '${_totalCarbs} g',
+                    icon: Icons.grain)),
             SizedBox(width: 8),
             Expanded(
                 child: HamvitMetricCard(
-                    label: 'Gorduras', value: '42 g', icon: Icons.opacity)),
+                    label: 'Gorduras',
+                    value: '${_totalFat} g',
+                    icon: Icons.opacity)),
           ],
         ),
         const SizedBox(height: 10),
@@ -401,18 +417,12 @@ class _NutritionPageState extends ConsumerState<NutritionPage> {
                 MaterialPageRoute(
                   builder: (_) => Scaffold(
                     appBar: AppBar(title: const Text('Sugestões Premium')),
-                    body: MealRecommendationsPage(isPremium: widget.isPremium),
+                    body: RecipeSuggestionsScreen(isPremium: widget.isPremium),
                   ),
                 ),
               );
             },
           ),
-        ),
-        const SizedBox(height: 8),
-        HamvitHistoryCard(
-          title: 'Histórico recente',
-          items: _recentMeals,
-          icon: Icons.history,
         ),
         const SizedBox(height: 8),
         HamvitModuleSummaryCard(

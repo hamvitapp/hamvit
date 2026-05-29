@@ -268,7 +268,7 @@ class HamvitPremiumFoodSuggestionsCard extends StatelessWidget {
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Suas sugest�es inteligentes usar�o estas prefer�ncias.',
+                'Suas sugestões inteligentes usarão estas preferências.',
                 style: TextStyle(
                     color: HamvitColors.darkText, fontWeight: FontWeight.w600),
               ),
@@ -292,26 +292,26 @@ class HamvitPremiumFoodSuggestionsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Desbloqueie sugest�es inteligentes.',
+            'Desbloqueie sugestões inteligentes.',
             style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Com o Premium Vital�cio, o HAMVIT usa suas prefer�ncias para sugerir receitas, montar refei��es do dia e ajudar voc� a bater suas metas com mais facilidade.',
+            'Com o Premium Vitalício, o HAMVIT usa suas preferências para sugerir receitas, montar refeições do dia e ajudar você a bater suas metas com mais facilidade.',
             style: TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 8),
-          const Text('� Receitas saud�veis sugeridas',
+          const Text('• Receitas saudáveis sugeridas',
               style: TextStyle(color: Colors.white70)),
-          const Text('� Montagem autom�tica do dia',
+          const Text('• Montagem automática do dia',
               style: TextStyle(color: Colors.white70)),
-          const Text('� Substitui��es inteligentes',
+          const Text('• Substituições inteligentes',
               style: TextStyle(color: Colors.white70)),
-          const Text('� Relat�rios avan�ados',
+          const Text('• Relatórios avançados',
               style: TextStyle(color: Colors.white70)),
-          const Text('� Sem an�ncios', style: TextStyle(color: Colors.white70)),
-          const Text('� Sem mensalidade',
+          const Text('• Sem anúncios', style: TextStyle(color: Colors.white70)),
+          const Text('• Sem mensalidade',
               style: TextStyle(color: Colors.white70)),
           const SizedBox(height: 10),
           Row(

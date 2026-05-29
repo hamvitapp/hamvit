@@ -97,7 +97,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'E-mail'),
                     validator: (v) {
-                      final value = (v ?? '').trim();
+                      final value = v ?? '';
                       if (value.isEmpty) return 'E-mail obrigatorio.';
                       if (!value.contains('@')) return 'E-mail invalido.';
                       return null;
@@ -123,7 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     decoration:
                         const InputDecoration(labelText: 'Confirmar senha'),
                     validator: (v) {
-                      if ((v ?? '').trim() != _passwordCtrl.text.trim()) {
+                      if ((v ?? '') != _passwordCtrl.text) {
                         return 'As senhas não conferem.';
                       }
                       return null;
@@ -179,7 +179,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     await notifier.register(
                       name: _nameCtrl.text.trim(),
                       email: _emailCtrl.text.trim(),
-                      password: _passwordCtrl.text.trim(),
+                      password: _passwordCtrl.text,
                     );
                   },
           ),

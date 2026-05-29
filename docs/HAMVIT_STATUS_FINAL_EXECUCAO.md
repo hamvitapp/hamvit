@@ -1,4 +1,4 @@
-﻿# HAMVIT - Status Final desta Execução
+# HAMVIT - Status Final desta Execução
 
 ## Implementado
 - Estrutura monorepo completa (`hamvit_mobile`, `hamvit_admin`, `hamvit_backend`, `supabase`, `docs`, `seeds`).
@@ -32,7 +32,7 @@
 - `supabase init`: OK.
 
 ## Limitações reais que impedem fechamento total ponta-a-ponta
-- `supabase start` não executa por ausência de Docker Desktop/daemon ativo.
+- `supabase db push` não executa por ausência de Supabase Cloud/daemon ativo.
 - Android toolchain incompleto para build de APK/AAB (SDK/JDK ausentes).
 
 ## O que ainda falta implementar em código para cobertura integral dos RCPs
@@ -46,7 +46,7 @@
 - Suite de testes essenciais (navegação, RLS, Free/Premium, offline, validações de input).
 
 ## Instalações/configurações pendentes para tentarmos agora
-1. Docker Desktop (obrigatório para Supabase local).
+1. Supabase Cloud (obrigatório para Supabase Cloud).
 2. JDK 17 (obrigatório para Android/Gradle).
 3. Android SDK + cmdline-tools + platform-tools.
 4. (Opcional) Android Studio para gestão de SDK/AVD.

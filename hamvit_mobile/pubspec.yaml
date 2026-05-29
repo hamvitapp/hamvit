@@ -27,6 +27,8 @@ dependencies:
   shared_preferences: ^2.2.3
   local_auth: ^2.3.0
   flutter_secure_storage: ^9.2.2
+  cached_network_image: ^3.4.1
+  image_cropper: ^12.2.1
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +41,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/branding/
+    - assets/fonts/
 
 flutter_launcher_icons:
   android: true

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../privacy/app_blur_overlay.dart';
 import '../../theme/hamvit_colors.dart';
+import '../onboarding/providers/onboarding_profile_provider.dart';
 import 'add_weight_screen.dart';
 import 'body_measurements_screen.dart';
 import 'domain/bmi_calculator.dart';
@@ -114,24 +115,35 @@ class _EvolutionScreenState extends ConsumerState<EvolutionScreen> {
           ),
         ),
         data: (data) {
+          final onboarding = ref.watch(onboardingProfileProvider);
           final allLogsAsc = [...data.weightLogs]..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
           final cutoff = _cutoffFor(_range);
           final rangeLogs = _range == _WeightRange.all
               ? allLogsAsc
               : allLogsAsc.where((e) => !e.loggedAt.isBefore(cutoff)).toList();
 
+          final effectiveTargetWeight =
+              data.targetWeightKg ?? onboarding.targetWeightKg;
+
           final summary = WeightProgressEngine.build(
             logs: allLogsAsc,
             fallbackCurrentWeight: data.profileWeightKg,
-            targetWeight: data.targetWeightKg,
+            targetWeight: effectiveTargetWeight,
           );
 
           final initialBmi = allLogsAsc.isNotEmpty
               ? (allLogsAsc.first.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.first.weightKg, heightCm: data.profileHeightCm))
               : null;
           final currentBmi = allLogsAsc.isNotEmpty
-              ? (allLogsAsc.last.bmi ?? BmiCalculator.calculate(weightKg: allLogsAsc.last.weightKg, heightCm: data.profileHeightCm))
-              : null;
+              ? (allLogsAsc.last.bmi ??
+                  BmiCalculator.calculate(
+                    weightKg: allLogsAsc.last.weightKg,
+                    heightCm: data.profileHeightCm,
+                  ))
+              : BmiCalculator.calculate(
+                  weightKg: data.profileWeightKg,
+                  heightCm: data.profileHeightCm,
+                );
 
           final insights = EvolutionInsightsEngine.build(
             summary: summary,

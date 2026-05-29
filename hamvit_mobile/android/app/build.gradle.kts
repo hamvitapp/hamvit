@@ -34,6 +34,8 @@ android {
     }
 }
 
+// uCrop dependency is provided by the image_cropper plugin/artifacts; avoid adding a duplicate here.
+
 kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17

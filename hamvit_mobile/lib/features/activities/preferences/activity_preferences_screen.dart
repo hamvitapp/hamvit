@@ -79,8 +79,6 @@ class _ActivityPreferencesScreenState extends ConsumerState<ActivityPreferencesS
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Preferencias de atividade', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _activityLevel,
           decoration: const InputDecoration(labelText: 'Nivel de atividade'),

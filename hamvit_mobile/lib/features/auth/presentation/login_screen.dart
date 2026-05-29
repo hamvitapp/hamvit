@@ -94,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (!_formKey.currentState!.validate()) return;
                       await notifier.login(
                         email: _emailCtrl.text.trim(),
-                        password: _passwordCtrl.text.trim(),
+                        password: _passwordCtrl.text,
                       );
                     },
             ),

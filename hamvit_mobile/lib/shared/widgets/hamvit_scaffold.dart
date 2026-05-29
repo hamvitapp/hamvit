@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/habits/habits_page.dart';
 import '../../features/home/today_page.dart';
-import '../../features/nutrition/nutrition_page.dart';
-import '../../features/progress/progress_page.dart';
 import '../../features/settings/profile_page.dart';
 import '../../theme/hamvit_colors.dart';
 import 'hamvit_bottom_nav.dart';
@@ -24,6 +21,7 @@ class HamvitScaffold extends ConsumerStatefulWidget {
 
 class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
   late int index;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -43,15 +41,13 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
     final pages = [
       TodayPage(isPremium: isPremium),
       const DashboardPage(),
-      const HabitsPage(),
-      NutritionPage(isPremium: isPremium),
-      const ProgressPage(),
       ProfilePage(name: profile?.displayName, isPremium: isPremium, onLogout: () => auth.logout()),
     ];
 
-    final titles = ['Hoje', 'Dashboard', 'Hábitos', 'Alimentação', 'Evolução', 'Perfil'];
+    final titles = ['Hoje', 'Dashboard', 'Perfil'];
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(titles[index]),
         flexibleSpace: Container(
@@ -69,7 +65,15 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
         isPremium: isPremium,
         isAdmin: isAdmin,
         userName: profile?.displayName ?? user?.email,
+        photoUrl: profile?.photoUrl,
         onLogout: () => auth.logout(),
+        onReturnFromDrawerRoute: () {
+          if (!mounted) return;
+          Future<void>.delayed(const Duration(milliseconds: 60), () {
+            if (!mounted) return;
+            _scaffoldKey.currentState?.openDrawer();
+          });
+        },
       ),
       body: authState.status == AuthStatus.loading
           ? const HamvitLoading()
@@ -93,5 +97,3 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
     );
   }
 }
-
-

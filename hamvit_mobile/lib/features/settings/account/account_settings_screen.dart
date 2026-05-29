@@ -7,6 +7,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../security/biometric_gate.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/hamvit_settings_components.dart';
+import '../../profile/widgets/profile_photo_widget.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -83,6 +84,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final accountAsync = ref.watch(settingsAccountProvider);
+    final profile = ref.watch(currentProfileProvider);
 
     return HamvitSettingsScreen(
       title: 'Conta',
@@ -118,9 +120,11 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        ProfilePhotoWidget(
+                          photoUrl: profile?.photoUrl,
+                          displayName: account.name,
+                          size: 56,
+                          editable: false,
                         ),
                         const SizedBox(width: 12),
                         Expanded(

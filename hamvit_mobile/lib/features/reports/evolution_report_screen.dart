@@ -178,7 +178,19 @@ class _EvolutionReportScreenState extends ConsumerState<EvolutionReportScreen> {
                     children: [
                       _kv('Peso inicial', data.weightInitial == null ? '-' : '${data.weightInitial!.toStringAsFixed(1)} kg'),
                       _kv('Peso atual', data.weightCurrent == null ? '-' : '${data.weightCurrent!.toStringAsFixed(1)} kg'),
-                      _kv('Peso alvo', data.weightTarget == null ? '-' : '${data.weightTarget!.toStringAsFixed(1)} kg'),
+                      _kv(
+                        'Peso alvo',
+                        () {
+                          final fallback = (data.bodyMeasures['target_weight_kg'] ??
+                                  data.bodyMeasures['desired_weight_kg'] ??
+                                  data.bodyMeasures['targetWeightKg'] ??
+                                  data.bodyMeasures['desiredWeightKg'])
+                              ?.toString();
+                          final fallbackNum = fallback == null ? null : double.tryParse(fallback.replaceAll(',', '.'));
+                          final target = data.weightTarget ?? (fallbackNum != null && fallbackNum > 0 ? fallbackNum : null);
+                          return target == null ? '-' : '${target.toStringAsFixed(1)} kg';
+                        }(),
+                      ),
                       _kv('Progresso', '${data.weightProgressPercent.toStringAsFixed(0)}%'),
                       _kv('IMC inicial', data.bmiInitial == null ? '-' : data.bmiInitial!.toStringAsFixed(1)),
                       _kv('IMC atual', data.bmiCurrent == null ? '-' : data.bmiCurrent!.toStringAsFixed(1)),
@@ -426,7 +438,7 @@ class HamvitReportChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visible = points.where((p) => p.value > 0).toList(growable: false);
-    if (visible.isEmpty) {
+    if (visible.length < 2) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),

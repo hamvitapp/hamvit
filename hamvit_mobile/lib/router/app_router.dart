@@ -21,7 +21,6 @@ import '../features/onboarding/presentation/sleep_flow.dart';
 import '../features/onboarding/presentation/general_profile_flow.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
-import '../features/meal_recommendations/meal_recommendations_page.dart';
 import '../features/menu/drawer_subpages.dart';
 import '../features/nutrition/preferences/food_preferences_screen.dart';
 import '../features/profile/body_data_page.dart';
@@ -29,10 +28,13 @@ import '../features/profile/goals_page.dart';
 import '../features/profile/profile_edit_screen.dart';
 import '../features/onboarding/presentation/my_profile_hub_screen.dart';
 import '../features/hydration/hydration_page.dart';
+import '../features/habits/habits_page.dart';
 import '../features/legal/privacy_policy_screen.dart';
 import '../features/legal/terms_screen.dart';
+import '../features/nutrition/nutrition_page.dart';
 import '../features/premium/advanced_analytics_screen.dart';
 import '../features/premium/premium_page.dart';
+import '../features/progress/progress_page.dart';
 import '../features/reports/analytics_screen.dart';
 import '../features/reports/evolution_report_screen.dart';
 import '../features/reports/reports_period_screen.dart';
@@ -48,6 +50,7 @@ import '../features/settings/security/security_settings_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/sleep/sleep_page.dart';
 import '../features/security/biometric_gate.dart';
+import '../features/nutrition/screens/recipe_suggestions_screen.dart';
 import '../shared/widgets/hamvit_back_app_bar.dart';
 import '../shared/widgets/hamvit_scaffold.dart';
 
@@ -249,10 +252,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       GoRoute(path: '/home', builder: (context, state) => const HamvitScaffold(initialIndex: 0)),
       GoRoute(path: '/dashboard', builder: (context, state) => const HamvitScaffold(initialIndex: 1)),
-      GoRoute(path: '/habits', builder: (context, state) => const HamvitScaffold(initialIndex: 2)),
-      GoRoute(path: '/nutrition', builder: (context, state) => const HamvitScaffold(initialIndex: 3)),
-      GoRoute(path: '/progress', builder: (context, state) => const HamvitScaffold(initialIndex: 4)),
-      GoRoute(path: '/profile', builder: (context, state) => const HamvitScaffold(initialIndex: 5)),
+      GoRoute(
+        path: '/habits',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Hábitos'),
+          body: const HabitsPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/nutrition',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Alimentação'),
+          body: NutritionPage(isPremium: ref.read(isPremiumProvider)),
+        ),
+      ),
+      GoRoute(
+        path: '/progress',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Evolução'),
+          body: const ProgressPage(),
+        ),
+      ),
+      GoRoute(path: '/profile', builder: (context, state) => const HamvitScaffold(initialIndex: 2)),
 
       GoRoute(
         path: '/settings',
@@ -386,12 +407,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           body: const PremiumPage(),
         ),
       ),
-      GoRoute(path: '/food-ai', builder: (context, state) => const HamvitScaffold(initialIndex: 3)),
+      GoRoute(
+        path: '/food-ai',
+        builder: (context, state) => Scaffold(
+          appBar: hamvitBackAppBar(context, title: 'Alimentação'),
+          body: NutritionPage(isPremium: ref.read(isPremiumProvider)),
+        ),
+      ),
       GoRoute(
         path: '/meal-suggestions',
         builder: (context, state) => Scaffold(
           appBar: hamvitBackAppBar(context, title: 'Sugestões Premium'),
-          body: MealRecommendationsPage(isPremium: ref.read(isPremiumProvider)),
+          body: RecipeSuggestionsScreen(isPremium: ref.read(isPremiumProvider)),
         ),
       ),
       GoRoute(
