@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,11 +22,41 @@ class TodayPage extends ConsumerStatefulWidget {
   ConsumerState<TodayPage> createState() => _TodayPageState();
 }
 
-class _TodayPageState extends ConsumerState<TodayPage> {
+class _TodayPageState extends ConsumerState<TodayPage> with WidgetsBindingObserver {
+  Timer? _midnightRefreshTimer;
+
+  void _scheduleMidnightRefresh() {
+    _midnightRefreshTimer?.cancel();
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now) + const Duration(seconds: 1);
+    _midnightRefreshTimer = Timer(delay, () async {
+      if (!mounted) return;
+      await _refreshDashboard();
+      _scheduleMidnightRefresh();
+    });
+  }
   int _lastSeenActivityTick = 0;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleMidnightRefresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnightRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(homeDashboardProvider);
+      _scheduleMidnightRefresh();
+    }
   }
   Future<void> _refreshDashboard() async {
     ref.invalidate(homeDashboardProvider);
@@ -305,3 +337,4 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     );
   }
 }
+

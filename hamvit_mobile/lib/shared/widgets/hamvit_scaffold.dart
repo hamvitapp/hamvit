@@ -1,10 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/dashboard/dashboard_page.dart';
+import '../../features/dashboard/domain/dashboard_metrics_service.dart';
+import '../../features/evolution/evolution_provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/home/today_page.dart';
+import '../../features/home/providers/home_dashboard_provider.dart';
 import '../../features/settings/profile_page.dart';
 import '../../theme/hamvit_colors.dart';
 import 'hamvit_bottom_nav.dart';
@@ -20,13 +25,45 @@ class HamvitScaffold extends ConsumerStatefulWidget {
 }
 
 class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
+  static const _pendingPhotoFlowKey = 'hamvit_pending_profile_photo_flow';
   late int index;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String? _prefetchedUserId;
 
   @override
   void initState() {
     super.initState();
     index = widget.initialIndex;
+    _handlePendingProfilePhotoFlow();
+  }
+
+  Future<void> _handlePendingProfilePhotoFlow() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pending = prefs.getBool(_pendingPhotoFlowKey) ?? false;
+    if (!pending || !mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    if (!mounted) return;
+    if (GoRouterState.of(context).matchedLocation != '/profile/edit') {
+      context.push('/profile/edit');
+    }
+  }
+
+  void _warmupCoreData(String? userId) {
+    if (userId == null || userId.isEmpty) return;
+    if (_prefetchedUserId == userId) return;
+    _prefetchedUserId = userId;
+    Future<void>.delayed(const Duration(milliseconds: 120), () async {
+      if (!mounted) return;
+      try {
+        await ref.read(homeDashboardProvider.future);
+      } catch (_) {}
+      try {
+        await ref.read(dashboardSnapshotProvider.future);
+      } catch (_) {}
+      try {
+        await ref.read(evolutionDashboardProvider.future);
+      } catch (_) {}
+    });
   }
 
   @override
@@ -37,6 +74,9 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
     final profile = ref.watch(currentProfileProvider);
     final isPremium = ref.watch(isPremiumProvider);
     final isAdmin = ref.watch(isAdminProvider);
+    if (authState.status == AuthStatus.authenticated) {
+      _warmupCoreData(user?.id);
+    }
 
     final pages = [
       TodayPage(isPremium: isPremium),

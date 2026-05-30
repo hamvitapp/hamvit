@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/hamvit_date_utils.dart';
@@ -24,6 +27,10 @@ class HomeDashboardRepository {
   final String? userId;
 
   static HomeDashboardModel? _inMemoryCache;
+  static const _pendingWritesKeyPrefix = 'hamvit_pending_writes_';
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   int _toInt(dynamic value) {
     if (value == null) return 0;
@@ -53,13 +60,14 @@ class HomeDashboardRepository {
     final dayStart = DateTime(now.year, now.month, now.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
     final isoDate = HamvitDateUtils.toIsoDate(dayStart);
+    unawaited(_flushPendingWrites());
 
     try {
       final hydration = await _fetchHydration(uid, dayStart, dayEnd, isoDate);
       final nutrition = await _fetchNutrition(uid, dayStart, dayEnd, isoDate);
       final habits = await _fetchHabits(uid, dayStart, dayEnd, isoDate);
       final activity = await _fetchActivity(uid, dayStart, dayEnd, isoDate);
-      final sleep = await _fetchSleep(uid);
+      final sleep = await _fetchSleep(uid, dayStart, dayEnd, isoDate);
       final trend = await _fetchWeeklyTrend(uid);
 
       final scoreData = _computeScore(
@@ -112,14 +120,38 @@ class HomeDashboardRepository {
       _inMemoryCache = model;
       return model;
     } catch (error) {
-      if (_inMemoryCache != null) {
+      if (_inMemoryCache != null &&
+          _isSameDay(_inMemoryCache!.referenceDate, dayStart)) {
         return _inMemoryCache!.copyWith(
           isOffline: true,
           warningMessage:
               'Exibindo ultimo dashboard salvo. Falha ao sincronizar dados reais.',
         );
       }
-      rethrow;
+      // Never carry over previous-day values into "Hoje" when sync fails.
+      return HomeDashboardModel(
+        referenceDate: dayStart,
+        waterMl: 0,
+        waterGoalMl: 2500,
+        calories: 0,
+        caloriesGoal: null,
+        habitsDone: 0,
+        habitsTotal: 0,
+        stepsToday: null,
+        distanceKm: 0,
+        activeMinutes: 0,
+        activityCaloriesKcal: 0,
+        sleepHours: null,
+        score: 0,
+        dayCompletionPercent: 0,
+        statusText: 'Comece seu dia registrando seus dados.',
+        primaryInsight: 'Sem registros para hoje ainda.',
+        secondaryInsight: null,
+        trend: const [0, 0, 0, 0, 0, 0, 0],
+        isOffline: true,
+        warningMessage:
+            'Sem conexão para sincronizar. Exibindo valores zerados de hoje.',
+      );
     }
   }
 
@@ -130,31 +162,56 @@ class HomeDashboardRepository {
     final now = DateTime.now();
     final isoDate = HamvitDateUtils.toIsoDate(now);
     final nowIso = now.toIso8601String();
+    final todayStart = DateTime(now.year, now.month, now.day);
 
-    try {
-      await client.from('hydration_logs').insert({
+    if (_inMemoryCache != null && _isSameDay(_inMemoryCache!.referenceDate, todayStart)) {
+      final updatedWater = (_inMemoryCache!.waterMl + amountMl).clamp(0, 20000);
+      final updatedScoreData = _computeScore(
+        waterMl: updatedWater,
+        waterGoalMl: _inMemoryCache!.waterGoalMl,
+        calories: _inMemoryCache!.calories,
+        caloriesGoal: _inMemoryCache!.caloriesGoal,
+        habitsDone: _inMemoryCache!.habitsDone,
+        habitsTotal: _inMemoryCache!.habitsTotal,
+        distanceKm: _inMemoryCache!.distanceKm,
+        activeMinutes: _inMemoryCache!.activeMinutes,
+        sleepHours: _inMemoryCache!.sleepHours,
+      );
+      final current = _inMemoryCache!;
+      _inMemoryCache = HomeDashboardModel(
+        referenceDate: current.referenceDate,
+        waterMl: updatedWater,
+        waterGoalMl: current.waterGoalMl,
+        calories: current.calories,
+        caloriesGoal: current.caloriesGoal,
+        habitsDone: current.habitsDone,
+        habitsTotal: current.habitsTotal,
+        stepsToday: current.stepsToday,
+        distanceKm: current.distanceKm,
+        activeMinutes: current.activeMinutes,
+        activityCaloriesKcal: current.activityCaloriesKcal,
+        sleepHours: current.sleepHours,
+        score: updatedScoreData.score,
+        dayCompletionPercent: updatedScoreData.dayCompletionPercent,
+        statusText: updatedScoreData.status,
+        primaryInsight: current.primaryInsight,
+        secondaryInsight: current.secondaryInsight,
+        trend: current.trend,
+        isOffline: current.isOffline,
+        warningMessage: current.warningMessage,
+      );
+    }
+
+    await _enqueuePendingWrite({
+      'type': 'hydration_insert_v1',
+      'payload': {
         'user_id': uid,
         'log_date': isoDate,
         'amount_ml': amountMl,
         'logged_at': nowIso,
-      });
-      return;
-    } catch (_) {
-      try {
-        await client.from('hydration_logs').insert({
-          'user_id': uid,
-          'ml': amountMl,
-          'logged_at': nowIso,
-        });
-        return;
-      } catch (_) {
-        await client.from('hydration_logs').insert({
-          'user_id': uid,
-          'amount_ml': amountMl,
-          'logged_at': nowIso,
-        });
       }
-    }
+    });
+    unawaited(_flushPendingWrites());
   }
 
   Future<void> quickAddMeal({required int calories}) async {
@@ -164,41 +221,56 @@ class HomeDashboardRepository {
     final now = DateTime.now();
     final isoDate = HamvitDateUtils.toIsoDate(now);
 
-    try {
-      final meal = await client
-          .from('meal_logs')
-          .insert({
-            'user_id': uid,
-            'meal_type': 'lanche',
-            'meal_date': isoDate,
-            'total_calories_kcal': calories,
-            'created_at': now.toIso8601String(),
-          })
-          .select('id')
-          .single();
-
-      await client.from('meal_items').insert({
-        'meal_log_id': meal['id'],
-        'calories': calories,
-      });
-      return;
-    } catch (_) {
-      final meal = await client
-          .from('meal_logs')
-          .insert({
-            'user_id': uid,
-            'meal_type': 'lanche',
-            'consumed_at': now.toIso8601String(),
-            'created_at': now.toIso8601String(),
-          })
-          .select('id')
-          .single();
-
-      await client.from('meal_items').insert({
-        'meal_log_id': meal['id'],
-        'calories': calories,
-      });
+    if (_inMemoryCache != null &&
+        _isSameDay(_inMemoryCache!.referenceDate, DateTime(now.year, now.month, now.day))) {
+      final updatedCalories = (_inMemoryCache!.calories + calories).clamp(0, 50000);
+      final updatedScoreData = _computeScore(
+        waterMl: _inMemoryCache!.waterMl,
+        waterGoalMl: _inMemoryCache!.waterGoalMl,
+        calories: updatedCalories,
+        caloriesGoal: _inMemoryCache!.caloriesGoal,
+        habitsDone: _inMemoryCache!.habitsDone,
+        habitsTotal: _inMemoryCache!.habitsTotal,
+        distanceKm: _inMemoryCache!.distanceKm,
+        activeMinutes: _inMemoryCache!.activeMinutes,
+        sleepHours: _inMemoryCache!.sleepHours,
+      );
+      final current = _inMemoryCache!;
+      _inMemoryCache = HomeDashboardModel(
+        referenceDate: current.referenceDate,
+        waterMl: current.waterMl,
+        waterGoalMl: current.waterGoalMl,
+        calories: updatedCalories,
+        caloriesGoal: current.caloriesGoal,
+        habitsDone: current.habitsDone,
+        habitsTotal: current.habitsTotal,
+        stepsToday: current.stepsToday,
+        distanceKm: current.distanceKm,
+        activeMinutes: current.activeMinutes,
+        activityCaloriesKcal: current.activityCaloriesKcal,
+        sleepHours: current.sleepHours,
+        score: updatedScoreData.score,
+        dayCompletionPercent: updatedScoreData.dayCompletionPercent,
+        statusText: updatedScoreData.status,
+        primaryInsight: current.primaryInsight,
+        secondaryInsight: current.secondaryInsight,
+        trend: current.trend,
+        isOffline: current.isOffline,
+        warningMessage: current.warningMessage,
+      );
     }
+    await _enqueuePendingWrite({
+      'type': 'meal_insert_v1',
+      'payload': {
+        'user_id': uid,
+        'meal_type': 'lanche',
+        'meal_date': isoDate,
+        'total_calories_kcal': calories,
+        'consumed_at': now.toIso8601String(),
+        'created_at': now.toIso8601String(),
+      }
+    });
+    unawaited(_flushPendingWrites());
   }
 
   Future<bool> quickCompleteOneHabit() async {
@@ -262,12 +334,136 @@ class HomeDashboardRepository {
 
     final now = DateTime.now();
 
-    await client.from('activity_sessions').insert({
-      'user_id': uid,
-      'activity_type': 'caminhada',
-      'started_at': now.toIso8601String(),
-      'created_at': now.toIso8601String(),
+    await _enqueuePendingWrite({
+      'type': 'activity_start_walk_v1',
+      'payload': {
+        'user_id': uid,
+        'activity_type': 'caminhada',
+        'started_at': now.toIso8601String(),
+        'created_at': now.toIso8601String(),
+      }
     });
+    unawaited(_flushPendingWrites());
+  }
+
+  String? get _pendingWritesKey {
+    final uid = userId;
+    if (uid == null || uid.isEmpty) return null;
+    return '$_pendingWritesKeyPrefix$uid';
+  }
+
+  Future<List<Map<String, dynamic>>> _loadPendingWrites() async {
+    final key = _pendingWritesKey;
+    if (key == null) return const [];
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return const [];
+      return decoded
+          .whereType<Map>()
+          .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+          .toList(growable: true);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _savePendingWrites(List<Map<String, dynamic>> writes) async {
+    final key = _pendingWritesKey;
+    if (key == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, jsonEncode(writes));
+  }
+
+  Future<void> _enqueuePendingWrite(Map<String, dynamic> write) async {
+    final writes = await _loadPendingWrites();
+    writes.add(write);
+    await _savePendingWrites(writes);
+  }
+
+  Future<void> _flushPendingWrites() async {
+    final writes = await _loadPendingWrites();
+    if (writes.isEmpty) return;
+    final remaining = <Map<String, dynamic>>[];
+    for (final write in writes) {
+      try {
+        await _executePendingWrite(write);
+      } catch (_) {
+        remaining.add(write);
+      }
+    }
+    await _savePendingWrites(remaining);
+  }
+
+  Future<void> _executePendingWrite(Map<String, dynamic> write) async {
+    final type = write['type']?.toString() ?? '';
+    final payload = (write['payload'] is Map)
+        ? (write['payload'] as Map).map((k, v) => MapEntry(k.toString(), v))
+        : <String, dynamic>{};
+
+    if (type == 'hydration_insert_v1') {
+      try {
+        await client.from('hydration_logs').insert(payload);
+      } catch (_) {
+        try {
+          await client.from('hydration_logs').insert({
+            'user_id': payload['user_id'],
+            'ml': payload['amount_ml'],
+            'logged_at': payload['logged_at'],
+          });
+        } catch (_) {
+          await client.from('hydration_logs').insert({
+            'user_id': payload['user_id'],
+            'amount_ml': payload['amount_ml'],
+            'logged_at': payload['logged_at'],
+          });
+        }
+      }
+      return;
+    }
+
+    if (type == 'meal_insert_v1') {
+      try {
+        final meal = await client
+            .from('meal_logs')
+            .insert({
+              'user_id': payload['user_id'],
+              'meal_type': payload['meal_type'],
+              'meal_date': payload['meal_date'],
+              'total_calories_kcal': payload['total_calories_kcal'],
+              'created_at': payload['created_at'],
+            })
+            .select('id')
+            .single();
+        await client.from('meal_items').insert({
+          'meal_log_id': meal['id'],
+          'calories': payload['total_calories_kcal'],
+        });
+      } catch (_) {
+        final meal = await client
+            .from('meal_logs')
+            .insert({
+              'user_id': payload['user_id'],
+              'meal_type': payload['meal_type'],
+              'meal_date': payload['meal_date'],
+              'consumed_at': payload['consumed_at'],
+              'created_at': payload['created_at'],
+            })
+            .select('id')
+            .single();
+        await client.from('meal_items').insert({
+          'meal_log_id': meal['id'],
+          'calories': payload['total_calories_kcal'],
+        });
+      }
+      return;
+    }
+
+    if (type == 'activity_start_walk_v1') {
+      await client.from('activity_sessions').insert(payload);
+    }
   }
 
   Future<_HydrationData> _fetchHydration(
@@ -561,34 +757,60 @@ class HomeDashboardRepository {
     }
   }
 
-  Future<double?> _fetchSleep(String uid) async {
+  Future<double?> _fetchSleep(
+    String uid,
+    DateTime dayStart,
+    DateTime dayEnd,
+    String isoDate,
+  ) async {
     try {
-      final row = await client
+      final rows = await client
           .from('sleep_logs')
           .select('duration_minutes')
           .eq('user_id', uid)
-          .order('sleep_date', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      final minutes = (row?['duration_minutes'] as num?)?.toDouble();
-      if (minutes == null) return null;
-      return (minutes / 60).clamp(0, 24);
-    } catch (_) {
-      try {
-        final row = await client
-            .from('sleep_logs')
-            .select('total_sleep_minutes')
-            .eq('user_id', uid)
-            .order('sleep_date', ascending: false)
-            .limit(1)
-            .maybeSingle();
-        final minutes = (row?['total_sleep_minutes'] as num?)?.toDouble();
-        if (minutes == null) return null;
-        return (minutes / 60).clamp(0, 24);
-      } catch (_) {
-        return null;
+          .eq('sleep_date', isoDate)
+          .limit(1);
+      if (rows.isNotEmpty) {
+        final minutes = (rows.first['duration_minutes'] as num?)?.toDouble();
+        if (minutes != null) return (minutes / 60).clamp(0, 24);
       }
+    } catch (_) {
+      // fallback below
     }
+
+    try {
+      final rows = await client
+          .from('sleep_logs')
+          .select('total_sleep_minutes')
+          .eq('user_id', uid)
+          .eq('sleep_date', isoDate)
+          .limit(1);
+      if (rows.isNotEmpty) {
+        final minutes = (rows.first['total_sleep_minutes'] as num?)?.toDouble();
+        if (minutes != null) return (minutes / 60).clamp(0, 24);
+      }
+    } catch (_) {
+      // fallback below
+    }
+
+    try {
+      final rows = await client
+          .from('sleep_logs')
+          .select('duration_minutes, total_sleep_minutes')
+          .eq('user_id', uid)
+          .gte('slept_at', dayStart.toIso8601String())
+          .lt('slept_at', dayEnd.toIso8601String())
+          .limit(1);
+      if (rows.isNotEmpty) {
+        final row = rows.first;
+        final minutes = ((row['duration_minutes'] as num?)?.toDouble() ?? 0) +
+            ((row['total_sleep_minutes'] as num?)?.toDouble() ?? 0);
+        if (minutes > 0) return (minutes / 60).clamp(0, 24);
+      }
+    } catch (_) {
+      // keep null
+    }
+    return null;
   }
 
   Future<List<double>> _fetchWeeklyTrend(String uid) async {

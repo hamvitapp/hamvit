@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/supabase_provider.dart';
 import '../../shared/widgets/hamvit_date_field.dart';
@@ -19,6 +22,7 @@ class ProfileEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
+  static const _pendingPhotoFlowKey = 'hamvit_pending_profile_photo_flow';
   final _nameCtrl = TextEditingController();
   final _birthCtrl = TextEditingController();
   final _heightCtrl = TextEditingController();
@@ -51,6 +55,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _objectiveCtrl.text = onboarding.objective ?? '';
 
     _refreshProfileFromServer();
+    _recoverLostPickedImage();
   }
 
   @override
@@ -65,6 +70,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _pickAndCropImage(ImageSource source) async {
+    await _setPendingPhotoFlow(true);
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: source,
@@ -72,42 +78,100 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       maxHeight: 1024,
       imageQuality: 85,
     );
-    if (picked == null) return;
+    if (picked == null) {
+      await _setPendingPhotoFlow(false);
+      return;
+    }
+    await _cropAndUploadPickedFile(picked);
+  }
 
-    final cropped = await ImageCropper.platform.cropImage(
-      sourcePath: picked.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Ajustar foto',
-          toolbarColor: const Color(0xFF071A2D),
-          toolbarWidgetColor: Colors.white,
-          backgroundColor: const Color(0xFF071A2D),
-          statusBarColor: const Color(0xFF071A2D),
-          activeControlsWidgetColor: const Color(0xFF00B4D8),
-          cropFrameColor: Colors.white,
-          cropFrameStrokeWidth: 2,
-          lockAspectRatio: true,
-          initAspectRatio: CropAspectRatioPreset.square,
-        ),
-      ],
-      compressFormat: ImageCompressFormat.jpg,
-      compressQuality: 85,
-    );
-    if (cropped == null) return;
+  Future<void> _recoverLostPickedImage() async {
+    final picker = ImagePicker();
+    try {
+      final lost = await picker.retrieveLostData();
+      if (lost.isEmpty) {
+        await _setPendingPhotoFlow(false);
+        return;
+      }
+      final file = lost.file;
+      if (file == null) {
+        await _setPendingPhotoFlow(false);
+        return;
+      }
+      await _cropAndUploadPickedFile(file);
+    } catch (_) {
+      // silencioso: apenas evita quebra ao recuperar estado perdido
+    }
+  }
 
-    // Upload para Supabase Storage
+  Future<void> _cropAndUploadPickedFile(XFile picked) async {
     final client = ref.read(supabaseClientProvider);
-    if (client == null) return;
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
+    if (client == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro: cliente Supabase indisponível.')),
+        );
+      }
+      return;
+    }
 
     setState(() => _uploading = true);
 
     try {
+      String? userId = ref.read(currentUserProvider)?.id ?? client.auth.currentUser?.id;
+      if (userId == null) {
+        for (var i = 0; i < 10; i++) {
+          await Future.delayed(const Duration(milliseconds: 300));
+          userId = client.auth.currentUser?.id;
+          if (userId != null) break;
+        }
+      }
+      if (userId == null) {
+        throw Exception('Sessão não encontrada após retorno da câmera. Abra o app novamente e tente salvar.');
+      }
+
+      var sourcePath = picked.path;
+      try {
+        final stablePath =
+            '${Directory.systemTemp.path}/hamvit_profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final stableFile = File(stablePath);
+        final stableBytes = await picked.readAsBytes();
+        await stableFile.writeAsBytes(stableBytes, flush: true);
+        sourcePath = stableFile.path;
+      } catch (_) {
+        // fallback para path original se o arquivo temporário sumir no retorno da câmera
+      }
+
+      XFile fileToUpload;
+      if (Platform.isAndroid) {
+        // Fluxo mais estável em Android/Xiaomi: evita fechamento ao voltar do cropper.
+        fileToUpload = XFile(sourcePath);
+      } else {
+        final cropped = await ImageCropper.platform.cropImage(
+          sourcePath: sourcePath,
+          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Ajustar foto',
+              toolbarColor: const Color(0xFF071A2D),
+              toolbarWidgetColor: Colors.white,
+              backgroundColor: const Color(0xFF071A2D),
+              statusBarColor: const Color(0xFF071A2D),
+              activeControlsWidgetColor: const Color(0xFF00B4D8),
+              cropFrameColor: Colors.white,
+              cropFrameStrokeWidth: 2,
+              lockAspectRatio: true,
+              initAspectRatio: CropAspectRatioPreset.square,
+            ),
+          ],
+          compressFormat: ImageCompressFormat.jpg,
+          compressQuality: 85,
+        );
+        fileToUpload = XFile(cropped?.path ?? sourcePath);
+      }
+
       final service = ProfilePhotoService(client);
-      final xfile = XFile(cropped.path);
-      final url = await service.uploadAndSavePhoto(user.id, xfile);
+      final url = await service.uploadAndSavePhoto(userId, fileToUpload);
 
       if (url != null) {
         // Atualiza UI imediatamente e marca mudança
@@ -132,8 +196,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         SnackBar(content: Text('Erro ao atualizar foto: $message')),
       );
     } finally {
+      await _setPendingPhotoFlow(false);
       if (mounted) setState(() => _uploading = false);
     }
+  }
+
+  Future<void> _setPendingPhotoFlow(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_pendingPhotoFlowKey, value);
   }
 
   void _showPhotoPicker() {
@@ -164,9 +234,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined, color: Colors.white70, size: 24),
               title: const Text('Tirar foto', style: TextStyle(color: Colors.white, fontSize: 16)),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(ctx);
-                _pickAndCropImage(ImageSource.camera);
+                await Future.delayed(const Duration(milliseconds: 160));
+                if (!mounted) return;
+                await _pickAndCropImage(ImageSource.camera);
               },
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               hoverColor: Colors.white10,
@@ -175,9 +247,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: Colors.white70, size: 24),
               title: const Text('Escolher da galeria', style: TextStyle(color: Colors.white, fontSize: 16)),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(ctx);
-                _pickAndCropImage(ImageSource.gallery);
+                await Future.delayed(const Duration(milliseconds: 160));
+                if (!mounted) return;
+                await _pickAndCropImage(ImageSource.gallery);
               },
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               hoverColor: Colors.white10,

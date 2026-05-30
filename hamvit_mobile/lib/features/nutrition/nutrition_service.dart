@@ -36,11 +36,13 @@ class NutritionService {
     if (user == null) throw Exception('Usuário não autenticado');
 
     final now = DateTime.now();
+    final localDate = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final meal = await client
         .from('meal_logs')
         .insert({
           'user_id': user.id,
           'meal_type': mealType,
+          'meal_date': localDate,
           'consumed_at': now.toIso8601String(),
           'created_at': now.toIso8601String(),
         })

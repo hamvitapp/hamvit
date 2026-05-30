@@ -28,7 +28,11 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
     try {
       await ref.read(homeDashboardActionsProvider).quickAddWater(amountMl: ml);
       ref.invalidate(homeDashboardProvider);
-      await ref.read(homeDashboardProvider.future);
+      Future<void>(() async {
+        try {
+          await ref.read(homeDashboardProvider.future);
+        } catch (_) {}
+      });
       if (!mounted) return;
       setState(() {
         _todayHistory.insert(0, '+$ml ml • ${TimeOfDay.now().format(context)}');

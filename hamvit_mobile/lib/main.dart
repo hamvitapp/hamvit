@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +15,17 @@ import 'theme/hamvit_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('[ENV] SUPABASE_URL=${AppEnv.supabaseUrl}');
+  debugPrint('[ENV] SUPABASE_ANON_KEY length=${AppEnv.supabaseAnonKey.length}');
+  if (AppEnv.supabaseUrl.isNotEmpty) {
+    try {
+      final host = Uri.parse(AppEnv.supabaseUrl).host;
+      final result = await InternetAddress.lookup(host);
+      debugPrint('[DNS] host=$host resolved=${result.isNotEmpty}');
+    } catch (e) {
+      debugPrint('[DNS] lookup failed: $e');
+    }
+  }
   if (AppEnv.hasSupabase) {
     await Supabase.initialize(url: AppEnv.supabaseUrl, anonKey: AppEnv.supabaseAnonKey);
   }
