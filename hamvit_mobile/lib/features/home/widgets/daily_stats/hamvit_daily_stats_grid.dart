@@ -12,9 +12,11 @@ class HamvitDailyStatsGrid extends StatelessWidget {
   final int habitsTotal;
   final int? steps;
   final double distanceKm;
+  final int activeMinutes;
   final int activityCaloriesKcal;
   final Duration? sleepDuration;
   final double? currentWeightKg;
+  final double? initialWeightKg;
   final double? targetWeightKg;
   final VoidCallback? onWaterTap;
   final VoidCallback? onCaloriesTap;
@@ -33,9 +35,11 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     required this.habitsTotal,
     required this.steps,
     required this.distanceKm,
+    required this.activeMinutes,
     required this.activityCaloriesKcal,
     required this.sleepDuration,
     required this.currentWeightKg,
+    required this.initialWeightKg,
     required this.targetWeightKg,
     this.onWaterTap,
     this.onCaloriesTap,
@@ -59,7 +63,8 @@ class HamvitDailyStatsGrid extends StatelessWidget {
     const defaultCaloriesGoal = 2000;
 
     final effectiveWaterGoal = waterGoalMl > 0 ? waterGoalMl : defaultWaterGoalMl;
-    final waterProgress = (waterMl / effectiveWaterGoal).clamp(0.0, 1.0);
+    final waterRawProgress = waterMl / effectiveWaterGoal;
+    final waterProgress = waterRawProgress.clamp(0.0, 1.0);
 
     final effectiveCaloriesGoal = (caloriesGoal != null && caloriesGoal! > 0)
       ? caloriesGoal!
@@ -70,21 +75,22 @@ class HamvitDailyStatsGrid extends StatelessWidget {
         (caloriesGoal != null && caloriesGoal! > 0) && calories > caloriesGoal!;
     final habitsProgress =
         habitsTotal == 0 ? 0.0 : (habitsDone / habitsTotal).clamp(0.0, 1.0);
-    final activityProgress = (distanceKm / 3.0).clamp(0.0, 1.0);
+    final activityProgress = ((distanceKm / 3.0) > (activeMinutes / 30.0)
+            ? (distanceKm / 3.0)
+            : (activeMinutes / 30.0))
+        .clamp(0.0, 1.0);
     final sleepProgress = sleepDuration == null
         ? 0.0
         : (sleepDuration!.inMinutes / (8 * 60)).clamp(0.0, 1.0);
     final hasEvolution = currentWeightKg != null &&
+        initialWeightKg != null &&
         targetWeightKg != null &&
-        currentWeightKg != targetWeightKg;
+        (initialWeightKg! - targetWeightKg!).abs() > 0.0001;
     final evolutionProgress = hasEvolution
-        ? (((currentWeightKg! - targetWeightKg!).abs() == 0)
-                ? 1.0
-                : 1 -
-                    (((currentWeightKg! - targetWeightKg!).abs() /
-                            (currentWeightKg!).abs())
-                        .clamp(0.0, 1.0)))
-            .clamp(0.0, 1.0)
+        ? (((initialWeightKg! - currentWeightKg!) /
+                    (initialWeightKg! - targetWeightKg!))
+                .clamp(0.0, 1.0))
+            .toDouble()
         : 0.0;
 
     final screenWidth = MediaQuery.of(context).size.width;
@@ -101,7 +107,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
           HamvitColors.accentCyan,
           HamvitColors.accentBlue
         ],
-        progressLabel: '${(waterProgress * 100).round()}%',
+        progressLabel: '${(waterRawProgress * 100).round()}%',
         footerNote:
             waterMl == 0 ? '0% - Registre seu primeiro consumo hoje' : null,
         onTap: onWaterTap,
@@ -118,7 +124,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
           HamvitColors.accentCyan,
           HamvitColors.accentBlue
         ],
-        progressLabel: '${(caloriesProgress * 100).round()}%',
+        progressLabel: '${(caloriesRawProgress * 100).round()}%',
         footerNote: caloriesGoal == null
           ? (calories == 0
             ? 'Meta pendente'
@@ -143,9 +149,11 @@ class HamvitDailyStatsGrid extends StatelessWidget {
       HamvitStatCard(
         icon: Icons.directions_walk_outlined,
         title: 'Atividade',
-        value: steps == null
-            ? '${distanceKm.toStringAsFixed(1)} km'
-            : '$steps - ${distanceKm.toStringAsFixed(1)} km',
+        value: activeMinutes > 0
+            ? '${activeMinutes} min • ${distanceKm.toStringAsFixed(1)} km'
+            : (steps == null
+                ? '${distanceKm.toStringAsFixed(1)} km'
+                : '$steps - ${distanceKm.toStringAsFixed(1)} km'),
         subtitle: 'Movimento hoje',
         progress: activityProgress,
         progressGradient: const [
@@ -153,7 +161,7 @@ class HamvitDailyStatsGrid extends StatelessWidget {
           HamvitColors.accentBlue
         ],
         progressLabel: '${(activityProgress * 100).round()}%',
-        footerNote: distanceKm == 0
+        footerNote: distanceKm == 0 && activeMinutes == 0
             ? '0% - Inicie uma atividade'
             : 'Calorias estimadas: $activityCaloriesKcal kcal',
         onTap: onActivityTap,

@@ -252,6 +252,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
           title: 'Hidratação',
           subtitle: 'Média diária ${_avg(d.hydrationLogs).toStringAsFixed(0)} ml • Meta ${d.waterGoal.toStringAsFixed(0)} ml • Dias na meta ${d.waterGoalDays}',
           values: d.hydrationLogs.map((e) => e.value).toList(),
+          dates: d.hydrationLogs.map((e) => e.date).toList(),
           goal: d.waterGoal,
           unit: 'ml',
           goalLabel: 'Meta diária de hidratação',
@@ -272,6 +273,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
           title: 'Alimentação',
           subtitle: 'Média ${_avg(d.calorieLogs).toStringAsFixed(0)} kcal • Meta ${d.caloriesGoal.toStringAsFixed(0)} kcal',
           values: d.calorieLogs.map((e) => e.value).toList(),
+          dates: d.calorieLogs.map((e) => e.date).toList(),
           goal: d.caloriesGoal,
           unit: 'kcal',
           goalLabel: 'Meta diária de calorias',
@@ -309,7 +311,11 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
     pw.SizedBox(height: 10),
 
     // ── Heatmap ────────────────────────────────────────────────────
-    heatmap(t, values: d.consistencyLogs.map((e) => e.value).toList()),
+    heatmap(
+      t,
+      values: d.consistencyLogs.map((e) => e.value).toList(),
+      dates: d.consistencyLogs.map((e) => e.date).toList(),
+    ),
     pw.SizedBox(height: 12),
 
     // ── Sleep ──────────────────────────────────────────────────────
@@ -322,6 +328,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
           title: 'Sono',
           subtitle: 'Média ${avgSleep.toStringAsFixed(1)} h • Meta 8.0 h',
           values: d.sleepLogs.map((e) => e.value).toList(),
+          dates: d.sleepLogs.map((e) => e.date).toList(),
           goal: 8,
           unit: 'h',
           goalLabel: 'Meta de horas de sono',
@@ -341,6 +348,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
           title: 'Atividade Física',
           subtitle: 'Distância ${d.distanceKm.toStringAsFixed(2)} km • Tempo ativo ${d.activeMinutes.toStringAsFixed(0)} min • Calorias ${d.activityCalories.toStringAsFixed(0)} kcal • ${d.activityCount} atividades',
           values: d.activityLogs.map((e) => e.value).toList(),
+          dates: d.activityLogs.map((e) => e.date).toList(),
           goal: d.caloriesGoal > 0 ? d.caloriesGoal : null,
           unit: 'kcal',
           goalLabel: 'Meta calórica de atividade',
@@ -369,6 +377,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
             title: 'Evolução Corporal',
             subtitle: 'Inicial ${d.weightInitial?.toStringAsFixed(1) ?? '-'} kg • Atual ${d.weightCurrent?.toStringAsFixed(1) ?? '-'} kg • Alvo ${d.weightTarget?.toStringAsFixed(1) ?? '-'} kg • Diferença ${weightDiff == null ? '-' : weightDiff.toStringAsFixed(1)} kg',
             values: d.weightLogs.map((e) => e.value).toList(),
+            dates: d.weightLogs.map((e) => e.date).toList(),
             goal: d.weightTarget,
             unit: 'kg',
             goalLabel: 'Peso alvo',
@@ -388,6 +397,7 @@ List<pw.Widget> buildPdfSections(HamvitPdfTheme t, HamvitReportData d) {
           title: 'Timeline de Progresso',
           subtitle: 'Tendência de consistência por dia',
           values: d.consistencyLogs.map((e) => e.value).toList(),
+          dates: d.consistencyLogs.map((e) => e.date).toList(),
           goal: 70,
           unit: 'pts',
           goalLabel: 'Meta de consistência (70 pts)',

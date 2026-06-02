@@ -21,8 +21,11 @@ class HomeDashboardActions {
   Future<void> quickAddWater({int amountMl = 200}) =>
       _repository.quickAddWater(amountMl: amountMl);
 
-  Future<void> quickAddMeal(int calories) =>
-      _repository.quickAddMeal(calories: calories);
+  Future<void> quickAddMeal(int calories, {String mealType = 'lanche'}) =>
+      _repository.quickAddMeal(calories: calories, mealType: mealType);
+
+  void reflectMealCaloriesLocally(int calories) =>
+      _repository.reflectMealCaloriesLocally(calories);
 
   Future<bool> quickCompleteHabit() => _repository.quickCompleteOneHabit();
 

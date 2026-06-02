@@ -81,11 +81,13 @@ class _TodayPageState extends ConsumerState<TodayPage> with WidgetsBindingObserv
       habitsTotal: model.habitsTotal,
       steps: model.stepsToday,
       distanceKm: model.distanceKm,
+      activeMinutes: model.activeMinutes,
       activityCaloriesKcal: model.activityCaloriesKcal,
       sleepDuration: model.sleepHours == null
           ? null
           : Duration(minutes: (model.sleepHours! * 60).round()),
       currentWeightKg: null,
+      initialWeightKg: null,
       targetWeightKg: null,
       dayCompletionPercent: model.dayCompletionPercent,
       primaryInsight: model.primaryInsight,
@@ -190,20 +192,23 @@ class _TodayPageState extends ConsumerState<TodayPage> with WidgetsBindingObserv
     final live = ref.watch(activityLiveStateProvider);
     final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     const bottomNavHeight = kBottomNavigationBarHeight;
-    final bottomContentPadding = bottomSafeArea + bottomNavHeight + 24;
+    final bottomContentPadding = bottomSafeArea + bottomNavHeight + 56;
 
     return RefreshIndicator(
       onRefresh: _refreshDashboard,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(10, 12, 10, bottomContentPadding),
+        padding: EdgeInsets.fromLTRB(10, 16, 10, bottomContentPadding),
         children: [
           SizedBox(
-            height: 120,
+            height: 86,
             width: double.infinity,
-            child: Image.asset(
-              'assets/branding/hamvit_hoje_exata.png',
-              fit: BoxFit.fitWidth,
-              alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Image.asset(
+                'assets/branding/hamvit_brand_banner.png',
+                fit: BoxFit.contain,
+                alignment: Alignment.center,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -232,10 +237,12 @@ class _TodayPageState extends ConsumerState<TodayPage> with WidgetsBindingObserv
                     habitsTotal: dashboard.habitsTotal,
                     steps: dashboard.steps,
                     distanceKm: dashboard.distanceKm + live.distanceKm,
+                    activeMinutes: dashboard.activeMinutes + live.activeMinutes,
                     activityCaloriesKcal:
                       dashboard.activityCaloriesKcal + live.caloriesKcal,
                     sleepDuration: dashboard.sleepDuration,
                     currentWeightKg: onboarding.weightKg,
+                    initialWeightKg: onboarding.initialWeightKg,
                     targetWeightKg: onboarding.targetWeightKg,
                     dayCompletionPercent: dashboard.dayCompletionPercent,
                     primaryInsight: dashboard.primaryInsight,
@@ -260,9 +267,11 @@ class _TodayPageState extends ConsumerState<TodayPage> with WidgetsBindingObserv
                     habitsTotal: dashboard.habitsTotal,
                     steps: dashboard.steps,
                     distanceKm: dashboard.distanceKm,
+                    activeMinutes: dashboard.activeMinutes,
                     activityCaloriesKcal: dashboard.activityCaloriesKcal,
                     sleepDuration: dashboard.sleepDuration,
                     currentWeightKg: onboarding.weightKg,
+                    initialWeightKg: onboarding.initialWeightKg,
                     targetWeightKg: onboarding.targetWeightKg,
                     dayCompletionPercent: dashboard.dayCompletionPercent,
                     primaryInsight: dashboard.primaryInsight,

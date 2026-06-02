@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -422,7 +422,6 @@ class HamvitReportSummaryCard extends StatelessWidget {
     );
   }
 }
-
 class HamvitReportChartCard extends StatelessWidget {
   final String title;
   final List<DashboardPoint> points;
@@ -438,15 +437,26 @@ class HamvitReportChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visible = points.where((p) => p.value > 0).toList(growable: false);
+    final titleStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        );
+
     if (visible.length < 2) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.white.withValues(alpha: 0.04),
-        ),
-        child: Text('$title sem dados no período.'),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: titleStyle),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withValues(alpha: 0.04),
+            ),
+            child: Text('$title sem dados no período.'),
+          ),
+        ],
       );
     }
 
@@ -455,64 +465,115 @@ class HamvitReportChartCard extends StatelessWidget {
       spots.add(FlSpot(i.toDouble(), points[i].value));
     }
 
-    final maxY = visible.map((e) => e.value).reduce((a, b) => a > b ? a : b) * 1.2;
+    final minY = visible.map((e) => e.value).reduce((a, b) => a < b ? a : b);
+    final maxY = visible.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final isBodyChart = title == 'Peso' || title == 'IMC';
+    final yPad = ((maxY - minY).abs() * 0.25).clamp(0.3, 99999).toDouble();
+    final lowY = isBodyChart
+        ? (minY - yPad).clamp(0.0, 999999.0).toDouble()
+        : 0.0;
+    final highY = isBodyChart
+        ? (maxY + yPad).clamp(1.0, 999999.0).toDouble()
+        : (maxY * 1.22).clamp(1.0, 999999.0).toDouble();
 
-    return SizedBox(
-      height: 160,
-      child: LineChart(
-        LineChartData(
-          minY: 0,
-          maxY: maxY <= 1 ? 1 : maxY,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY <= 0 ? 1 : (maxY / 4).clamp(1, 99999),
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: Colors.white.withValues(alpha: 0.08),
-              strokeWidth: 1,
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: const FlTitlesData(
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          lineTouchData: LineTouchData(
-            handleBuiltInTouches: true,
-            touchTooltipData: LineTouchTooltipData(
-              tooltipPadding: const EdgeInsets.all(8),
-              tooltipRoundedRadius: 8,
-              getTooltipItems: (touched) {
-                return touched
-                    .map((item) => LineTooltipItem(
-                          item.y.toStringAsFixed(1),
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                        ))
-                    .toList(growable: false);
-              },
-            ),
-          ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: color,
-              barWidth: 3,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: titleStyle),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 180,
+          child: LineChart(
+            LineChartData(
+              minY: lowY,
+              maxY: highY <= lowY ? lowY + 1 : highY,
+              clipData: const FlClipData.all(),
+              gridData: FlGridData(
                 show: true,
-                gradient: LinearGradient(
-                  colors: [color.withValues(alpha: 0.20), color.withValues(alpha: 0.03)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                drawVerticalLine: false,
+                horizontalInterval: (((highY - lowY).abs()) / 4).clamp(0.2, 99999),
+                getDrawingHorizontalLine: (_) => FlLine(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  strokeWidth: 1,
                 ),
               ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 34,
+                    interval: (((highY - lowY).abs()) / 3).clamp(0.2, 99999),
+                    getTitlesWidget: (value, meta) => Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Text(
+                        value.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 10, color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24,
+                    interval: (points.length / 4).ceilToDouble().clamp(1, 999),
+                    getTitlesWidget: (value, meta) {
+                      final index = value.round();
+                      if (index < 0 || index >= points.length) return const SizedBox.shrink();
+                      final d = points[index].date;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          '${d.day}/${d.month}',
+                          style: const TextStyle(fontSize: 10, color: Colors.white70),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                handleBuiltInTouches: true,
+                touchTooltipData: LineTouchTooltipData(
+                  tooltipPadding: const EdgeInsets.all(8),
+                  tooltipRoundedRadius: 8,
+                  getTooltipItems: (touched) {
+                    return touched
+                        .map((item) => LineTooltipItem(
+                              item.y.toStringAsFixed(1),
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            ))
+                        .toList(growable: false);
+                  },
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: spots.length > 2,
+                  curveSmoothness: 0.16,
+                  preventCurveOverShooting: true,
+                  preventCurveOvershootingThreshold: 8,
+                  color: color,
+                  barWidth: 3,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [color.withValues(alpha: 0.20), color.withValues(alpha: 0.03)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -671,3 +732,4 @@ class _ConsistencyHeatmap extends StatelessWidget {
     );
   }
 }
+

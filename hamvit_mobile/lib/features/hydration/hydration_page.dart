@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/widgets/hamvit_module_widgets.dart';
+import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import '../onboarding/providers/onboarding_profile_provider.dart';
 
@@ -14,6 +15,7 @@ class HydrationPage extends ConsumerStatefulWidget {
 
 class _HydrationPageState extends ConsumerState<HydrationPage> {
   final List<String> _todayHistory = [];
+  int _optimisticAddedMl = 0;
   final List<String> _weekHistory = const [
     'Seg: 1800 ml',
     'Ter: 2200 ml',
@@ -25,16 +27,14 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
   ];
 
   Future<void> _addWater(int ml) async {
+    setState(() => _optimisticAddedMl += ml);
     try {
       await ref.read(homeDashboardActionsProvider).quickAddWater(amountMl: ml);
       ref.invalidate(homeDashboardProvider);
-      Future<void>(() async {
-        try {
-          await ref.read(homeDashboardProvider.future);
-        } catch (_) {}
-      });
+      ref.invalidate(dashboardSnapshotProvider);
       if (!mounted) return;
       setState(() {
+        _optimisticAddedMl = 0;
         _todayHistory.insert(0, '+$ml ml • ${TimeOfDay.now().format(context)}');
         if (_todayHistory.length > 8) {
           _todayHistory.removeLast();
@@ -45,8 +45,9 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
       );
     } catch (error) {
       if (!mounted) return;
+      setState(() => _optimisticAddedMl = (_optimisticAddedMl - ml).clamp(0, 50000));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Falha ao registrar agua: $error')),
+        SnackBar(content: Text('Falha ao registrar água: $error')),
       );
     }
   }
@@ -63,7 +64,7 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
           controller: ctrl,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
-              labelText: 'Meta (ml/dia) • limite 1200 a 6000'),
+              labelText: 'Meta (ml/dia) â€¢ limite 1200 a 6000'),
         ),
         actions: [
           TextButton(
@@ -77,6 +78,7 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
               await notifier.saveHydrationAdvancedGoal(mlTarget: value);
               if (!mounted) return;
               ref.invalidate(homeDashboardProvider);
+              ref.invalidate(dashboardSnapshotProvider);
               Navigator.of(this.context).pop();
             },
             child: const Text('Salvar'),
@@ -93,8 +95,10 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
     final calculatedGoal = onboarding.calculatedTargets?.waterMl;
     final fallbackGoal = calculatedGoal ?? onboarding.hydrationGoalMl ?? 2200;
 
-    final consumedMl =
-        dashboardAsync.maybeWhen(data: (data) => data.waterMl, orElse: () => 0);
+    final consumedMl = dashboardAsync.maybeWhen(
+      data: (data) => data.waterMl + _optimisticAddedMl,
+      orElse: () => _optimisticAddedMl,
+    );
     final goal = dashboardAsync.maybeWhen(
         data: (data) => data.waterGoalMl, orElse: () => fallbackGoal);
     final safeGoal = goal <= 0 ? fallbackGoal : goal;
@@ -177,3 +181,5 @@ class _HydrationPageState extends ConsumerState<HydrationPage> {
     );
   }
 }
+
+

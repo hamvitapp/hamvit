@@ -6,6 +6,7 @@ import '../../core/hamvit_date_utils.dart';
 import '../../core/supabase_provider.dart';
 import '../../shared/widgets/hamvit_module_widgets.dart';
 import '../../shared/widgets/hamvit_time_input.dart';
+import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import '../onboarding/providers/onboarding_profile_provider.dart';
 
@@ -346,6 +347,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                     if (!mounted) return;
                     Navigator.of(context).pop();
                     ref.invalidate(homeDashboardProvider);
+                    ref.invalidate(dashboardSnapshotProvider);
                     await _loadSleepData();
                     if (!mounted) return;
                     ScaffoldMessenger.of(this.context).showSnackBar(
@@ -429,3 +431,4 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     );
   }
 }
+

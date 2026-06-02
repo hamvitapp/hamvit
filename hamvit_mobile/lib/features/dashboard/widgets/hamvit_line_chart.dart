@@ -35,9 +35,40 @@ class HamvitLineChart extends StatelessWidget {
       spots.add(FlSpot(i.toDouble(), points[i].value));
     }
 
-    final values = points.map((e) => e.value).toList(growable: false);
+    final values = visiblePoints.map((e) => e.value).toList(growable: false);
+    final minPoint = values.reduce((a, b) => a < b ? a : b);
     final maxPoint = values.reduce((a, b) => a > b ? a : b);
-    final top = [maxPoint, goal ?? 0].reduce((a, b) => a > b ? a : b) * 1.22;
+    final range = (maxPoint - minPoint).abs();
+    final isBodyMetric = unit == 'kg' || unit == 'IMC';
+    final isConsistency = unit == '%';
+
+    final double minY;
+    final double maxY;
+    if (isConsistency) {
+      minY = 0;
+      maxY = 100;
+    } else if (isBodyMetric) {
+      // Smart Y-domain: keeps subtle body-metric changes (e.g. 172 -> 170) visible.
+      const basePadding = 0.8;
+      final padding = range > 0 ? (range * 0.28).clamp(basePadding, 99999.0) : basePadding;
+      final minYRaw =
+          ((range > 0 ? (minPoint - padding) : (minPoint - basePadding)).clamp(0.0, 999999.0))
+              .toDouble();
+      final maxYRaw =
+          ((range > 0 ? (maxPoint + padding) : (maxPoint + basePadding)).clamp(1.0, 999999.0))
+              .toDouble();
+      minY = minYRaw;
+      maxY = maxYRaw <= minY ? minY + 1.0 : maxYRaw;
+    } else {
+      // Non-body metrics must keep zero baseline to avoid "floating history".
+      minY = 0;
+      final topCandidate = [maxPoint, goal ?? 0].reduce((a, b) => a > b ? a : b);
+      final top = (topCandidate * 1.22).clamp(1.0, 999999.0).toDouble();
+      maxY = top <= minY ? minY + 1.0 : top;
+    }
+    final ySpan = (maxY - minY).abs();
+    final goalValue = goal;
+    final goalInRange = goalValue != null && goalValue >= minY && goalValue <= maxY;
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -45,7 +76,7 @@ class HamvitLineChart extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, t, _) {
         final animatedSpots = spots
-            .map((s) => FlSpot(s.x, s.y * t))
+            .map((s) => FlSpot(s.x, minY + ((s.y - minY) * t)))
             .toList(growable: false);
 
         return SizedBox(
@@ -54,12 +85,13 @@ class HamvitLineChart extends StatelessWidget {
             LineChartData(
               minX: 0,
               maxX: (animatedSpots.length - 1).toDouble(),
-              minY: 0,
-              maxY: top <= 1 ? 1 : top,
+              minY: minY,
+              maxY: maxY,
+              clipData: const FlClipData.all(),
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval: top <= 0 ? 1 : (top / 4).clamp(1, 99999),
+                horizontalInterval: (ySpan / 4).clamp(0.2, 99999),
                 getDrawingHorizontalLine: (_) => FlLine(
                   color: Colors.white.withValues(alpha: 0.08),
                   strokeWidth: 1,
@@ -97,7 +129,7 @@ class HamvitLineChart extends StatelessWidget {
               borderData: FlBorderData(show: false),
               extraLinesData: ExtraLinesData(
                 horizontalLines: [
-                  if (buildHamvitGoalLine(goal, color) != null)
+                  if (goalInRange && buildHamvitGoalLine(goal, color) != null)
                     buildHamvitGoalLine(goal, color)!,
                 ],
               ),
@@ -113,8 +145,10 @@ class HamvitLineChart extends StatelessWidget {
               lineBarsData: [
                 LineChartBarData(
                   spots: animatedSpots,
-                  isCurved: true,
-                  curveSmoothness: 0.28,
+                  isCurved: animatedSpots.length > 2,
+                  curveSmoothness: 0.18,
+                  preventCurveOverShooting: true,
+                  preventCurveOvershootingThreshold: 8,
                   barWidth: 3,
                   color: color,
                   dotData: FlDotData(

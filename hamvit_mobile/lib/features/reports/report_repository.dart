@@ -266,18 +266,44 @@ class ReportRepository {
         _nullablePositive(bodyMeasures['targetWeightKg']) ??
         _nullablePositive(bodyMeasures['desiredWeightKg']);
 
-    if (weightPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.weightKg != null) {
+    if (weightPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.currentWeightKg != null) {
       weightPoints = [
-        DashboardPoint(date: end, value: profileSnapshot.weightKg!),
+        DashboardPoint(date: end, value: profileSnapshot.currentWeightKg!),
       ];
     }
-    if (bmiPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.weightKg != null && profileSnapshot.heightCm != null) {
+    if (bmiPoints.where((p) => p.value > 0).isEmpty && profileSnapshot.currentWeightKg != null && profileSnapshot.heightCm != null) {
       final heightM = profileSnapshot.heightCm! / 100.0;
       if (heightM > 0) {
-        final bmi = profileSnapshot.weightKg! / (heightM * heightM);
+        final bmi = profileSnapshot.currentWeightKg! / (heightM * heightM);
         bmiPoints = [
           DashboardPoint(date: end, value: bmi),
         ];
+      }
+    }
+
+    // Seed do peso inicial para preservar histórico de partida (ex.: 172kg)
+    // quando o período já contém apenas registros de evolução (ex.: 170kg).
+    if (profileSnapshot.initialWeightKg != null &&
+        profileSnapshot.initialWeightKg! > 0 &&
+        profileSnapshot.createdAt != null) {
+      final createdDay = _startOfDay(profileSnapshot.createdAt!);
+      final hasInitialPoint = weightPoints.any(
+        (p) => _startOfDay(p.date) == createdDay && (p.value - profileSnapshot.initialWeightKg!).abs() < 0.05,
+      );
+      if (!hasInitialPoint && !createdDay.isBefore(start) && !createdDay.isAfter(end)) {
+        weightPoints = [
+          DashboardPoint(date: createdDay, value: profileSnapshot.initialWeightKg!),
+          ...weightPoints,
+        ]..sort((a, b) => a.date.compareTo(b.date));
+
+        if (profileSnapshot.heightCm != null && profileSnapshot.heightCm! > 0) {
+          final hM = profileSnapshot.heightCm! / 100.0;
+          final initialBmi = profileSnapshot.initialWeightKg! / (hM * hM);
+          bmiPoints = [
+            DashboardPoint(date: createdDay, value: initialBmi),
+            ...bmiPoints,
+          ]..sort((a, b) => a.date.compareTo(b.date));
+        }
       }
     }
 
@@ -285,7 +311,9 @@ class ReportRepository {
     final bmiValues = bmiPoints.where((p) => p.value > 0).toList(growable: false);
 
     final weightInitial = weightValues.isEmpty ? null : weightValues.first.value;
-    final weightCurrent = weightValues.isEmpty ? null : weightValues.last.value;
+    final weightCurrent = weightValues.isEmpty
+        ? profileSnapshot.currentWeightKg
+        : weightValues.last.value;
     final bmiInitial = bmiValues.isEmpty ? null : bmiValues.first.value;
     final bmiCurrent = bmiValues.isEmpty ? null : bmiValues.last.value;
 
@@ -561,7 +589,9 @@ class ReportRepository {
           .limit(1)
           .maybeSingle();
       if (row == null) return null;
-        final target = _toDouble(row['target_weight_kg']) ?? _toDouble(row['desired_weight_kg']);
+        final target = _toDouble(row['target_weight_kg']) > 0
+            ? _toDouble(row['target_weight_kg'])
+            : _toDouble(row['desired_weight_kg']);
         if (target > 0) return target;
       return null;
     } catch (_) {
@@ -630,16 +660,57 @@ class ReportRepository {
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
+      final oldest = await client
+          .from('health_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', ascending: true)
+          .limit(1)
+          .maybeSingle();
+      Map<String, dynamic>? oldestWeightLog;
+      Map<String, dynamic>? oldestGoalHistory;
+      try {
+        final log = await client
+            .from('weight_logs')
+            .select('weight_kg, logged_at, created_at')
+            .eq('user_id', userId)
+            .order('logged_at', ascending: true)
+            .limit(1)
+            .maybeSingle();
+        if (log != null) {
+          oldestWeightLog = Map<String, dynamic>.from(log as Map);
+        }
+      } catch (_) {}
+      try {
+        final goalRows = await client
+            .from('goal_history')
+            .select('previous_weight_kg, created_at')
+            .eq('user_id', userId)
+            .order('created_at', ascending: true)
+            .limit(1);
+        if (goalRows.isNotEmpty) {
+          oldestGoalHistory = Map<String, dynamic>.from(goalRows.first as Map);
+        }
+      } catch (_) {}
       if (row == null) return const _HealthProfileSnapshot();
 
-      final weightKg = _nullablePositive(row['weight_kg']);
+      final initialWeightKg = _nullablePositive(oldest?['initial_weight_kg']) ??
+          _nullablePositive(row['initial_weight_kg']) ??
+          _nullablePositive(oldestGoalHistory?['previous_weight_kg']) ??
+          _nullablePositive(oldest?['weight_kg']) ??
+          _nullablePositive(row['weight_kg']) ??
+          _nullablePositive(oldestWeightLog?['weight_kg']);
+      final currentWeightKg = _nullablePositive(row['current_weight_kg']) ?? initialWeightKg;
       final heightCm = _nullablePositive(row['height_cm']);
       final targetWeightKg = _nullablePositive(row['target_weight_kg']) ?? _nullablePositive(row['desired_weight_kg']);
+      final createdAt = DateTime.tryParse(((oldest?['created_at'] ?? row['created_at']) ?? '').toString());
 
       return _HealthProfileSnapshot(
-        weightKg: weightKg,
+        initialWeightKg: initialWeightKg,
+        currentWeightKg: currentWeightKg,
         heightCm: heightCm,
         targetWeightKg: targetWeightKg,
+        createdAt: createdAt,
       );
     } catch (_) {
       return const _HealthProfileSnapshot();
@@ -761,13 +832,17 @@ class _MacroMetrics {
 }
 
 class _HealthProfileSnapshot {
-  final double? weightKg;
+  final double? initialWeightKg;
+  final double? currentWeightKg;
   final double? heightCm;
   final double? targetWeightKg;
+  final DateTime? createdAt;
 
   const _HealthProfileSnapshot({
-    this.weightKg,
+    this.initialWeightKg,
+    this.currentWeightKg,
     this.heightCm,
     this.targetWeightKg,
+    this.createdAt,
   });
 }

@@ -42,80 +42,90 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Entrar')),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: Image.asset(
-              'assets/branding/hamvit_hoje_exata.png',
-              fit: BoxFit.fitWidth,
-              alignment: Alignment.center,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'E-mail'),
-                    validator: (v) {
-                      final value = (v ?? '').trim();
-                      if (value.isEmpty) return 'Informe seu e-mail.';
-                      if (!value.contains('@')) return 'E-mail invalido.';
-                      return null;
-                    },
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 86,
+                        child: Image.asset(
+                          'assets/branding/hamvit_brand_banner.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _emailCtrl,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(labelText: 'E-mail'),
+                              validator: (v) {
+                                final value = (v ?? '').trim();
+                                if (value.isEmpty) return 'Informe seu e-mail.';
+                                if (!value.contains('@')) return 'E-mail invalido.';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: _passwordCtrl,
+                              obscureText: true,
+                              decoration: const InputDecoration(labelText: 'Senha'),
+                              validator: (v) => (v == null || v.isEmpty) ? 'Informe sua senha.' : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      HamvitButton(
+                        label: loading ? 'Entrando...' : 'Entrar',
+                        onPressed: loading
+                            ? null
+                            : () async {
+                                if (!_formKey.currentState!.validate()) return;
+                                await notifier.login(
+                                  email: _emailCtrl.text.trim(),
+                                  password: _passwordCtrl.text,
+                                );
+                              },
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => context.push('/forgot-password'),
+                        child: const Text('Esqueci minha senha'),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push('/register'),
+                        child: const Text('Criar conta'),
+                      ),
+                      if (auth.errorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          auth.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Senha'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Informe sua senha.' : null,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: HamvitButton(
-              label: loading ? 'Entrando...' : 'Entrar',
-              onPressed: loading
-                  ? null
-                  : () async {
-                      if (!_formKey.currentState!.validate()) return;
-                      await notifier.login(
-                        email: _emailCtrl.text.trim(),
-                        password: _passwordCtrl.text,
-                      );
-                    },
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => context.push('/forgot-password'),
-            child: const Text('Esqueci minha senha'),
-          ),
-          TextButton(
-            onPressed: () => context.push('/register'),
-            child: const Text('Criar conta'),
-          ),
-          if (auth.errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              auth.errorMessage!,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }

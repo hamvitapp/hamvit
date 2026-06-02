@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/goals/goal_calculation_engine.dart';
@@ -12,6 +13,7 @@ class OnboardingProfileState {
   final bool isSaving;
   final String? objective;
   final double? weightKg;
+  final double? initialWeightKg;
   final int? heightCm;
   final String? activityLevel;
   final Map<String, dynamic> activityPreferences;
@@ -33,6 +35,7 @@ class OnboardingProfileState {
     this.isSaving = false,
     this.objective,
     this.weightKg,
+    this.initialWeightKg,
     this.heightCm,
     this.activityLevel,
     this.activityPreferences = const {},
@@ -55,6 +58,7 @@ class OnboardingProfileState {
     bool? isSaving,
     String? objective,
     double? weightKg,
+    double? initialWeightKg,
     int? heightCm,
     String? activityLevel,
     Map<String, dynamic>? activityPreferences,
@@ -77,6 +81,7 @@ class OnboardingProfileState {
       isSaving: isSaving ?? this.isSaving,
       objective: objective ?? this.objective,
       weightKg: weightKg ?? this.weightKg,
+      initialWeightKg: initialWeightKg ?? this.initialWeightKg,
       heightCm: heightCm ?? this.heightCm,
       activityLevel: activityLevel ?? this.activityLevel,
       activityPreferences: activityPreferences ?? this.activityPreferences,
@@ -160,6 +165,23 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
           .eq('user_id', uid)
           .order('created_at', ascending: false)
           .limit(1);
+      final healthRowsAsc = await client
+          .from('health_profiles')
+          .select('*')
+          .eq('user_id', uid)
+          .order('created_at', ascending: true)
+          .limit(200);
+      List<dynamic> weightRowsAsc = const [];
+      try {
+        weightRowsAsc = await client
+            .from('weight_logs')
+            .select('weight_kg, logged_at, created_at')
+            .eq('user_id', uid)
+            .order('logged_at', ascending: true)
+            .limit(200);
+      } catch (_) {
+        weightRowsAsc = const [];
+      }
 
       final prefRows = await client
           .from('user_preferences')
@@ -167,9 +189,39 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
           .eq('user_id', uid)
           .order('created_at', ascending: false)
           .limit(1);
+      List<dynamic> sleepRows = const [];
+      try {
+        sleepRows = await client
+            .from('sleep_profiles')
+            .select('*')
+            .eq('user_id', uid)
+            .order('created_at', ascending: false)
+            .limit(1);
+      } catch (_) {
+        sleepRows = const [];
+      }
 
       final health = healthRows.isNotEmpty ? Map<String, dynamic>.from(healthRows.first as Map) : <String, dynamic>{};
+      final oldestHealth = healthRowsAsc.isNotEmpty
+          ? Map<String, dynamic>.from(healthRowsAsc.first as Map)
+          : <String, dynamic>{};
+      final oldestWeightLog = weightRowsAsc.isNotEmpty
+          ? Map<String, dynamic>.from(weightRowsAsc.first as Map)
+          : <String, dynamic>{};
       final prefsRow = prefRows.isNotEmpty ? Map<String, dynamic>.from(prefRows.first as Map) : <String, dynamic>{};
+      final sleepProfile = sleepRows.isNotEmpty ? Map<String, dynamic>.from(sleepRows.first as Map) : <String, dynamic>{};
+      Map<String, dynamic> oldestGoalHistory = <String, dynamic>{};
+      try {
+        final goalRows = await client
+            .from('goal_history')
+            .select('previous_weight_kg, created_at')
+            .eq('user_id', uid)
+            .order('created_at', ascending: true)
+            .limit(1);
+        if (goalRows.isNotEmpty) {
+          oldestGoalHistory = Map<String, dynamic>.from(goalRows.first as Map);
+        }
+      } catch (_) {}
       final prefs = prefsRow['data'] is Map<String, dynamic>
           ? (prefsRow['data'] as Map<String, dynamic>)
           : Map<String, dynamic>.from((prefsRow['data'] as Map?) ?? {});
@@ -181,16 +233,47 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       final body = _mapFromDynamic(onboarding['body']);
       final activityPreferences = _mapFromDynamic(onboarding['activity_preferences']);
 
+      final sleepGoalHours = _asDouble(sleep['hours_target']) ??
+          _asDouble(sleepProfile['hours_target']) ??
+          _asDouble(sleepProfile['target_hours']) ??
+          _asDouble(sleepProfile['sleep_goal_hours']);
+
+      final initialWeight = _asDouble(oldestHealth['initial_weight_kg']) ??
+          _asDouble(health['initial_weight_kg']) ??
+          _asDouble(oldestGoalHistory['previous_weight_kg']) ??
+          _asDouble(oldestHealth['weight_kg']) ??
+          _asDouble(health['weight_kg']) ??
+          _asDouble(oldestWeightLog['weight_kg']);
+      debugPrint(
+        '[GOALS_LOAD] initial=$initialWeight current=${_asDouble(health['current_weight_kg']) ?? _asDouble(health['weight_kg'])} '
+        'oldestHealth=${_asDouble(oldestHealth['weight_kg'])} oldestWeightLog=${_asDouble(oldestWeightLog['weight_kg'])}',
+      );
+
+      final profileId = health['id'];
+      final storedInitial = _asDouble(health['initial_weight_kg']);
+      if (profileId != null && initialWeight != null && initialWeight > 0) {
+        final needsPersist = storedInitial == null || (storedInitial - initialWeight).abs() > 0.01;
+        if (needsPersist) {
+          try {
+            await client
+                .from('health_profiles')
+                .update({'initial_weight_kg': initialWeight})
+                .eq('id', profileId);
+          } catch (_) {}
+        }
+      }
+
       state = OnboardingProfileState(
         isLoading: false,
         objective: _asString(onboarding['objective']),
         weightKg: _asDouble(health['current_weight_kg']) ?? _asDouble(health['weight_kg']),
+        initialWeightKg: initialWeight,
         heightCm: _asInt(health['height_cm']),
         activityLevel: _asString(onboarding['activity_level']),
         activityPreferences: activityPreferences,
         foodPreferences: _asStringList(food['preferences']),
         foodRestrictions: _asStringList(food['restrictions']),
-        sleepHours: _asDouble(sleep['hours_target']),
+        sleepHours: sleepGoalHours,
         hydrationGoalMl: _asInt(hydration['ml_target']),
         targetWeightKg: _asDouble(body['target_weight_kg']) ??
             _asDouble(health['target_weight_kg']) ??
@@ -252,14 +335,20 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
 
       if (rows.isNotEmpty) {
         final existing = Map<String, dynamic>.from(rows.first as Map);
+        final existingInitialWeight =
+            _asDouble(existing['initial_weight_kg']) ?? _asDouble(existing['weight_kg']);
         await client.from('health_profiles').update({
-          'weight_kg': weightKg,
+          if (existingInitialWeight == null || existingInitialWeight <= 0) 'weight_kg': weightKg,
+          if (existingInitialWeight == null || existingInitialWeight <= 0) 'initial_weight_kg': weightKg,
+          'current_weight_kg': weightKg,
           'height_cm': heightCm,
         }).eq('id', existing['id']);
       } else {
         await client.from('health_profiles').insert({
           'user_id': uid,
           'weight_kg': weightKg,
+          'initial_weight_kg': weightKg,
+          'current_weight_kg': weightKg,
           'height_cm': heightCm,
         });
       }
@@ -275,6 +364,7 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       state = state.copyWith(
         isSaving: false,
         weightKg: weightKg,
+        initialWeightKg: state.initialWeightKg ?? weightKg,
         heightCm: heightCm,
         activityLevel: activityLevel.trim(),
       );
@@ -412,7 +502,6 @@ class OnboardingProfileNotifier extends StateNotifier<OnboardingProfileState> {
       try {
         await client.from('health_profiles').update({
           'current_weight_kg': weightKg,
-          'weight_kg': weightKg,
           'height_cm': heightCm,
           'target_weight_kg': targetWeightKg,
           'desired_weight_kg': targetWeightKg,

@@ -1,4 +1,4 @@
-import 'package:pdf/pdf.dart';
+﻿import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'hamvit_pdf_theme.dart';
@@ -41,6 +41,33 @@ String _fmtScale(double val, String unit) {
   return val.toStringAsFixed(1);
 }
 
+List<String> _buildXAxisDateLabels(List<DateTime> dates) {
+  if (dates.isEmpty) return const <String>[];
+  if (dates.length <= 10) {
+    return dates
+        .map((d) =>
+            '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}')
+        .toList(growable: false);
+  }
+
+  final step = dates.length <= 15
+      ? 2
+      : dates.length <= 31
+          ? 3
+          : 5;
+  final labels = List<String>.filled(dates.length, '', growable: false);
+  for (var i = 0; i < dates.length; i++) {
+    final isEdge = i == 0 || i == dates.length - 1;
+    final isStep = i % step == 0;
+    if (isEdge || isStep) {
+      final d = dates[i];
+      labels[i] =
+          '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+    }
+  }
+  return labels;
+}
+
 pw.Widget fallbackCard(HamvitPdfTheme t, String message, {pw.ImageProvider? icon}) {
   return pw.Container(
     width: double.infinity,
@@ -58,7 +85,7 @@ pw.Widget fallbackCard(HamvitPdfTheme t, String message, {pw.ImageProvider? icon
         pw.SizedBox(height: 6),
         pw.Text(message, style: t.bodyMuted()),
         pw.SizedBox(height: 4),
-        pw.Text('Registre dados continuamente para habilitar gráficos completos.', style: t.small()),
+        pw.Text('Registre dados continuamente para habilitar grÃ¡ficos completos.', style: t.small()),
       ],
     ),
   );
@@ -86,11 +113,12 @@ pw.Widget chartCard(
   required String title,
   required String subtitle,
   required List<double> values,
+  List<DateTime>? dates,
   required String legend,
   required String insight,
   double? goal,
   bool bars = false,
-  String emptyMessage = 'Sem dados suficientes neste período.',
+  String emptyMessage = 'Sem dados suficientes neste perÃ­odo.',
   String unit = '',
   String goalLabel = 'Meta calculada',
 }) {
@@ -103,7 +131,15 @@ pw.Widget chartCard(
   final axisMax = ticks.last;
   const chartHeight = 130.0;
 
+  final baseDates = (dates != null && dates.length == values.length) ? dates : null;
   final displayValues = values.length > 30 ? _downsample(values, 30) : values;
+  final List<DateTime> displayDates = baseDates == null
+      ? List<DateTime>.generate(
+          displayValues.length,
+          (i) => DateTime(2000, 1, i + 1),
+        )
+      : (baseDates.length > 30 ? _downsample(baseDates, 30) : baseDates);
+  final xAxisLabels = _buildXAxisDateLabels(displayDates);
 
   return pw.Container(
     padding: const pw.EdgeInsets.all(12),
@@ -118,7 +154,7 @@ pw.Widget chartCard(
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            metricPill(t, 'Média', '${avg.toStringAsFixed(1)} $unit'),
+            metricPill(t, 'MÃ©dia', '${avg.toStringAsFixed(1)} $unit'),
             metricPill(t, 'Meta', goal == null ? '-' : '${goal.toStringAsFixed(1)} $unit'),
             metricPill(t, 'Pico', '${maxVal.toStringAsFixed(1)} $unit'),
           ],
@@ -213,7 +249,7 @@ pw.Widget chartCard(
                 children: List.generate(displayValues.length, (i) {
                   return pw.Expanded(
                     child: pw.Center(
-                      child: pw.Text('${i + 1}', style: t.small(6.8)),
+                      child: pw.Text(xAxisLabels[i], style: t.small(6.3)),
                     ),
                   );
                 }),
@@ -223,7 +259,7 @@ pw.Widget chartCard(
         ),
         pw.SizedBox(height: 8),
         pw.Text(
-          'Barras: $legend em $unit. ${goal != null ? 'Linha vermelha: $goalLabel ($goal $unit).' : ''} Período analisado: período completo.',
+          'Barras: $legend em $unit. ${goal != null ? 'Linha vermelha: $goalLabel ($goal $unit).' : ''} PerÃ­odo analisado: perÃ­odo completo.',
           style: t.small(),
         ),
         pw.SizedBox(height: 3),
@@ -244,7 +280,7 @@ pw.Widget macrosSegmentedBar(HamvitPdfTheme t, {required double protein, require
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Distribuição de Macros', style: t.h2()),
+        pw.Text('DistribuiÃ§Ã£o de Macros', style: t.h2()),
         pw.SizedBox(height: 6),
         pw.Container(
           height: 24,
@@ -298,7 +334,7 @@ pw.Widget macrosSegmentedBar(HamvitPdfTheme t, {required double protein, require
         pw.SizedBox(height: 8),
         pw.Row(
           children: [
-            _macroDot(t, HamvitPdfTheme.mint, 'Proteína', protein, 'g'),
+            _macroDot(t, HamvitPdfTheme.mint, 'ProteÃ­na', protein, 'g'),
             pw.SizedBox(width: 12),
             _macroDot(t, HamvitPdfTheme.cyan, 'Carboidrato', carbs, 'g'),
             pw.SizedBox(width: 12),
@@ -306,7 +342,7 @@ pw.Widget macrosSegmentedBar(HamvitPdfTheme t, {required double protein, require
           ],
         ),
         pw.SizedBox(height: 4),
-        pw.Text('Legenda: distribuição percentual de macronutrientes • Período analisado: período completo.', style: t.small()),
+        pw.Text('Legenda: distribuiÃ§Ã£o percentual de macronutrientes â€¢ PerÃ­odo analisado: perÃ­odo completo.', style: t.small()),
       ],
     ),
   );
@@ -322,8 +358,12 @@ pw.Widget _macroDot(HamvitPdfTheme t, PdfColor color, String label, double grams
   );
 }
 
-pw.Widget heatmap(HamvitPdfTheme t, {required List<double> values}) {
-  if (values.isEmpty) return fallbackCard(t, 'Sem dados de consistência neste período.');
+pw.Widget heatmap(
+  HamvitPdfTheme t, {
+  required List<double> values,
+  List<DateTime>? dates,
+}) {
+  if (values.isEmpty) return fallbackCard(t, 'Sem dados de consistÃªncia neste perÃ­odo.');
   final colorScale = [
     PdfColor.fromInt(0xFFE7EDF5),
     PdfColor.fromInt(0xFFCFE6FA),
@@ -331,35 +371,70 @@ pw.Widget heatmap(HamvitPdfTheme t, {required List<double> values}) {
     PdfColor.fromInt(0xFF3FB9EE),
     PdfColor.fromInt(0xFF168DFF),
   ];
+
+  final labels = (dates != null && dates.length == values.length)
+      ? dates
+          .map((d) =>
+              '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}')
+          .toList(growable: false)
+      : List<String>.generate(values.length, (i) => '${i + 1}');
+
+  const maxCols = 15;
+  final rows = <pw.Widget>[];
+  for (var start = 0; start < values.length; start += maxCols) {
+    final end = (start + maxCols) > values.length ? values.length : (start + maxCols);
+    final chunkValues = values.sublist(start, end);
+    final chunkLabels = labels.sublist(start, end);
+    rows.add(
+      pw.Row(
+        children: List.generate(maxCols, (i) {
+          if (i >= chunkValues.length) {
+            return pw.Expanded(child: pw.SizedBox(height: 18));
+          }
+          final v = chunkValues[i];
+          final idx = (v / 25).floor().clamp(0, 4);
+          final color = colorScale[idx];
+          return pw.Expanded(
+            child: pw.Container(
+              margin: const pw.EdgeInsets.symmetric(horizontal: 1.5),
+              height: 18,
+              alignment: pw.Alignment.center,
+              decoration: pw.BoxDecoration(
+                color: color,
+                borderRadius: pw.BorderRadius.circular(3),
+              ),
+              child: pw.Text(
+                chunkLabels[i],
+                style: pw.TextStyle(
+                  font: t.bold,
+                  fontSize: 5.5,
+                  color: const PdfColor.fromInt(0xFF1D2A3A),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
   return pw.Container(
     padding: const pw.EdgeInsets.all(10),
     decoration: t.card(),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text('Consistência de Hábitos', style: t.h2()),
+        pw.Text('ConsistÃªncia de HÃ¡bitos', style: t.h2()),
         pw.SizedBox(height: 4),
-        pw.Text('Relação de constância por dia', style: t.bodyMuted()),
+        pw.Text('RelaÃ§Ã£o de constÃ¢ncia por dia', style: t.bodyMuted()),
         pw.SizedBox(height: 8),
-        pw.Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: values.take(35).toList().asMap().entries.map((entry) {
-            final index = entry.key;
-            final v = entry.value;
-            final idx = (v / 25).floor().clamp(0, 4);
-            final color = colorScale[idx];
-            return pw.Container(
-              width: 16,
-              height: 16,
-              alignment: pw.Alignment.center,
-              decoration: pw.BoxDecoration(color: color, borderRadius: pw.BorderRadius.circular(3)),
-              child: pw.Text(
-                '${index + 1}',
-                style: pw.TextStyle(font: t.bold, fontSize: 6, color: const PdfColor.fromInt(0xFF1D2A3A)),
-              ),
-            );
-          }).toList(),
+        pw.Column(
+          children: rows
+              .map((r) => pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 4),
+                    child: r,
+                  ))
+              .toList(),
         ),
         pw.SizedBox(height: 8),
         pw.Row(
@@ -378,21 +453,21 @@ pw.Widget heatmap(HamvitPdfTheme t, {required List<double> values}) {
         ),
         pw.SizedBox(height: 4),
         pw.Text(
-          'Legenda: cada bloco representa um dia. Quanto mais escuro, maior a consistência de hábitos naquele dia. Período analisado: período completo.',
+          'Legenda: cada bloco representa um dia. Quanto mais escuro, maior a consistÃªncia de hÃ¡bitos naquele dia. PerÃ­odo analisado: perÃ­odo completo.',
           style: t.small(),
         ),
       ],
     ),
   );
 }
-
-List<double> _downsample(List<double> data, int targetCount) {
+List<T> _downsample<T>(List<T> data, int targetCount) {
   if (data.length <= targetCount) return data;
   final step = data.length / targetCount;
-  final result = <double>[];
+  final result = <T>[];
   for (var i = 0; i < targetCount; i++) {
     final idx = (i * step).floor().clamp(0, data.length - 1);
     result.add(data[idx]);
   }
   return result;
 }
+

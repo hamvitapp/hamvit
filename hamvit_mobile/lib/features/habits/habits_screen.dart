@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import 'habit_model.dart';
 import 'habit_provider.dart';
@@ -278,6 +279,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                           .read(habitsControllerProvider.notifier)
                           .toggleHabit(habit, value);
                       ref.invalidate(homeDashboardProvider);
+                      ref.invalidate(dashboardSnapshotProvider);
                     } catch (e) {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -302,3 +304,4 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
     );
   }
 }
+

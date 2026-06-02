@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/supabase_provider.dart';
@@ -28,14 +29,37 @@ class EvolutionRepository {
     final goalHistoryTarget = await _fetchTargetWeightFromGoalHistory(uid);
     final resolvedTarget = profile.targetWeightKg ?? prefTarget ?? goalHistoryTarget;
     final weights = await _fetchWeightLogs(uid, profileHeightCm: profile.heightCm);
+    final enrichedWeights = [...weights];
+    if (profile.initialWeightKg != null && profile.initialWeightKg! > 0) {
+      final firstLog = enrichedWeights.isEmpty
+          ? null
+          : (enrichedWeights..sort((a, b) => a.loggedAt.compareTo(b.loggedAt))).first;
+      final needsSeed = firstLog == null ||
+          firstLog.weightKg != profile.initialWeightKg ||
+          (profile.createdAt != null && profile.createdAt!.isBefore(firstLog.loggedAt));
+      if (needsSeed) {
+        enrichedWeights.add(
+          WeightLogEntry(
+            id: 'seed_initial_weight',
+            weightKg: profile.initialWeightKg!,
+            bmi: BmiCalculator.calculate(
+              weightKg: profile.initialWeightKg!,
+              heightCm: profile.heightCm,
+            ),
+            loggedAt: profile.createdAt ?? DateTime.now(),
+            notes: 'Peso inicial',
+          ),
+        );
+      }
+    }
     final measurements = await _fetchMeasurements(uid);
     final photos = await _fetchPhotos(uid);
 
     return EvolutionDashboardData(
-      weightLogs: weights,
       measurements: measurements,
       photos: photos,
-      profileWeightKg: profile.weightKg,
+      weightLogs: enrichedWeights,
+      profileWeightKg: profile.currentWeightKg,
       profileHeightCm: profile.heightCm,
       targetWeightKg: resolvedTarget,
     );
@@ -119,10 +143,7 @@ class EvolutionRepository {
           .update({'current_weight_kg': weightKg})
           .eq('user_id', uid);
     } catch (_) {
-      await client
-          .from('health_profiles')
-          .update({'weight_kg': weightKg})
-          .eq('user_id', uid);
+      // Preserve initial weight immutability on legacy schemas.
     }
   }
 
@@ -191,34 +212,117 @@ class EvolutionRepository {
 
   Future<_HealthProfileData> _fetchHealthProfile(String uid) async {
     try {
-          final rows = await client
-            .from('health_profiles')
-            .select('*')
+      final rows = await client
+          .from('health_profiles')
+          .select('*')
           .eq('user_id', uid)
           .order('created_at', ascending: false)
           .limit(1);
+      final rowsAsc = await client
+          .from('health_profiles')
+          .select('*')
+          .eq('user_id', uid)
+          .order('created_at', ascending: true)
+          .limit(200);
+      List<dynamic> weightRowsAsc = const [];
+      try {
+        weightRowsAsc = await client
+            .from('weight_logs')
+            .select('weight_kg, logged_at, created_at')
+            .eq('user_id', uid)
+            .order('logged_at', ascending: true)
+            .limit(200);
+      } catch (_) {
+        weightRowsAsc = const [];
+      }
       final row = rows.isNotEmpty ? Map<String, dynamic>.from(rows.first as Map) : null;
+      final oldest = rowsAsc.isNotEmpty ? Map<String, dynamic>.from(rowsAsc.first as Map) : null;
+      final oldestWeightLog =
+          weightRowsAsc.isNotEmpty ? Map<String, dynamic>.from(weightRowsAsc.first as Map) : null;
+      Map<String, dynamic>? oldestGoalHistory;
+      try {
+        final goalRows = await client
+            .from('goal_history')
+            .select('previous_weight_kg, created_at')
+            .eq('user_id', uid)
+            .order('created_at', ascending: true)
+            .limit(1);
+        if (goalRows.isNotEmpty) {
+          oldestGoalHistory = Map<String, dynamic>.from(goalRows.first as Map);
+        }
+      } catch (_) {}
         final targetWeight = _toDouble(row?['target_weight_kg']) ??
             _toDouble(row?['desired_weight_kg']);
+      final initialWeight = _toDouble(oldest?['initial_weight_kg']) ??
+          _toDouble(row?['initial_weight_kg']) ??
+          _toDouble(oldestGoalHistory?['previous_weight_kg']) ??
+          _toDouble(oldest?['weight_kg']) ??
+          _toDouble(row?['weight_kg']) ??
+          _toDouble(oldestWeightLog?['weight_kg']);
+      debugPrint(
+        '[EVOLUTION_LOAD] initial=$initialWeight current=${_toDouble(row?['current_weight_kg']) ?? _toDouble(row?['weight_kg'])}',
+      );
       return _HealthProfileData(
-        weightKg: _toDouble(row?['current_weight_kg']) ?? _toDouble(row?['weight_kg']),
+        initialWeightKg: initialWeight,
+        currentWeightKg: _toDouble(row?['current_weight_kg']) ?? _toDouble(row?['weight_kg']),
         heightCm: _toInt(row?['height_cm']),
         targetWeightKg: targetWeight,
+        createdAt: DateTime.tryParse((oldest?['created_at'] ?? row?['created_at'] ?? '').toString()),
       );
     } catch (_) {
-          final rows = await client
-            .from('health_profiles')
-            .select('*')
+      final rows = await client
+          .from('health_profiles')
+          .select('*')
           .eq('user_id', uid)
           .order('created_at', ascending: false)
           .limit(1);
+      final rowsAsc = await client
+          .from('health_profiles')
+          .select('*')
+          .eq('user_id', uid)
+          .order('created_at', ascending: true)
+          .limit(200);
+      List<dynamic> weightRowsAsc = const [];
+      try {
+        weightRowsAsc = await client
+            .from('weight_logs')
+            .select('weight_kg, logged_at, created_at')
+            .eq('user_id', uid)
+            .order('logged_at', ascending: true)
+            .limit(200);
+      } catch (_) {
+        weightRowsAsc = const [];
+      }
       final row = rows.isNotEmpty ? Map<String, dynamic>.from(rows.first as Map) : null;
+      final oldest = rowsAsc.isNotEmpty ? Map<String, dynamic>.from(rowsAsc.first as Map) : null;
+      final oldestWeightLog =
+          weightRowsAsc.isNotEmpty ? Map<String, dynamic>.from(weightRowsAsc.first as Map) : null;
+      Map<String, dynamic>? oldestGoalHistory;
+      try {
+        final goalRows = await client
+            .from('goal_history')
+            .select('previous_weight_kg, created_at')
+            .eq('user_id', uid)
+            .order('created_at', ascending: true)
+            .limit(1);
+        if (goalRows.isNotEmpty) {
+          oldestGoalHistory = Map<String, dynamic>.from(goalRows.first as Map);
+        }
+      } catch (_) {}
         final targetWeight = _toDouble(row?['target_weight_kg']) ??
             _toDouble(row?['desired_weight_kg']);
+      final initialWeight = _toDouble(oldest?['initial_weight_kg']) ??
+          _toDouble(row?['initial_weight_kg']) ??
+          _toDouble(oldestGoalHistory?['previous_weight_kg']) ??
+          _toDouble(oldest?['weight_kg']) ??
+          _toDouble(row?['weight_kg']) ??
+          _toDouble(oldestWeightLog?['weight_kg']);
       return _HealthProfileData(
-        weightKg: _toDouble(row?['weight_kg']),
+        initialWeightKg: initialWeight,
+        currentWeightKg: _toDouble(row?['current_weight_kg']) ?? _toDouble(row?['weight_kg']),
         heightCm: _toInt(row?['height_cm']),
         targetWeightKg: targetWeight,
+        createdAt: DateTime.tryParse((oldest?['created_at'] ?? row?['created_at'] ?? '').toString()),
       );
     }
   }
@@ -368,13 +472,17 @@ class EvolutionRepository {
 }
 
 class _HealthProfileData {
-  final double? weightKg;
+  final double? initialWeightKg;
+  final double? currentWeightKg;
   final int? heightCm;
   final double? targetWeightKg;
+  final DateTime? createdAt;
 
   const _HealthProfileData({
-    required this.weightKg,
+    required this.initialWeightKg,
+    required this.currentWeightKg,
     required this.heightCm,
     required this.targetWeightKg,
+    required this.createdAt,
   });
 }

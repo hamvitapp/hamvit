@@ -19,21 +19,41 @@ class ReportsPage extends ConsumerStatefulWidget {
 }
 
 class _ReportsPageState extends ConsumerState<ReportsPage> {
+  late Future<Map<String, dynamic>> _summaryFuture;
+  late Future<List<Map<String, dynamic>>> _heatmapFuture;
+
   @override
-  Widget build(BuildContext context) {
-    final svc = ref.watch(reportsServiceProvider);
-    final onboarding = ref.watch(onboardingProfileProvider);
+  void initState() {
+    super.initState();
+    final svc = ref.read(reportsServiceProvider);
     final end = DateTime.now();
     final start = end.subtract(const Duration(days: 7));
+    _summaryFuture = svc.loadSummary(start: start, end: end);
+    _heatmapFuture = svc.loadHeatmap(start: start, end: end);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final svc = ref.read(reportsServiceProvider);
+    final onboarding = ref.watch(onboardingProfileProvider);
 
     return FutureBuilder<Map<String, dynamic>>(
-      future: svc.loadSummary(start: start, end: end),
+      future: _summaryFuture,
       builder: (context, summarySnapshot) {
-        if (!summarySnapshot.hasData) return const HamvitLoading();
+        if (!summarySnapshot.hasData) {
+          return Stack(
+            children: const [
+              HamvitLoading(),
+              HamvitBlockingLoadingOverlay(
+                message: 'Carregando relatórios...',
+              ),
+            ],
+          );
+        }
         final summary = summarySnapshot.data!;
 
         return FutureBuilder<List<Map<String, dynamic>>>(
-          future: svc.loadHeatmap(start: start, end: end),
+          future: _heatmapFuture,
           builder: (context, heatmapSnapshot) {
             final heatValues = heatmapSnapshot.hasData
                 ? heatmapSnapshot.data!
@@ -43,112 +63,120 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
             final insights = svc.buildDeterministicInsights(summary);
 
-            return ListView(
-              padding: const EdgeInsets.all(16),
+            return Stack(
               children: [
-                const HamvitHeader(title: 'Relatórios HAMVIT', subtitle: 'Evolução clara, sem poluição visual e com foco em constância.'),
-                if (!onboarding.essentialCompleted) ...[
-                  const SizedBox(height: 10),
-                  const HamvitCard(
-                    child: Text('Complete seu perfil para relatórios mais precisos.'),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1.18,
+                ListView(
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    HamvitAnalyticsCard(
-                      title: 'Calorias',
-                      value: '${(summary['calories_total'] as num?)?.toStringAsFixed(0) ?? '0'} kcal',
-                      icon: Icons.local_fire_department_outlined,
+                    const HamvitHeader(title: 'Relatórios HAMVIT', subtitle: 'Evolução clara, sem poluição visual e com foco em constância.'),
+                    if (!onboarding.essentialCompleted) ...[
+                      const SizedBox(height: 10),
+                      const HamvitCard(
+                        child: Text('Complete seu perfil para relatórios mais precisos.'),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.18,
+                      children: [
+                        HamvitAnalyticsCard(
+                          title: 'Calorias',
+                          value: '${(summary['calories_total'] as num?)?.toStringAsFixed(0) ?? '0'} kcal',
+                          icon: Icons.local_fire_department_outlined,
+                        ),
+                        HamvitAnalyticsCard(
+                          title: 'Proteina',
+                          value: '${(summary['protein_total'] as num?)?.toStringAsFixed(0) ?? '0'} g',
+                          icon: Icons.fitness_center_outlined,
+                        ),
+                        HamvitAnalyticsCard(
+                          title: 'Água',
+                          value: '${(summary['water_total_ml'] as num?)?.toStringAsFixed(0) ?? '0'} ml',
+                          icon: Icons.water_drop_outlined,
+                        ),
+                        HamvitAnalyticsCard(
+                          title: 'Score',
+                          value: (summary['hamvit_score'] as num?)?.toStringAsFixed(0) ?? '0',
+                          icon: Icons.insights_outlined,
+                        ),
+                      ],
                     ),
-                    HamvitAnalyticsCard(
-                      title: 'Proteina',
-                      value: '${(summary['protein_total'] as num?)?.toStringAsFixed(0) ?? '0'} g',
-                      icon: Icons.fitness_center_outlined,
-                    ),
-                    HamvitAnalyticsCard(
-                      title: 'Água',
-                      value: '${(summary['water_total_ml'] as num?)?.toStringAsFixed(0) ?? '0'} ml',
-                      icon: Icons.water_drop_outlined,
-                    ),
-                    HamvitAnalyticsCard(
-                      title: 'Score',
-                      value: (summary['hamvit_score'] as num?)?.toStringAsFixed(0) ?? '0',
-                      icon: Icons.insights_outlined,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                HamvitChartCard(
-                  title: 'Evolução semanal',
-                  subtitle: 'Peso, adesão e constância em leitura rápida.',
-                  child: SizedBox(
-                    height: 180,
-                    child: LineChart(
-                      LineChartData(
-                        gridData: const FlGridData(show: false),
-                        borderData: FlBorderData(show: false),
-                        titlesData: const FlTitlesData(show: false),
-                        lineBarsData: [
-                          LineChartBarData(
-                            isCurved: true,
-                            color: const Color(0xFF00B7D8),
-                            dotData: const FlDotData(show: false),
-                            barWidth: 3,
-                            spots: const [
-                              FlSpot(0, 50),
-                              FlSpot(1, 58),
-                              FlSpot(2, 55),
-                              FlSpot(3, 62),
-                              FlSpot(4, 68),
-                              FlSpot(5, 72),
-                              FlSpot(6, 79),
+                    const SizedBox(height: 12),
+                    HamvitChartCard(
+                      title: 'Evolução semanal',
+                      subtitle: 'Peso, adesão e constância em leitura rápida.',
+                      child: SizedBox(
+                        height: 180,
+                        child: LineChart(
+                          LineChartData(
+                            gridData: const FlGridData(show: false),
+                            borderData: FlBorderData(show: false),
+                            titlesData: const FlTitlesData(show: false),
+                            lineBarsData: [
+                              LineChartBarData(
+                                isCurved: true,
+                                color: const Color(0xFF00B7D8),
+                                dotData: const FlDotData(show: false),
+                                barWidth: 3,
+                                spots: const [
+                                  FlSpot(0, 50),
+                                  FlSpot(1, 58),
+                                  FlSpot(2, 55),
+                                  FlSpot(3, 62),
+                                  FlSpot(4, 68),
+                                  FlSpot(5, 72),
+                                  FlSpot(6, 79),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                HamvitChartCard(
-                  title: 'Constancia (heatmap)',
-                  child: HamvitHeatmap(values: heatValues),
-                ),
-                HamvitChartCard(
-                  title: 'HAMVIT Score',
-                  child: HamvitScoreWidget(score: ((summary['hamvit_score'] as num?) ?? 0).toDouble()),
-                ),
-                const SizedBox(height: 8),
-                ...insights.map(
-                  (i) => HamvitInsightCard(
-                    title: i['title'] ?? '',
-                    body: i['body'] ?? '',
-                    severity: i['severity'] ?? 'info',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => context.push('/reports/evolution'),
-                      icon: const Icon(Icons.timeline_outlined),
-                      label: const Text('Relatório de evolução'),
+                    HamvitChartCard(
+                      title: 'Constancia (heatmap)',
+                      child: HamvitHeatmap(values: heatValues),
                     ),
-                    FilledButton(onPressed: () => context.push('/analytics'), child: const Text('Analytics')),
+                    HamvitChartCard(
+                      title: 'HAMVIT Score',
+                      child: HamvitScoreWidget(score: ((summary['hamvit_score'] as num?) ?? 0).toDouble()),
+                    ),
+                    const SizedBox(height: 8),
+                    ...insights.map(
+                      (i) => HamvitInsightCard(
+                        title: i['title'] ?? '',
+                        body: i['body'] ?? '',
+                        severity: i['severity'] ?? 'info',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () => context.push('/reports/evolution'),
+                          icon: const Icon(Icons.timeline_outlined),
+                          label: const Text('Relatório de evolução'),
+                        ),
+                        FilledButton(onPressed: () => context.push('/analytics'), child: const Text('Analytics')),
+                      ],
+                    ),
+                    if (!widget.isPremium) ...[
+                      const SizedBox(height: 12),
+                      const PremiumTeaserCard(feature: HamvitFeature.reportsPdfExport),
+                    ],
                   ],
                 ),
-                if (!widget.isPremium) ...[
-                  const SizedBox(height: 12),
-                  const PremiumTeaserCard(feature: HamvitFeature.reportsPdfExport),
-                ],
+                if (heatmapSnapshot.connectionState == ConnectionState.waiting)
+                  const HamvitBlockingLoadingOverlay(
+                    message: 'Carregando relatórios...',
+                  ),
               ],
             );
           },
@@ -157,4 +185,3 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 }
-

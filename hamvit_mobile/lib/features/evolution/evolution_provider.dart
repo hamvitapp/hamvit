@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import 'evolution_models.dart';
 import 'evolution_repository.dart';
@@ -34,6 +35,7 @@ class EvolutionActions {
     );
     ref.invalidate(evolutionDashboardProvider);
     ref.invalidate(homeDashboardProvider);
+    ref.invalidate(dashboardSnapshotProvider);
   }
 
   Future<void> addMeasurement({
@@ -55,6 +57,7 @@ class EvolutionActions {
       hipCm: hipCm,
     );
     ref.invalidate(evolutionDashboardProvider);
+    ref.invalidate(dashboardSnapshotProvider);
   }
 
   Future<void> addPhoto({
@@ -68,5 +71,6 @@ class EvolutionActions {
       notes: notes,
     );
     ref.invalidate(evolutionDashboardProvider);
+    ref.invalidate(dashboardSnapshotProvider);
   }
 }

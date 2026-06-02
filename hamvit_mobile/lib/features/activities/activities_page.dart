@@ -17,10 +17,13 @@ import '../dashboard/domain/dashboard_metrics_service.dart';
 import '../home/providers/home_dashboard_provider.dart';
 import '../onboarding/providers/onboarding_profile_provider.dart';
 import '../reports/report_controller.dart';
+import 'activity_detail_screen.dart';
+import 'activity_repository.dart';
 import 'activity_tracking_engine.dart';
 import 'activity_type_selector.dart';
 import 'calorie_estimation_service.dart';
 import 'indoor_activity_screen.dart';
+import 'outdoor_activity_tracking_screen.dart';
 import 'treadmill_activity_screen.dart';
 
 class ActivitiesPage extends ConsumerStatefulWidget {
@@ -32,6 +35,7 @@ class ActivitiesPage extends ConsumerStatefulWidget {
 
 class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   static const _pendingActivitySessionsKey = 'hamvit_pending_activity_sessions_v1';
+  static const _liveActivitySessionKey = 'hamvit_live_activity_session_v1';
   static const _options = <ActivityTypeOption>[
     ActivityTypeOption(
       id: 'caminhada_outdoor',
@@ -97,6 +101,8 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   int _weekActiveMinBase = 0;
   double _weekDistanceKmBase = 0;
   double _weekCaloriesBase = 0;
+  ActivityRepository get _activityRepository =>
+      ActivityRepository(Supabase.instance.client);
 
   Duration get _elapsed {
     final start = _startedAt;
@@ -215,19 +221,31 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       rows = await client
           .from('activity_sessions')
           .select(
-              'id, activity_type, activity_environment, tracking_mode, started_at, finished_at, ended_at, duration_seconds, distance_meters, distance_m, manual_distance_meters, estimated_calories_kcal')
+              'id, activity_type, activity_environment, tracking_mode, started_at, finished_at, ended_at, duration_seconds, distance_meters, distance_m, manual_distance_meters, estimated_calories_kcal, average_pace_seconds, route_summary_json')
           .eq('user_id', user.id)
           .gte('started_at', since.toIso8601String())
           .order('started_at', ascending: false)
           .limit(50);
     } catch (_) {
-      rows = await client
-          .from('activity_sessions')
-          .select('id, activity_type, started_at, ended_at, distance_m')
-          .eq('user_id', user.id)
-          .gte('started_at', since.toIso8601String())
-          .order('started_at', ascending: false)
-          .limit(50);
+      try {
+        rows = await client
+            .from('activity_sessions')
+            .select('id, activity_type, started_at, ended_at, distance_m, route_summary_json')
+            .eq('user_id', user.id)
+            .gte('started_at', since.toIso8601String())
+            .order('started_at', ascending: false)
+            .limit(50);
+      } catch (_) {
+        // fallback maximo: evita "sumir" com historico quando houver
+        // diferenca de schema entre ambientes.
+        rows = await client
+            .from('activity_sessions')
+            .select('id, activity_type, started_at, ended_at, distance_m')
+            .eq('user_id', user.id)
+            .gte('started_at', since.toIso8601String())
+            .order('started_at', ascending: false)
+            .limit(50);
+      }
     }
 
     var totalMin = 0;
@@ -268,6 +286,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
           ? 'indoor'
           : 'outdoor';
       history.add(_ActivityHistoryEntry(
+        sessionId: (row['id'] ?? '').toString(),
         type: type,
         environment: env,
         distanceKm: km,
@@ -275,15 +294,63 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
         caloriesKcal: _toDouble(row['estimated_calories_kcal']).round(),
         paceLabel: _paceLabel(_toInt(row['average_pace_seconds'])),
         startedAt: startedAt,
+        rawSession: Map<String, dynamic>.from(row as Map),
       ));
     }
 
+    // Inclui itens pendentes locais para não "sumirem" da lista quando
+    // a sincronização remota falha temporariamente.
+    final prefs = await SharedPreferences.getInstance();
+    final pendingRaw = prefs.getStringList(_pendingActivitySessionsKey) ?? const <String>[];
+    for (final raw in pendingRaw) {
+      try {
+        final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+        final startedAt = DateTime.tryParse((map['started_at'] ?? '').toString());
+        if (startedAt == null || startedAt.isBefore(since)) continue;
+
+        final durationSeconds = _toInt(map['duration_seconds']);
+        final distanceMeters = _toDouble(map['distance_meters']);
+        final manualDistance = _toDouble(map['manual_distance_meters']);
+        final km = (distanceMeters > 0 ? distanceMeters : manualDistance) / 1000;
+        final pace = _toInt(map['average_pace_seconds']);
+        final type = _capitalize((map['activity_type'] ?? 'atividade').toString());
+        final env = (map['activity_environment'] ?? '').toString().toLowerCase() == 'indoor'
+            ? 'indoor'
+            : 'outdoor';
+
+        history.add(_ActivityHistoryEntry(
+          sessionId: 'pending_${startedAt.millisecondsSinceEpoch}',
+          type: type,
+          environment: env,
+          distanceKm: km,
+          durationMin: _minutesFromSeconds(durationSeconds),
+          caloriesKcal: _toDouble(map['estimated_calories_kcal']).round(),
+          paceLabel: _paceLabel(pace),
+          startedAt: startedAt,
+          rawSession: map,
+        ));
+      } catch (_) {}
+    }
+
+    history.sort((a, b) {
+      final ad = a.startedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bd = b.startedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bd.compareTo(ad);
+    });
+
+    final visibleHistory = history.take(7).toList(growable: false);
+    // Garante consistencia entre cards semanais e lista exibida.
+    final visibleMin = visibleHistory.fold<int>(0, (acc, e) => acc + e.durationMin);
+    final visibleKm = visibleHistory.fold<double>(0.0, (acc, e) => acc + e.distanceKm);
+    final visibleKcal =
+        visibleHistory.fold<double>(0.0, (acc, e) => acc + e.caloriesKcal.toDouble());
+
     if (!mounted) return;
     setState(() {
-      _weekActiveMinBase = totalMin;
-      _weekDistanceKmBase = totalKm;
-      _weekCaloriesBase = totalCalories;
-      _history = history.take(7).toList(growable: false);
+      _weekActiveMinBase = visibleMin;
+      _weekDistanceKmBase = visibleKm;
+      _weekCaloriesBase = visibleKcal;
+      _history = visibleHistory;
     });
     debugPrint('ActivitiesPage: history refreshed with ${_history.length} items');
   }
@@ -291,17 +358,8 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   Future<void> _start(ActivityTypeOption type) async {
     debugPrint('ActivitiesPage: atividade iniciada ${type.id}');
     if (type.environment == ActivityEnvironment.outdoor) {
-      final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) return;
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
+      await _startOutdoorFlow(type);
+      return;
     }
 
     final now = DateTime.now();
@@ -309,6 +367,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     final user = client.auth.currentUser;
 
     _sessionId = null;
+    await _clearLiveSessionState();
     if (user != null) {
       try {
         final row = await client
@@ -364,6 +423,9 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       if (!mounted || !_running || _paused) return;
       // Atualiza UI local
       setState(() {});
+      if (_elapsedSeconds % 3 == 0) {
+        _persistLiveSessionState();
+      }
       // Incrementa o tick global para notificar outras telas (ex: Hoje)
       try {
         final elapsed = _elapsedSeconds;
@@ -394,6 +456,145 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     });
 
     setState(() {});
+  }
+
+  Future<void> _startOutdoorFlow(ActivityTypeOption type) async {
+    final result = await Navigator.of(context).push<OutdoorTrackingResult>(
+      MaterialPageRoute(
+        builder: (_) => OutdoorActivityTrackingScreen(title: type.label),
+      ),
+    );
+    if (result == null) return;
+
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    final avgSpeed = ActivityTrackingEngine.averageSpeedKmh(
+      distanceMeters: result.distanceMeters,
+      durationSeconds: result.durationSeconds,
+    );
+    final avgPace = ActivityTrackingEngine.averagePaceSeconds(
+      distanceMeters: result.distanceMeters,
+      durationSeconds: result.durationSeconds,
+    );
+    final weightKg = ref.read(onboardingProfileProvider).weightKg ?? 70;
+    final calories = CalorieEstimationService.estimateCalories(
+      met: CalorieEstimationService.metForIndoor(
+        activityType: type.id,
+        speedKmh: avgSpeed,
+      ),
+      weightKg: weightKg,
+      durationSeconds: result.durationSeconds,
+    );
+
+    final payload = <String, dynamic>{
+      if (user != null) 'user_id': user.id,
+      'activity_type': type.id,
+      'activity_environment': 'outdoor',
+      'tracking_mode': 'gps',
+      'started_at': result.startedAt.toIso8601String(),
+      'finished_at': result.finishedAt.toIso8601String(),
+      'ended_at': result.finishedAt.toIso8601String(),
+      'duration_seconds': result.durationSeconds,
+      'distance_meters': result.distanceMeters,
+      'distance_m': result.distanceMeters,
+      'average_pace_seconds': avgPace,
+      'average_speed_kmh': avgSpeed,
+      'estimated_calories_kcal': calories,
+      'created_at': result.startedAt.toIso8601String(),
+      'route_summary_json': {
+        'points_count': result.points.length,
+        'points': result.points
+            .take(600)
+            .map((p) => {
+                  'lat': p.latitude,
+                  'lng': p.longitude,
+                  'ts': p.recordedAt.toIso8601String(),
+                })
+            .toList(growable: false),
+      },
+    };
+
+    var savedRemotely = false;
+    try {
+      final row = await client
+          .from('activity_sessions')
+          .insert(payload)
+          .select('id')
+          .single();
+      final sessionId = row['id']?.toString();
+      savedRemotely = true;
+      if (sessionId != null && sessionId.isNotEmpty && user != null) {
+        await _activityRepository.saveRoutePoints(
+          sessionId: sessionId,
+          userId: user.id,
+          points: result.points,
+        );
+      }
+    } catch (e) {
+      debugPrint('ActivitiesPage: falha ao salvar outdoor remoto: $e');
+      // Compatibilidade com bancos sem route_summary_json.
+      try {
+        final legacyPayload = Map<String, dynamic>.from(payload)
+          ..remove('route_summary_json');
+        final row = await client
+            .from('activity_sessions')
+            .insert(legacyPayload)
+            .select('id')
+            .single();
+        final sessionId = row['id']?.toString();
+        savedRemotely = true;
+        if (sessionId != null && sessionId.isNotEmpty && user != null) {
+          await _activityRepository.saveRoutePoints(
+            sessionId: sessionId,
+            userId: user.id,
+            points: result.points,
+          );
+        }
+      } catch (e2) {
+        debugPrint('ActivitiesPage: falha fallback legado outdoor: $e2');
+        await _queuePendingActivitySession(payload);
+      }
+    }
+
+    // Atualizacao otimista: a atividade aparece na lista imediatamente,
+    // mesmo se a sincronizacao remota estiver pendente.
+    final localEntry = _ActivityHistoryEntry(
+      sessionId: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      type: _capitalize(type.id),
+      environment: 'outdoor',
+      distanceKm: result.distanceMeters / 1000,
+      durationMin: _minutesFromSeconds(result.durationSeconds),
+      caloriesKcal: calories.round(),
+      paceLabel: _paceLabel(avgPace),
+      startedAt: result.startedAt,
+      rawSession: Map<String, dynamic>.from(payload),
+    );
+    if (mounted) {
+      setState(() {
+        _history = [localEntry, ..._history].take(7).toList(growable: false);
+        _weekActiveMinBase += _minutesFromSeconds(result.durationSeconds);
+        _weekDistanceKmBase += result.distanceMeters / 1000;
+        _weekCaloriesBase += calories;
+      });
+    }
+
+    await _loadWeeklyFromDb();
+    ref.read(activityRefreshTickProvider.notifier).state++;
+    ref.invalidate(homeDashboardProvider);
+    ref.invalidate(dashboardSnapshotProvider);
+    ref.invalidate(evolutionReportProvider);
+    ref.invalidate(reportHistoryProvider);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          savedRemotely
+              ? 'Atividade salva com sucesso.'
+              : 'Atividade salva localmente e sincronizando com a nuvem.',
+        ),
+      ),
+    );
   }
 
   Future<void> _startActivityPicker() async {
@@ -444,6 +645,88 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
       }
     }
     await prefs.setStringList(_pendingActivitySessionsKey, pending);
+  }
+
+  Future<void> _persistLiveSessionState() async {
+    if (!_running || _startedAt == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final payload = <String, dynamic>{
+      'running': _running,
+      'paused': _paused,
+      'startedAt': _startedAt!.toIso8601String(),
+      'currentTypeId': _currentType.id,
+      'sessionId': _sessionId,
+      'distanceM': _distanceM,
+      'manualDistanceM': _manualDistanceM,
+      'manualSpeedKmh': _manualSpeedKmh,
+      'points': _points
+          .map((p) => {
+                'lat': p.latitude,
+                'lng': p.longitude,
+              })
+          .toList(growable: false),
+    };
+    await prefs.setString(_liveActivitySessionKey, jsonEncode(payload));
+  }
+
+  Future<void> _clearLiveSessionState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_liveActivitySessionKey);
+  }
+
+  Future<void> _restoreLiveSessionState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_liveActivitySessionKey);
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final startedAt = DateTime.tryParse((map['startedAt'] ?? '').toString());
+      if (startedAt == null || map['running'] != true) return;
+      final typeId = (map['currentTypeId'] ?? '').toString();
+      final matches = _options.where((e) => e.id == typeId);
+      _currentType = matches.isNotEmpty ? matches.first : _currentType;
+      _startedAt = startedAt;
+      _endedAt = null;
+      _running = true;
+      _paused = map['paused'] == true;
+      _sessionId = (map['sessionId'] ?? '').toString().isEmpty
+          ? null
+          : (map['sessionId'] ?? '').toString();
+      _distanceM = _toDouble(map['distanceM']);
+      _manualDistanceM = _toDouble(map['manualDistanceM']);
+      _manualSpeedKmh = _toDouble(map['manualSpeedKmh']) > 0
+          ? _toDouble(map['manualSpeedKmh'])
+          : _manualSpeedKmh;
+
+      _points.clear();
+
+      _sub?.cancel();
+      if (_currentType.environment == ActivityEnvironment.outdoor) {
+        _sub = Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.best,
+            distanceFilter: 5,
+          ),
+        ).listen((pos) {
+          if (!_running || _paused) return;
+          if (_points.isNotEmpty) {
+            final prev = _points.last;
+            _distanceM += Geolocator.distanceBetween(
+                prev.latitude, prev.longitude, pos.latitude, pos.longitude);
+          }
+          setState(() => _points.add(pos));
+        });
+      }
+
+      _clockTicker?.cancel();
+      _clockTicker = Timer.periodic(const Duration(seconds: 1), (_) async {
+        if (!mounted || !_running || _paused) return;
+        setState(() {});
+        await _persistLiveSessionState();
+      });
+    } catch (_) {
+      await _clearLiveSessionState();
+    }
   }
 
   Future<void> _finish() async {
@@ -545,6 +828,7 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
     }
 
     _sessionId = null;
+    await _clearLiveSessionState();
     // limpar overlay live
     try {
       ref.read(activityLiveStateProvider.notifier).state = null;
@@ -589,10 +873,12 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
   void initState() {
     super.initState();
     _loadWeeklyFromDb();
+    _restoreLiveSessionState();
   }
 
   @override
   void dispose() {
+    _persistLiveSessionState();
     _clockTicker?.cancel();
     _sub?.cancel();
     super.dispose();
@@ -718,13 +1004,23 @@ class _ActivitiesPageState extends ConsumerState<ActivitiesPage> {
           paceLabel: _paceLabel(_currentPaceSeconds()),
         ),
         const SizedBox(height: 8),
-        _ActivityHistoryCard(entries: _history),
+        _ActivityHistoryCard(
+          entries: _history,
+          onTap: (entry) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ActivityDetailScreen(session: entry.rawSession),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 }
 
 class _ActivityHistoryEntry {
+  final String sessionId;
   final String type;
   final String environment;
   final double distanceKm;
@@ -732,8 +1028,10 @@ class _ActivityHistoryEntry {
   final int caloriesKcal;
   final String paceLabel;
   final DateTime? startedAt;
+  final Map<String, dynamic> rawSession;
 
   const _ActivityHistoryEntry({
+    required this.sessionId,
     required this.type,
     required this.environment,
     required this.distanceKm,
@@ -741,12 +1039,14 @@ class _ActivityHistoryEntry {
     required this.caloriesKcal,
     required this.paceLabel,
     required this.startedAt,
+    required this.rawSession,
   });
 }
 
 class _ActivityHistoryCard extends StatelessWidget {
   final List<_ActivityHistoryEntry> entries;
-  const _ActivityHistoryCard({required this.entries});
+  final ValueChanged<_ActivityHistoryEntry> onTap;
+  const _ActivityHistoryCard({required this.entries, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -801,9 +1101,11 @@ class _ActivityHistoryCard extends StatelessWidget {
                     child: Text(group, style: Theme.of(context).textTheme.titleSmall),
                   ),
                   for (final item in grouped[group]!)
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
+                    InkWell(
+                      onTap: () => onTap(item),
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -820,6 +1122,7 @@ class _ActivityHistoryCard extends StatelessWidget {
                             Text('Ritmo: ${item.paceLabel} • ${fmt(item.startedAt)}', style: Theme.of(context).textTheme.bodySmall),
                           ],
                         ),
+                      ),
                       ),
                     ),
                 ],

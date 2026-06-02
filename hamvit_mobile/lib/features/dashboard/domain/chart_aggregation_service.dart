@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -127,8 +128,8 @@ class ChartAggregationService {
     );
 
     await check(
-      () => client.from('weight_logs').select('log_date, recorded_at, created_at').eq('user_id', uid).order('created_at').limit(1).maybeSingle(),
-      (r) => _parseDate(r['log_date'] ?? r['recorded_at'] ?? r['created_at']),
+      () => client.from('weight_logs').select('log_date, logged_at, recorded_at, created_at').eq('user_id', uid).order('logged_at').limit(1).maybeSingle(),
+      (r) => _parseDate(r['log_date'] ?? r['logged_at'] ?? r['recorded_at'] ?? r['created_at']),
     );
 
     if (candidates.isEmpty) {
@@ -167,6 +168,8 @@ class ChartAggregationService {
     const activityGoal = 30.0;
     const sleepGoal = 8.0;
     double? weightGoal;
+    double? profileInitialWeight;
+    double? profileCurrentWeight;
     const bmiGoal = 24.9;
     const consistencyGoal = 70.0;
 
@@ -203,9 +206,35 @@ class ChartAggregationService {
           .select('*')
           .eq('user_id', uid)
           .maybeSingle();
+      Map<String, dynamic>? oldestProfile;
+      try {
+        final oldest = await client
+            .from('health_profiles')
+            .select('*')
+            .eq('user_id', uid)
+            .order('created_at', ascending: true)
+            .limit(1)
+            .maybeSingle();
+        if (oldest != null) {
+          oldestProfile = Map<String, dynamic>.from(oldest as Map);
+        }
+      } catch (_) {}
       if (profile != null) {
         final heightCm = _toDouble(profile['height_cm']);
         if (heightCm > 0) heightMeters = heightCm / 100;
+        final oldestInitial = _toDouble(oldestProfile?['initial_weight_kg']) > 0
+            ? _toDouble(oldestProfile?['initial_weight_kg'])
+            : _toDouble(oldestProfile?['weight_kg']);
+        final initial = oldestInitial > 0
+            ? oldestInitial
+            : (_toDouble(profile['initial_weight_kg']) > 0
+                ? _toDouble(profile['initial_weight_kg'])
+                : _toDouble(profile['weight_kg']));
+        final current = _toDouble(profile['current_weight_kg']) > 0
+            ? _toDouble(profile['current_weight_kg'])
+            : _toDouble(profile['weight_kg']);
+        if (initial > 0) profileInitialWeight = initial;
+        if (current > 0) profileCurrentWeight = current;
         final goal = _toDouble(profile['target_weight_kg']);
         if (goal > 0) {
           weightGoal = goal;
@@ -213,6 +242,22 @@ class ChartAggregationService {
           final fallbackGoal = _toDouble(profile['desired_weight_kg']);
           if (fallbackGoal > 0) weightGoal = fallbackGoal;
         }
+      }
+    } catch (_) {}
+
+    // Recover canonical initial weight from goal history.
+    // If available, it should override flattened profile values.
+    try {
+      final goalRow = await client
+          .from('goal_history')
+          .select('previous_weight_kg')
+          .eq('user_id', uid)
+          .order('created_at', ascending: true)
+          .limit(1)
+          .maybeSingle();
+      if (goalRow != null) {
+        final recovered = _toDouble(goalRow['previous_weight_kg']);
+        if (recovered > 0) profileInitialWeight = recovered;
       }
     } catch (_) {}
 
@@ -329,36 +374,122 @@ class ChartAggregationService {
       }
     } catch (_) {}
 
+    DateTime? earliestKnownWeightDate;
+    double? carryWeightBeforeStart;
+    DateTime? carryWeightDateBeforeStart;
+    double? firstObservedWeight;
+    DateTime? firstObservedWeightDate;
+    double? lastObservedWeight;
+    DateTime? lastObservedWeightDate;
+
+    Future<void> consumeWeightRows(List<dynamic> rows) async {
+      for (final row in rows) {
+        final weightValue = _toDouble(row['weight_kg']) > 0
+            ? _toDouble(row['weight_kg'])
+            : _toDouble(row['weight']);
+        if (weightValue <= 0) continue;
+
+        final day = _parseDate(
+          row['log_date'] ?? row['logged_at'] ?? row['recorded_at'] ?? row['created_at'],
+        );
+
+        if (earliestKnownWeightDate == null || day.isBefore(earliestKnownWeightDate!)) {
+          earliestKnownWeightDate = day;
+        }
+
+        if (firstObservedWeightDate == null || day.isBefore(firstObservedWeightDate!)) {
+          firstObservedWeightDate = day;
+          firstObservedWeight = weightValue;
+        }
+        if (lastObservedWeightDate == null || day.isAfter(lastObservedWeightDate!)) {
+          lastObservedWeightDate = day;
+          lastObservedWeight = weightValue;
+        }
+
+        if (day.isBefore(start)) {
+          // Keep the latest known value before the chart window as the carry baseline.
+          if (carryWeightDateBeforeStart == null || day.isAfter(carryWeightDateBeforeStart!)) {
+            carryWeightBeforeStart = weightValue;
+            carryWeightDateBeforeStart = day;
+          }
+          continue;
+        }
+
+        if (day.isAfter(end)) continue;
+
+        final key = _dayKey(day);
+        weightByDay[key] = weightValue;
+      }
+    }
+
     try {
+      // Primary source: weight logs (supports schemas with either logged_at or created_at).
       final rows = await client
           .from('weight_logs')
-          .select('log_date, recorded_at, created_at, weight_kg, weight')
+          .select('log_date, logged_at, recorded_at, created_at, weight_kg, weight')
           .eq('user_id', uid)
-          .gte('created_at', start.toIso8601String())
-          .lt('created_at', endExclusive.toIso8601String())
           .order('created_at');
-      for (final row in rows) {
-        final day = _parseDate(row['log_date'] ?? row['recorded_at'] ?? row['created_at']);
-        final key = _dayKey(day);
-        final weight = _toDouble(row['weight_kg']) > 0 ? _toDouble(row['weight_kg']) : _toDouble(row['weight']);
-        if (weight > 0) weightByDay[key] = weight;
-      }
-    } catch (_) {
+      await consumeWeightRows(rows);
+    } catch (_) {}
+
+    if (weightByDay.isEmpty) {
       try {
+        // Fallback source used by older environments.
         final rows = await client
             .from('body_progress_logs')
-            .select('log_date, created_at, weight_kg')
+            .select('log_date, logged_at, recorded_at, created_at, weight_kg, weight')
             .eq('user_id', uid)
-            .gte('created_at', start.toIso8601String())
-            .lt('created_at', endExclusive.toIso8601String())
             .order('created_at');
-        for (final row in rows) {
-          final day = _parseDate(row['log_date'] ?? row['created_at']);
-          final key = _dayKey(day);
-          final weight = _toDouble(row['weight_kg']);
-          if (weight > 0) weightByDay[key] = weight;
-        }
+        await consumeWeightRows(rows);
       } catch (_) {}
+    }
+
+    // Carry latest value before start so the line reflects continuity.
+    if (carryWeightBeforeStart != null && carryWeightBeforeStart! > 0) {
+      weightByDay.putIfAbsent(_dayKey(start), () => carryWeightBeforeStart!);
+    }
+
+    // If we still only have one/zero value, seed with initial/current anchors when available.
+    if (weightByDay.isEmpty) {
+      if (profileInitialWeight != null && profileInitialWeight! > 0) {
+        weightByDay[_dayKey(start)] = profileInitialWeight!;
+      }
+      if (profileCurrentWeight != null && profileCurrentWeight! > 0) {
+        weightByDay[_dayKey(end)] = profileCurrentWeight!;
+      }
+    } else if (weightByDay.length == 1) {
+      if (!weightByDay.containsKey(_dayKey(start)) &&
+          profileInitialWeight != null &&
+          profileInitialWeight! > 0) {
+        weightByDay[_dayKey(start)] = profileInitialWeight!;
+      }
+      if (!weightByDay.containsKey(_dayKey(end)) &&
+          profileCurrentWeight != null &&
+          profileCurrentWeight! > 0) {
+        weightByDay[_dayKey(end)] = profileCurrentWeight!;
+      }
+    }
+
+    // If all visible values are equal (common when multiple updates happened on same day),
+    // project first vs last observed values to period bounds to expose real evolution.
+    final distinctWeightValues = weightByDay.values.toSet();
+    final hasObservedVariation =
+        firstObservedWeight != null &&
+        lastObservedWeight != null &&
+        (firstObservedWeight! - lastObservedWeight!).abs() > 0.01;
+    if (hasObservedVariation && distinctWeightValues.length <= 1) {
+      weightByDay[_dayKey(start)] = firstObservedWeight!;
+      weightByDay[_dayKey(end)] = lastObservedWeight!;
+    }
+
+    debugPrint(
+      '[DASH_WEIGHT] period=${period.name} start=${_dayKey(start)} end=${_dayKey(end)} '
+      'profileInitial=$profileInitialWeight profileCurrent=$profileCurrentWeight '
+      'carryBeforeStart=$carryWeightBeforeStart points=${weightByDay.length}',
+    );
+    final sortedKeys = weightByDay.keys.toList()..sort();
+    for (final k in sortedKeys.take(10)) {
+      debugPrint('[DASH_WEIGHT_POINT] $k => ${weightByDay[k]}');
     }
 
     final water = <DashboardPoint>[];

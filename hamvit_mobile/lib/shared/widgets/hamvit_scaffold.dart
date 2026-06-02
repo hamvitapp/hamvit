@@ -10,6 +10,8 @@ import '../../features/evolution/evolution_provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/home/today_page.dart';
 import '../../features/home/providers/home_dashboard_provider.dart';
+import '../../features/reports/report_controller.dart';
+import '../../features/reports/reports_service.dart';
 import '../../features/settings/profile_page.dart';
 import '../../theme/hamvit_colors.dart';
 import 'hamvit_bottom_nav.dart';
@@ -29,6 +31,7 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
   late int index;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _prefetchedUserId;
+  bool _isBootstrappingData = false;
 
   @override
   void initState() {
@@ -54,15 +57,46 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
     _prefetchedUserId = userId;
     Future<void>.delayed(const Duration(milliseconds: 120), () async {
       if (!mounted) return;
-      try {
-        await ref.read(homeDashboardProvider.future);
-      } catch (_) {}
-      try {
-        await ref.read(dashboardSnapshotProvider.future);
-      } catch (_) {}
-      try {
-        await ref.read(evolutionDashboardProvider.future);
-      } catch (_) {}
+      setState(() => _isBootstrappingData = true);
+      final reportsSvc = ref.read(reportsServiceProvider);
+      final end = DateTime.now();
+      final start = end.subtract(const Duration(days: 7));
+      await Future.wait([
+        Future<void>(() async {
+          try {
+            await ref.read(homeDashboardProvider.future);
+          } catch (_) {}
+        }),
+        Future<void>(() async {
+          try {
+            await ref.read(dashboardSnapshotProvider.future);
+          } catch (_) {}
+        }),
+        Future<void>(() async {
+          try {
+            await ref.read(evolutionDashboardProvider.future);
+          } catch (_) {}
+        }),
+        Future<void>(() async {
+          try {
+            await ref.read(evolutionReportProvider.future);
+          } catch (_) {}
+        }),
+        Future<void>(() async {
+          try {
+            await ref.read(reportHistoryProvider.future);
+          } catch (_) {}
+        }),
+        Future<void>(() async {
+          try {
+            await reportsSvc.loadSummary(start: start, end: end);
+            await reportsSvc.loadHeatmap(start: start, end: end);
+          } catch (_) {}
+        }),
+      ]);
+      if (mounted) {
+        setState(() => _isBootstrappingData = false);
+      }
     });
   }
 
@@ -85,6 +119,25 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
     ];
 
     final titles = ['Hoje', 'Dashboard', 'Perfil'];
+
+    final baseBody = authState.status == AuthStatus.loading
+        ? const HamvitLoading()
+        : authState.status == AuthStatus.error
+            ? HamvitErrorState(message: authState.errorMessage ?? 'Erro ao carregar sessão')
+            : Column(
+                children: [
+                  if (!isPremium)
+                    Container(
+                      width: double.infinity,
+                      color: HamvitColors.accentGreen.withValues(alpha: 0.12),
+                      padding: const EdgeInsets.all(10),
+                      child: const Text('Plano Free ativo. Premium Vitalício: sem mensalidade, sem anuncios. Evolua no seu ritmo.'),
+                    ),
+                  Expanded(
+                    child: pages[index],
+                  ),
+                ],
+              );
 
     return Scaffold(
       key: _scaffoldKey,
@@ -115,24 +168,15 @@ class _HamvitScaffoldState extends ConsumerState<HamvitScaffold> {
           });
         },
       ),
-      body: authState.status == AuthStatus.loading
-          ? const HamvitLoading()
-          : authState.status == AuthStatus.error
-              ? HamvitErrorState(message: authState.errorMessage ?? 'Erro ao carregar sessão')
-              : Column(
-                  children: [
-                    if (!isPremium)
-                      Container(
-                        width: double.infinity,
-                        color: HamvitColors.accentGreen.withValues(alpha: 0.12),
-                        padding: const EdgeInsets.all(10),
-                        child: const Text('Plano Free ativo. Premium Vitalício: sem mensalidade, sem anuncios. Evolua no seu ritmo.'),
-                      ),
-                    Expanded(
-                      child: pages[index],
-                    ),
-                  ],
-                ),
+      body: Stack(
+        children: [
+          baseBody,
+          if (_isBootstrappingData)
+            const HamvitBlockingLoadingOverlay(
+              message: 'Preparando sua experiência...',
+            ),
+        ],
+      ),
       bottomNavigationBar: HamvitBottomNav(currentIndex: index, onTap: (v) => setState(() => index = v)),
     );
   }

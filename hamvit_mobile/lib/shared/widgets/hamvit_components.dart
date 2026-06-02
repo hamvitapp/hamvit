@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 
 import '../../theme/hamvit_colors.dart';
 
@@ -228,6 +229,60 @@ class HamvitLoading extends StatelessWidget {
   }
 }
 
+
+class HamvitBlockingLoadingOverlay extends StatelessWidget {
+  final String message;
+  const HamvitBlockingLoadingOverlay({
+    super.key,
+    this.message = 'Carregando seus dados...',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        absorbing: true,
+        child: Stack(
+          children: [
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5.5, sigmaY: 5.5),
+              child: Container(color: Colors.black.withValues(alpha: 0.36)),
+            ),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: HamvitColors.primaryNavy.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2.8),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      message,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: HamvitColors.darkText),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 class HamvitEmptyState extends StatelessWidget {
   final String message;
   const HamvitEmptyState({super.key, required this.message});
@@ -271,3 +326,4 @@ class HamvitErrorState extends StatelessWidget {
     );
   }
 }
+

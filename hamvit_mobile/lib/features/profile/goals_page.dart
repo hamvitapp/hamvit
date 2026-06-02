@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,6 +29,7 @@ class GoalsPage extends ConsumerWidget {
 
     final dataRows = <MapEntry<String, String>>[
       MapEntry('Objetivo atual', _orPending(state.objective)),
+      MapEntry('Peso inicial', state.initialWeightKg != null ? '${state.initialWeightKg!.toStringAsFixed(1)} kg' : 'Não preenchido'),
       MapEntry('Peso atual', state.weightKg != null ? '${state.weightKg!.toStringAsFixed(1)} kg' : 'Não preenchido'),
       MapEntry('Peso desejado', state.targetWeightKg != null ? '${state.targetWeightKg!.toStringAsFixed(1)} kg' : 'Não preenchido'),
       MapEntry('Diferença', weightDiff == null ? 'Não disponível' : '${weightDiff.toStringAsFixed(1)} kg'),

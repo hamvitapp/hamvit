@@ -36,7 +36,8 @@ class NutritionService {
     if (user == null) throw Exception('Usuário não autenticado');
 
     final now = DateTime.now();
-    final localDate = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final localDate =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final meal = await client
         .from('meal_logs')
         .insert({
@@ -61,6 +62,61 @@ class NutritionService {
     };
   }
 
+  Future<List<Map<String, dynamic>>> searchFoods(String query) async {
+    final client = _client;
+    if (client == null) return const [];
+    var request = client
+        .from('foods')
+        .select('id, name, calories, protein_g, carbs_g, fats_g, source');
+    final normalized = query.trim();
+    if (normalized.isNotEmpty) {
+      request = request.ilike('name', '%$normalized%');
+    }
+    final rows = await request.order('name').limit(30);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  Future<Map<String, dynamic>> registerDetailedMeal({
+    required String mealType,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final client = _client;
+    if (client == null) throw Exception('Supabase indisponível');
+    if (client.auth.currentUser == null) {
+      throw Exception('Usuário não autenticado');
+    }
+
+    final now = DateTime.now();
+    final mealId = await client.rpc(
+      'register_manual_meal',
+      params: {
+        'p_meal_type': mealType,
+        'p_consumed_at': now.toIso8601String(),
+        'p_items': items
+            .map((item) => {
+                  'food_id': item['food_id'],
+                  'grams': item['grams'],
+                  'quantity': item['quantity'] ?? item['grams'],
+                  'portion_label': item['portion_label'] ?? 'gramas',
+                })
+            .toList(growable: false),
+      },
+    );
+
+    return {
+      'meal_id': mealId.toString(),
+      'meal_type': mealType,
+      'calories': _sum(items, 'calories'),
+      'protein_g': _sum(items, 'protein_g'),
+      'carbs_g': _sum(items, 'carbs_g'),
+      'fat_g': _sum(items, 'fat_g'),
+    };
+  }
+
+  int _sum(List<Map<String, dynamic>> items, String key) {
+    return items.fold<int>(0, (total, item) => total + _toInt(item[key]));
+  }
+
   Future<List<Map<String, dynamic>>> fetchTodayMeals() async {
     final client = _client;
     if (client == null) return const [];
@@ -73,7 +129,8 @@ class NutritionService {
 
     final logs = await client
         .from('meal_logs')
-        .select('id, meal_type, consumed_at')
+        .select(
+            'id, meal_type, consumed_at, total_calories_kcal, total_protein_g, total_carbs_g, total_fat_g')
         .eq('user_id', user.id)
         .gte('consumed_at', dayStart.toIso8601String())
         .lt('consumed_at', dayEnd.toIso8601String())
@@ -84,26 +141,44 @@ class NutritionService {
         .whereType<String>()
         .toList(growable: false);
 
-    final caloriesByMeal = <String, int>{};
+    final itemsByMeal = <String, Map<String, int>>{};
     if (ids.isNotEmpty) {
       final items = await client
           .from('meal_items')
-          .select('meal_log_id, calories')
+          .select('meal_log_id, calories, protein_g, carbs_g, fats_g')
           .inFilter('meal_log_id', ids);
 
       for (final row in items) {
         final mealId = row['meal_log_id']?.toString();
         if (mealId == null) continue;
-        caloriesByMeal[mealId] =
-            (caloriesByMeal[mealId] ?? 0) + _toInt(row['calories']);
+        final totals = itemsByMeal.putIfAbsent(
+          mealId,
+          () => {'calories': 0, 'protein_g': 0, 'carbs_g': 0, 'fat_g': 0},
+        );
+        totals['calories'] = totals['calories']! + _toInt(row['calories']);
+        totals['protein_g'] = totals['protein_g']! + _toInt(row['protein_g']);
+        totals['carbs_g'] = totals['carbs_g']! + _toInt(row['carbs_g']);
+        totals['fat_g'] = totals['fat_g']! + _toInt(row['fats_g']);
       }
     }
 
     return logs.map<Map<String, dynamic>>((row) {
       final id = row['id']?.toString() ?? '';
+      final itemTotals = itemsByMeal[id] ?? const <String, int>{};
       return {
         'meal_type': (row['meal_type'] ?? 'lanche').toString(),
-        'calories': caloriesByMeal[id] ?? 0,
+        'calories': _toInt(row['total_calories_kcal']) > 0
+            ? _toInt(row['total_calories_kcal'])
+            : (itemTotals['calories'] ?? 0),
+        'protein_g': _toInt(row['total_protein_g']) > 0
+            ? _toInt(row['total_protein_g'])
+            : (itemTotals['protein_g'] ?? 0),
+        'carbs_g': _toInt(row['total_carbs_g']) > 0
+            ? _toInt(row['total_carbs_g'])
+            : (itemTotals['carbs_g'] ?? 0),
+        'fat_g': _toInt(row['total_fat_g']) > 0
+            ? _toInt(row['total_fat_g'])
+            : (itemTotals['fat_g'] ?? 0),
       };
     }).toList(growable: false);
   }

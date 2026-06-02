@@ -27,7 +27,11 @@ class HomeDashboardRepository {
   final String? userId;
 
   static HomeDashboardModel? _inMemoryCache;
+  static DateTime? _inMemoryCacheUpdatedAt;
+  static Future<void>? _flushInFlight;
   static const _pendingWritesKeyPrefix = 'hamvit_pending_writes_';
+  static const _pendingActivitySessionsKey =
+      'hamvit_pending_activity_sessions_v1';
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -61,6 +65,16 @@ class HomeDashboardRepository {
     final dayEnd = dayStart.add(const Duration(days: 1));
     final isoDate = HamvitDateUtils.toIsoDate(dayStart);
     unawaited(_flushPendingWrites());
+
+    // Return very recent in-memory snapshot immediately (used by optimistic actions),
+    // avoiding UI lag while network sync happens in the background.
+    if (_inMemoryCache != null &&
+        _inMemoryCacheUpdatedAt != null &&
+        _isSameDay(_inMemoryCache!.referenceDate, dayStart) &&
+        now.difference(_inMemoryCacheUpdatedAt!) <=
+            const Duration(seconds: 12)) {
+      return _inMemoryCache!;
+    }
 
     try {
       final hydration = await _fetchHydration(uid, dayStart, dayEnd, isoDate);
@@ -118,14 +132,36 @@ class HomeDashboardRepository {
       );
 
       _inMemoryCache = model;
+      _inMemoryCacheUpdatedAt = DateTime.now();
       return model;
     } catch (error) {
       if (_inMemoryCache != null &&
           _isSameDay(_inMemoryCache!.referenceDate, dayStart)) {
-        return _inMemoryCache!.copyWith(
+        _inMemoryCacheUpdatedAt = DateTime.now();
+        final c = _inMemoryCache!;
+        return HomeDashboardModel(
+          referenceDate: c.referenceDate,
+          waterMl: c.waterMl,
+          waterGoalMl: c.waterGoalMl,
+          calories: c.calories,
+          caloriesGoal: c.caloriesGoal,
+          habitsDone: c.habitsDone,
+          habitsTotal: c.habitsTotal,
+          stepsToday: c.stepsToday,
+          // Evita manter atividade "fantasma" quando a sincronizacao falha.
+          distanceKm: 0,
+          activeMinutes: 0,
+          activityCaloriesKcal: 0,
+          sleepHours: c.sleepHours,
+          score: c.score,
+          dayCompletionPercent: c.dayCompletionPercent,
+          statusText: c.statusText,
+          primaryInsight: c.primaryInsight,
+          secondaryInsight: c.secondaryInsight,
+          trend: c.trend,
           isOffline: true,
           warningMessage:
-              'Exibindo ultimo dashboard salvo. Falha ao sincronizar dados reais.',
+              'Falha ao sincronizar atividades reais. Exibindo valores locais de hoje.',
         );
       }
       // Never carry over previous-day values into "Hoje" when sync fails.
@@ -162,9 +198,12 @@ class HomeDashboardRepository {
     final now = DateTime.now();
     final isoDate = HamvitDateUtils.toIsoDate(now);
     final nowIso = now.toIso8601String();
+    final clientUuid =
+        '${uid}_hydration_${now.millisecondsSinceEpoch}_$amountMl';
     final todayStart = DateTime(now.year, now.month, now.day);
 
-    if (_inMemoryCache != null && _isSameDay(_inMemoryCache!.referenceDate, todayStart)) {
+    if (_inMemoryCache != null &&
+        _isSameDay(_inMemoryCache!.referenceDate, todayStart)) {
       final updatedWater = (_inMemoryCache!.waterMl + amountMl).clamp(0, 20000);
       final updatedScoreData = _computeScore(
         waterMl: updatedWater,
@@ -200,6 +239,7 @@ class HomeDashboardRepository {
         isOffline: current.isOffline,
         warningMessage: current.warningMessage,
       );
+      _inMemoryCacheUpdatedAt = DateTime.now();
     }
 
     await _enqueuePendingWrite({
@@ -209,12 +249,14 @@ class HomeDashboardRepository {
         'log_date': isoDate,
         'amount_ml': amountMl,
         'logged_at': nowIso,
+        'client_uuid': clientUuid,
       }
     });
     unawaited(_flushPendingWrites());
   }
 
-  Future<void> quickAddMeal({required int calories}) async {
+  Future<void> quickAddMeal(
+      {required int calories, String mealType = 'lanche'}) async {
     final uid = userId;
     if (uid == null) throw Exception('Usuario nao autenticado');
 
@@ -222,8 +264,10 @@ class HomeDashboardRepository {
     final isoDate = HamvitDateUtils.toIsoDate(now);
 
     if (_inMemoryCache != null &&
-        _isSameDay(_inMemoryCache!.referenceDate, DateTime(now.year, now.month, now.day))) {
-      final updatedCalories = (_inMemoryCache!.calories + calories).clamp(0, 50000);
+        _isSameDay(_inMemoryCache!.referenceDate,
+            DateTime(now.year, now.month, now.day))) {
+      final updatedCalories =
+          (_inMemoryCache!.calories + calories).clamp(0, 50000);
       final updatedScoreData = _computeScore(
         waterMl: _inMemoryCache!.waterMl,
         waterGoalMl: _inMemoryCache!.waterGoalMl,
@@ -258,12 +302,13 @@ class HomeDashboardRepository {
         isOffline: current.isOffline,
         warningMessage: current.warningMessage,
       );
+      _inMemoryCacheUpdatedAt = DateTime.now();
     }
     await _enqueuePendingWrite({
       'type': 'meal_insert_v1',
       'payload': {
         'user_id': uid,
-        'meal_type': 'lanche',
+        'meal_type': mealType,
         'meal_date': isoDate,
         'total_calories_kcal': calories,
         'consumed_at': now.toIso8601String(),
@@ -271,6 +316,53 @@ class HomeDashboardRepository {
       }
     });
     unawaited(_flushPendingWrites());
+  }
+
+  void reflectMealCaloriesLocally(int calories) {
+    final current = _inMemoryCache;
+    final now = DateTime.now();
+    if (current == null ||
+        !_isSameDay(
+          current.referenceDate,
+          DateTime(now.year, now.month, now.day),
+        )) {
+      return;
+    }
+    final updatedCalories = (current.calories + calories).clamp(0, 50000);
+    final updatedScoreData = _computeScore(
+      waterMl: current.waterMl,
+      waterGoalMl: current.waterGoalMl,
+      calories: updatedCalories,
+      caloriesGoal: current.caloriesGoal,
+      habitsDone: current.habitsDone,
+      habitsTotal: current.habitsTotal,
+      distanceKm: current.distanceKm,
+      activeMinutes: current.activeMinutes,
+      sleepHours: current.sleepHours,
+    );
+    _inMemoryCache = HomeDashboardModel(
+      referenceDate: current.referenceDate,
+      waterMl: current.waterMl,
+      waterGoalMl: current.waterGoalMl,
+      calories: updatedCalories,
+      caloriesGoal: current.caloriesGoal,
+      habitsDone: current.habitsDone,
+      habitsTotal: current.habitsTotal,
+      stepsToday: current.stepsToday,
+      distanceKm: current.distanceKm,
+      activeMinutes: current.activeMinutes,
+      activityCaloriesKcal: current.activityCaloriesKcal,
+      sleepHours: current.sleepHours,
+      score: updatedScoreData.score,
+      dayCompletionPercent: updatedScoreData.dayCompletionPercent,
+      statusText: updatedScoreData.status,
+      primaryInsight: current.primaryInsight,
+      secondaryInsight: current.secondaryInsight,
+      trend: current.trend,
+      isOffline: current.isOffline,
+      warningMessage: current.warningMessage,
+    );
+    _inMemoryCacheUpdatedAt = DateTime.now();
   }
 
   Future<bool> quickCompleteOneHabit() async {
@@ -354,19 +446,19 @@ class HomeDashboardRepository {
 
   Future<List<Map<String, dynamic>>> _loadPendingWrites() async {
     final key = _pendingWritesKey;
-    if (key == null) return const [];
+    if (key == null) return <Map<String, dynamic>>[];
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(key);
-    if (raw == null || raw.isEmpty) return const [];
+    if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! List) return const [];
+      if (decoded is! List) return <Map<String, dynamic>>[];
       return decoded
           .whereType<Map>()
           .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
           .toList(growable: true);
     } catch (_) {
-      return const [];
+      return <Map<String, dynamic>>[];
     }
   }
 
@@ -384,17 +476,28 @@ class HomeDashboardRepository {
   }
 
   Future<void> _flushPendingWrites() async {
-    final writes = await _loadPendingWrites();
-    if (writes.isEmpty) return;
-    final remaining = <Map<String, dynamic>>[];
-    for (final write in writes) {
-      try {
-        await _executePendingWrite(write);
-      } catch (_) {
-        remaining.add(write);
-      }
+    if (_flushInFlight != null) {
+      await _flushInFlight;
+      return;
     }
-    await _savePendingWrites(remaining);
+    final completer = Completer<void>();
+    _flushInFlight = completer.future;
+    final writes = await _loadPendingWrites();
+    try {
+      if (writes.isEmpty) return;
+      final remaining = <Map<String, dynamic>>[];
+      for (final write in writes) {
+        try {
+          await _executePendingWrite(write);
+        } catch (_) {
+          remaining.add(write);
+        }
+      }
+      await _savePendingWrites(remaining);
+    } finally {
+      completer.complete();
+      _flushInFlight = null;
+    }
   }
 
   Future<void> _executePendingWrite(Map<String, dynamic> write) async {
@@ -404,6 +507,33 @@ class HomeDashboardRepository {
         : <String, dynamic>{};
 
     if (type == 'hydration_insert_v1') {
+      // Idempotência: evita duplicar água quando ocorrer refresh/flush concorrente.
+      final userId = payload['user_id']?.toString();
+      final loggedAt = payload['logged_at']?.toString();
+      final amountMl = (payload['amount_ml'] as num?)?.toInt();
+      if (userId != null && loggedAt != null && amountMl != null) {
+        try {
+          final existing = await client
+              .from('hydration_logs')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('logged_at', loggedAt)
+              .eq('amount_ml', amountMl)
+              .limit(1);
+          if (existing.isNotEmpty) return;
+        } catch (_) {
+          try {
+            final existing = await client
+                .from('hydration_logs')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('logged_at', loggedAt)
+                .eq('ml', amountMl)
+                .limit(1);
+            if (existing.isNotEmpty) return;
+          } catch (_) {}
+        }
+      }
       try {
         await client.from('hydration_logs').insert(payload);
       } catch (_) {
@@ -680,13 +810,15 @@ class HomeDashboardRepository {
     String isoDate,
   ) async {
     try {
+      // Janela ampliada para tolerar diferenças de timezone entre app e banco.
+      final windowStart = dayStart.subtract(const Duration(days: 1));
+      final windowEnd = dayEnd.add(const Duration(days: 1));
       final sessions = await client
           .from('activity_sessions')
-          .select(
-              'distance_meters, manual_distance_meters, duration_seconds, started_at, finished_at, steps_count, estimated_calories_kcal')
+          .select()
           .eq('user_id', uid)
-          .gte('started_at', dayStart.toIso8601String())
-          .lt('started_at', dayEnd.toIso8601String());
+          .gte('started_at', windowStart.toIso8601String())
+          .lt('started_at', windowEnd.toIso8601String());
 
       var distanceMeters = 0.0;
       var activeMinutes = 0;
@@ -694,10 +826,26 @@ class HomeDashboardRepository {
       var caloriesKcal = 0;
 
       for (final row in sessions) {
+        final startedAt =
+            DateTime.tryParse((row['started_at'] ?? '').toString());
+        if (startedAt == null) continue;
+        final startedAtLocal = startedAt.toLocal();
+        final startedDay = DateTime(
+          startedAtLocal.year,
+          startedAtLocal.month,
+          startedAtLocal.day,
+        );
+        if (startedDay != dayStart) {
+          continue;
+        }
+
         final distanceGps = (row['distance_meters'] as num?)?.toDouble() ?? 0;
+        final distanceAlt = (row['distance_m'] as num?)?.toDouble() ?? 0;
         final distanceManual =
             (row['manual_distance_meters'] as num?)?.toDouble() ?? 0;
-        distanceMeters += distanceGps > 0 ? distanceGps : distanceManual;
+        distanceMeters += distanceGps > 0
+            ? distanceGps
+            : (distanceManual > 0 ? distanceManual : distanceAlt);
         stepsToday += (row['steps_count'] as num?)?.toInt() ?? 0;
         caloriesKcal += (row['estimated_calories_kcal'] as num?)?.round() ?? 0;
 
@@ -707,10 +855,8 @@ class HomeDashboardRepository {
           continue;
         }
 
-        final startedAt =
-            DateTime.tryParse((row['started_at'] ?? '').toString());
-        final finishedAt =
-            DateTime.tryParse((row['finished_at'] ?? '').toString());
+        final finishedAt = DateTime.tryParse(
+            (row['finished_at'] ?? row['ended_at'] ?? '').toString());
         if (startedAt != null &&
             finishedAt != null &&
             finishedAt.isAfter(startedAt)) {
@@ -719,27 +865,76 @@ class HomeDashboardRepository {
         }
       }
 
+      // Soma sessoes pendentes locais (offline) para refletir no card "Hoje"
+      // antes da sincronizacao remota.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final pending = prefs.getStringList(_pendingActivitySessionsKey) ??
+            const <String>[];
+        for (final raw in pending) {
+          final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+          final startedAt =
+              DateTime.tryParse((map['started_at'] ?? '').toString());
+          if (startedAt == null) continue;
+          final startedAtLocal = startedAt.toLocal();
+          final startedDay = DateTime(
+            startedAtLocal.year,
+            startedAtLocal.month,
+            startedAtLocal.day,
+          );
+          if (startedDay != dayStart) continue;
+
+          final distanceGps = (map['distance_meters'] as num?)?.toDouble() ?? 0;
+          final distanceAlt = (map['distance_m'] as num?)?.toDouble() ?? 0;
+          final distanceManual =
+              (map['manual_distance_meters'] as num?)?.toDouble() ?? 0;
+          distanceMeters += distanceGps > 0
+              ? distanceGps
+              : (distanceManual > 0 ? distanceManual : distanceAlt);
+
+          caloriesKcal +=
+              (map['estimated_calories_kcal'] as num?)?.round() ?? 0;
+          final durationSeconds = (map['duration_seconds'] as num?)?.toInt();
+          if (durationSeconds != null && durationSeconds > 0) {
+            activeMinutes += _minutesFromSeconds(durationSeconds);
+          }
+        }
+      } catch (_) {}
+
       return _ActivityData(
           distanceKm: distanceMeters / 1000,
           activeMinutes: activeMinutes,
           stepsToday: stepsToday == 0 ? null : stepsToday,
           caloriesKcal: caloriesKcal);
     } catch (_) {
+      final windowStart = dayStart.subtract(const Duration(days: 1));
+      final windowEnd = dayEnd.add(const Duration(days: 1));
       final sessions = await client
           .from('activity_sessions')
           .select('distance_m, started_at, ended_at')
           .eq('user_id', uid)
-          .gte('started_at', dayStart.toIso8601String())
-          .lt('started_at', dayEnd.toIso8601String());
+          .gte('started_at', windowStart.toIso8601String())
+          .lt('started_at', windowEnd.toIso8601String());
 
       var distanceKm = 0.0;
       var activeMinutes = 0;
       const caloriesKcal = 0;
 
       for (final row in sessions) {
-        distanceKm += ((row['distance_m'] as num?)?.toDouble() ?? 0) / 1000;
         final startedAt =
             DateTime.tryParse((row['started_at'] ?? '').toString());
+        if (startedAt == null) continue;
+        final startedAtLocal = startedAt.toLocal();
+        final startedDay = DateTime(
+          startedAtLocal.year,
+          startedAtLocal.month,
+          startedAtLocal.day,
+        );
+        if (startedDay != dayStart) {
+          continue;
+        }
+
+        distanceKm += ((row['distance_m'] as num?)?.toDouble() ?? 0) / 1000;
         final endedAt = DateTime.tryParse((row['ended_at'] ?? '').toString());
         if (startedAt != null &&
             endedAt != null &&
@@ -873,7 +1068,8 @@ class HomeDashboardRepository {
                 DateTime.tryParse((row['logged_at'] ?? '').toString()) ?? now);
         final current = dayMap[key] ?? const _TrendDayData();
         dayMap[key] = current.copyWith(
-          waterMl: current.waterMl + _toInt(row['amount_ml']) + _toInt(row['ml']),
+          waterMl:
+              current.waterMl + _toInt(row['amount_ml']) + _toInt(row['ml']),
         );
       }
     } catch (_) {}
@@ -890,7 +1086,8 @@ class HomeDashboardRepository {
         final key = dateRaw.isNotEmpty
             ? dateRaw
             : HamvitDateUtils.toIsoDate(
-                DateTime.tryParse((row['consumed_at'] ?? '').toString()) ?? now);
+                DateTime.tryParse((row['consumed_at'] ?? '').toString()) ??
+                    now);
         final current = dayMap[key] ?? const _TrendDayData();
         dayMap[key] = current.copyWith(
           calories: current.calories + _toInt(row['total_calories_kcal']),
@@ -934,7 +1131,8 @@ class HomeDashboardRepository {
         final key = HamvitDateUtils.toIsoDate(startedAt);
         final current = dayMap[key] ?? const _TrendDayData();
 
-        var activeMinutes = _minutesFromSeconds(_toInt(row['duration_seconds']));
+        var activeMinutes =
+            _minutesFromSeconds(_toInt(row['duration_seconds']));
         if (activeMinutes <= 0) {
           final endedAt =
               DateTime.tryParse((row['finished_at'] ?? '').toString()) ??
